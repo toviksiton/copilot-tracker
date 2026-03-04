@@ -383,22 +383,65 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.45);
   display: flex; align-items: center; justify-content: center;
-  z-index: 1000; padding: 20px;
+  z-index: 1000; padding: 20px; overflow-y: auto;
 }
 .modal-overlay.hidden { display: none; }
 .modal {
   background: #fff; border-radius: var(--radius); padding: 28px;
   width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.25);
 }
-.modal h2 { font-size: 18px; margin-bottom: 18px; }
-.modal label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 5px; }
-.modal input {
+.modal-wide { max-width: 620px; }
+.modal h2 { font-size: 18px; margin-bottom: 20px; }
+.modal label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px; color: var(--ms-muted); text-transform: uppercase; letter-spacing: .4px; }
+.modal input, .modal select {
   width: 100%; padding: 8px 12px;
   border: 1px solid var(--ms-border); border-radius: var(--radius);
-  font-size: 14px; font-family: inherit; margin-bottom: 18px;
+  font-size: 14px; font-family: inherit; margin-bottom: 0;
+  background: #fff;
 }
-.modal input:focus { outline: 2px solid var(--ms-blue); }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal input:focus, .modal select:focus { outline: 2px solid var(--ms-blue); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+/* 2-column form grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-section-label {
+  grid-column: 1 / -1;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--ms-blue);
+  padding-bottom: 4px; border-bottom: 1px solid var(--ms-border);
+  margin-top: 6px;
+}
+
+/* ── Customer meta display ── */
+.cust-meta {
+  padding: 0 18px 12px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+.meta-item {
+  font-size: 11px; color: var(--ms-muted);
+  display: flex; align-items: center; gap: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.meta-item strong { color: var(--ms-text); font-weight: 600; }
+
+/* Detail meta panel */
+.detail-meta {
+  background: #fff; border: 1px solid var(--ms-border);
+  border-radius: var(--radius); padding: 14px 20px;
+  margin-bottom: 16px; box-shadow: var(--shadow);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px 24px;
+}
+.dm-item { display: flex; flex-direction: column; gap: 1px; }
+.dm-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--ms-muted); font-weight: 600; }
+.dm-value { font-size: 13px; font-weight: 600; color: var(--ms-text); }
 
 /* ── Report Modal ── */
 .report-overlay {
@@ -553,8 +596,12 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
         <div class="do-bar-bg"><div class="do-bar-fill" id="do-bar" style="width:0%"></div></div>
       </div>
       <div class="do-pills" id="do-pills"></div>
-      <button class="btn btn-danger btn-sm" id="del-customer-btn" onclick="deleteCustomer()">🗑 Delete</button>
+      <button class="btn btn-sm" onclick="openEditCustomer()" style="white-space:nowrap">✏️ Edit Info</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCustomer()">🗑 Delete</button>
     </div>
+
+    <!-- Customer meta panel -->
+    <div class="detail-meta" id="detail-meta"></div>
 
     <!-- Legend -->
     <div class="legend">
@@ -574,15 +621,59 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 </div>
 
 <!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
-<div class="modal-overlay hidden" id="add-customer-modal">
-  <div class="modal">
-    <h2>➕ Add Customer</h2>
-    <label for="new-customer-name">Customer Name</label>
-    <input type="text" id="new-customer-name" placeholder="e.g. Contoso Ltd." maxlength="60"
-           onkeydown="if(event.key==='Enter') confirmAddCustomer()" />
+<div class="modal-overlay hidden" id="customer-modal">
+  <div class="modal modal-wide">
+    <h2 id="customer-modal-title">➕ Add Customer</h2>
+    <div class="form-grid">
+
+      <!-- Customer name -->
+      <div class="form-group full">
+        <label>Customer Name *</label>
+        <input type="text" id="cf-name" placeholder="e.g. Contoso Ltd." maxlength="80" />
+      </div>
+
+      <div class="form-section-label">Account Details</div>
+
+      <div class="form-group">
+        <label># of Users</label>
+        <input type="number" id="cf-users" min="0" placeholder="e.g. 500" />
+      </div>
+      <div class="form-group">
+        <label># of Copilot 365 Users</label>
+        <input type="number" id="cf-copilot-users" min="0" placeholder="e.g. 100" />
+      </div>
+      <div class="form-group">
+        <label>Date of Renewal</label>
+        <input type="date" id="cf-renewal" />
+      </div>
+      <div class="form-group">
+        <label>AOP Due Date</label>
+        <input type="date" id="cf-aop" />
+      </div>
+
+      <div class="form-section-label">Team</div>
+
+      <div class="form-group">
+        <label>AE Name</label>
+        <input type="text" id="cf-ae" placeholder="Account Executive" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label>ATS Name</label>
+        <input type="text" id="cf-ats" placeholder="ATS" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label>CSAM Name</label>
+        <input type="text" id="cf-csam" placeholder="Customer Success" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label>SE Name</label>
+        <input type="text" id="cf-se" placeholder="Solution Engineer" maxlength="60" />
+      </div>
+
+    </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal('add-customer-modal')">Cancel</button>
-      <button class="btn btn-blue" onclick="confirmAddCustomer()">Add Customer</button>
+      <button class="btn" onclick="closeModal('customer-modal')">Cancel</button>
+      <button class="btn btn-blue" id="customer-modal-btn" onclick="confirmSaveCustomer()">Add Customer</button>
     </div>
   </div>
 </div>
@@ -778,6 +869,23 @@ function buildCustomerCard(customer) {
     ? new Date(customer.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
     : '';
 
+  // Format a date string nicely
+  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : null;
+
+  // Meta fields to show on card
+  const metaItems = [
+    customer.users        ? `👥 <strong>${Number(customer.users).toLocaleString()}</strong> users` : null,
+    customer.copilotUsers ? `🤖 <strong>${Number(customer.copilotUsers).toLocaleString()}</strong> Copilot 365` : null,
+    customer.renewalDate  ? `📅 Renewal: <strong>${fmtDate(customer.renewalDate)}</strong>` : null,
+    customer.aopDate      ? `📋 AOP: <strong>${fmtDate(customer.aopDate)}</strong>` : null,
+    customer.aeName       ? `👤 AE: <strong>${escHtml(customer.aeName)}</strong>` : null,
+    customer.csamName     ? `🎯 CSAM: <strong>${escHtml(customer.csamName)}</strong>` : null,
+  ].filter(Boolean);
+
+  const metaHtml = metaItems.length
+    ? metaItems.map(m => `<div class="meta-item">${m}</div>`).join('')
+    : '';
+
   // Category mini bars
   const catBars = customer.categories.map(cat => {
     const done = cat.items.filter(i=>i.status==='done').length;
@@ -818,6 +926,8 @@ function buildCustomerCard(customer) {
       ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending} Pending</span>` : ''}
     </div>
 
+    ${metaHtml ? `<div class="cust-meta">${metaHtml}</div>` : ''}
+
     <div class="cust-cats">${catBars}</div>
 
     <div class="cust-card-footer">
@@ -841,6 +951,29 @@ function renderDetailHeader(customer) {
     ${s.blocked ? `<span class="status-pill" style="background:var(--block-bg);color:var(--block)">⊘ ${s.blocked}</span>` : ''}
     ${s.unblock ? `<span class="status-pill" style="background:var(--unblock-bg);color:var(--unblock)">↻ ${s.unblock}</span>` : ''}
     ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending}</span>` : ''}`;
+
+  // Meta panel
+  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const fields = [
+    { label:'# of Users',         value: customer.users        ? Number(customer.users).toLocaleString()        : null },
+    { label:'Copilot 365 Users',   value: customer.copilotUsers ? Number(customer.copilotUsers).toLocaleString() : null },
+    { label:'Renewal Date',        value: customer.renewalDate  ? fmtDate(customer.renewalDate) : null },
+    { label:'AOP Due Date',        value: customer.aopDate      ? fmtDate(customer.aopDate)     : null },
+    { label:'AE',                  value: customer.aeName  || null },
+    { label:'ATS',                 value: customer.atsName || null },
+    { label:'CSAM',                value: customer.csamName|| null },
+    { label:'SE',                  value: customer.seName  || null },
+  ].filter(f => f.value);
+
+  const metaEl = document.getElementById('detail-meta');
+  if (fields.length) {
+    metaEl.style.display = '';
+    metaEl.innerHTML = fields.map(f =>
+      `<div class="dm-item"><div class="dm-label">${f.label}</div><div class="dm-value">${escHtml(String(f.value))}</div></div>`
+    ).join('');
+  } else {
+    metaEl.style.display = 'none';
+  }
 }
 
 function renderCategories(customer) {
@@ -966,27 +1099,85 @@ function startRename(labelEl, custId, catId, itemId) {
 // ═══════════════════════════════════════════════════════
 //  CUSTOMER MANAGEMENT
 // ═══════════════════════════════════════════════════════
-function openAddCustomer() {
-  document.getElementById('new-customer-name').value = '';
-  document.getElementById('add-customer-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('new-customer-name').focus(), 80);
+let _editingCustomerId = null; // null = adding new
+
+function _clearForm() {
+  ['cf-name','cf-ae','cf-ats','cf-csam','cf-se'].forEach(id => document.getElementById(id).value = '');
+  ['cf-users','cf-copilot-users'].forEach(id => document.getElementById(id).value = '');
+  ['cf-renewal','cf-aop'].forEach(id => document.getElementById(id).value = '');
 }
 
-function confirmAddCustomer() {
-  const name = document.getElementById('new-customer-name').value.trim();
-  if (!name) return;
-  const customer = {
-    id: uid(), name, createdAt: new Date().toISOString(),
-    categories: DEFAULT_CATEGORIES.map(cat => ({
-      ...cat,
-      items: cat.items.map(label => ({ id:uid(), label, status:'pending' }))
-    }))
+function _readForm() {
+  return {
+    name:         document.getElementById('cf-name').value.trim(),
+    users:        document.getElementById('cf-users').value.trim(),
+    copilotUsers: document.getElementById('cf-copilot-users').value.trim(),
+    renewalDate:  document.getElementById('cf-renewal').value,
+    aopDate:      document.getElementById('cf-aop').value,
+    aeName:       document.getElementById('cf-ae').value.trim(),
+    atsName:      document.getElementById('cf-ats').value.trim(),
+    csamName:     document.getElementById('cf-csam').value.trim(),
+    seName:       document.getElementById('cf-se').value.trim(),
   };
-  state.customers.push(customer);
-  state.current = customer.id;
-  save();
-  closeModal('add-customer-modal');
-  openDetail(customer.id);
+}
+
+function openAddCustomer() {
+  _editingCustomerId = null;
+  _clearForm();
+  document.getElementById('customer-modal-title').textContent = '➕ Add Customer';
+  document.getElementById('customer-modal-btn').textContent   = 'Add Customer';
+  document.getElementById('customer-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('cf-name').focus(), 80);
+}
+
+function openEditCustomer() {
+  const c = state.customers.find(x => x.id === state.current);
+  if (!c) return;
+  _editingCustomerId = c.id;
+  _clearForm();
+  document.getElementById('cf-name').value          = c.name || '';
+  document.getElementById('cf-users').value         = c.users || '';
+  document.getElementById('cf-copilot-users').value = c.copilotUsers || '';
+  document.getElementById('cf-renewal').value       = c.renewalDate || '';
+  document.getElementById('cf-aop').value           = c.aopDate || '';
+  document.getElementById('cf-ae').value            = c.aeName || '';
+  document.getElementById('cf-ats').value           = c.atsName || '';
+  document.getElementById('cf-csam').value          = c.csamName || '';
+  document.getElementById('cf-se').value            = c.seName || '';
+  document.getElementById('customer-modal-title').textContent = '✏️ Edit Customer';
+  document.getElementById('customer-modal-btn').textContent   = 'Save Changes';
+  document.getElementById('customer-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('cf-name').focus(), 80);
+}
+
+function confirmSaveCustomer() {
+  const data = _readForm();
+  if (!data.name) { document.getElementById('cf-name').focus(); return; }
+
+  if (_editingCustomerId) {
+    // Edit existing
+    const c = state.customers.find(x => x.id === _editingCustomerId);
+    Object.assign(c, data);
+    save();
+    closeModal('customer-modal');
+    document.getElementById('crumb-name').textContent = c.name;
+    renderDetailHeader(c);
+  } else {
+    // Add new
+    const customer = {
+      id: uid(), createdAt: new Date().toISOString(),
+      ...data,
+      categories: DEFAULT_CATEGORIES.map(cat => ({
+        ...cat,
+        items: cat.items.map(label => ({ id:uid(), label, status:'pending' }))
+      }))
+    };
+    state.customers.push(customer);
+    state.current = customer.id;
+    save();
+    closeModal('customer-modal');
+    openDetail(customer.id);
+  }
 }
 
 function deleteCustomer() {
@@ -1024,14 +1215,38 @@ function openReportFor(id) {
     </div>`;
   }).join('');
 
+  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const metaRows = [
+    ['# of Users',       customer.users        ? Number(customer.users).toLocaleString()        : null],
+    ['Copilot 365 Users',customer.copilotUsers ? Number(customer.copilotUsers).toLocaleString() : null],
+    ['Renewal Date',     customer.renewalDate  ? fmtDate(customer.renewalDate) : null],
+    ['AOP Due Date',     customer.aopDate      ? fmtDate(customer.aopDate)     : null],
+    ['AE',               customer.aeName  || null],
+    ['ATS',              customer.atsName || null],
+    ['CSAM',             customer.csamName|| null],
+    ['SE',               customer.seName  || null],
+  ].filter(([,v]) => v);
+
+  const metaTableHtml = metaRows.length ? `
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px">
+      <tbody>
+        ${metaRows.map(([ l, v], i) => `
+          <tr style="background:${i%2?'#f9f9f9':'#fff'}">
+            <td style="padding:4px 10px;font-weight:600;color:#555;width:160px;border:1px solid #e8e8e8">${l}</td>
+            <td style="padding:4px 10px;border:1px solid #e8e8e8">${escHtml(String(v))}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>` : '';
+
   document.getElementById('report-content').innerHTML = `
     <div class="report-header">
       <div class="report-title-block">
         <h1>Copilot Adoption Report</h1>
         <p>Customer: <strong>${escHtml(customer.name)}</strong></p>
       </div>
-      <div class="report-meta"><div>📅 ${dateStr}</div><div>Microsoft Copilot Adoption Tracker</div></div>
+      <div class="report-meta"><div>📅 ${dateStr}</div><div>Copilot Adoption Tracker · by Tovik</div></div>
     </div>
+    ${metaTableHtml}
     <div class="overall-progress">
       <div class="op-label"><span>Overall Adoption Progress</span><span style="color:var(--ms-blue);font-weight:700">${s.pct}%</span></div>
       <div class="op-bar"><div class="op-fill" style="width:${s.pct}%"></div></div>
@@ -1060,6 +1275,16 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 document.querySelectorAll('.modal-overlay,.report-overlay').forEach(el =>
   el.addEventListener('click', e => { if (e.target===el) el.classList.add('hidden'); })
 );
+
+// also close customer-modal on Enter in last field
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('customer-modal').classList.contains('hidden')) {
+    const active = document.activeElement;
+    if (active && active.tagName === 'INPUT' && active.closest('#customer-modal')) {
+      confirmSaveCustomer();
+    }
+  }
+});
 </script>
 </body>
 </html>
