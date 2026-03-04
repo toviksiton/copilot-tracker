@@ -5,511 +5,490 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Copilot Adoption Tracker</title>
 <style>
-  /* ── Root & Reset ── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --ms-blue: #0078d4;
-    --ms-blue-dark: #005a9e;
-    --ms-light: #f3f2f1;
-    --ms-border: #d2d0ce;
-    --ms-text: #201f1e;
-    --ms-muted: #605e5c;
-    --done: #107c10;
-    --done-bg: #dff6dd;
-    --miss: #a4262c;
-    --miss-bg: #fde7e9;
-    --block: #ca5010;
-    --block-bg: #fed9cc;
-    --unblock: #797673;
-    --unblock-bg: #edebe9;
-    --pending: #797673;
-    --pending-bg: #f3f2f1;
-    --radius: 8px;
-    --shadow: 0 2px 8px rgba(0,0,0,.12);
-  }
+/* ── Reset & Root ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ms-blue: #0078d4;
+  --ms-blue-dark: #005a9e;
+  --ms-blue-light: #e8f0fe;
+  --ms-light: #f3f2f1;
+  --ms-border: #d2d0ce;
+  --ms-text: #201f1e;
+  --ms-muted: #605e5c;
+  --done: #107c10;    --done-bg: #dff6dd;
+  --miss: #a4262c;    --miss-bg: #fde7e9;
+  --block: #ca5010;   --block-bg: #fed9cc;
+  --unblock: #797673; --unblock-bg: #edebe9;
+  --pending: #797673; --pending-bg: #f3f2f1;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,.1);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.14);
+}
 
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: #faf9f8;
-    color: var(--ms-text);
-    min-height: 100vh;
-  }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f0f2f5;
+  color: var(--ms-text);
+  min-height: 100vh;
+}
 
-  /* ── Header ── */
-  header {
-    background: var(--ms-blue);
-    color: #fff;
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    height: 52px;
-    box-shadow: var(--shadow);
-  }
-  header .logo {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -.3px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  header .logo span { opacity: .75; font-weight: 400; font-size: 14px; }
-  header nav { margin-left: auto; display: flex; gap: 8px; }
-  header nav button {
-    background: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.3);
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-size: 13px;
-    font-family: inherit;
-    transition: background .15s;
-  }
-  header nav button:hover { background: rgba(255,255,255,.28); }
-  header nav button.primary {
-    background: #fff;
-    color: var(--ms-blue);
-    font-weight: 600;
-  }
-  header nav button.primary:hover { background: #e8f0fe; }
+/* ── Header ── */
+header {
+  background: var(--ms-blue);
+  color: #fff;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 52px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo {
+  font-size: 18px; font-weight: 700; letter-spacing: -.3px;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.logo sub { opacity: .65; font-weight: 400; font-size: 12px; vertical-align: middle; }
+.breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; opacity: .85;
+}
+.breadcrumb .sep { opacity: .5; }
+.breadcrumb .crumb-link {
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.breadcrumb .crumb-link:hover { opacity: 1; }
+header nav { margin-left: auto; display: flex; gap: 8px; }
+.hbtn {
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: #fff; padding: 6px 14px; border-radius: var(--radius);
+  cursor: pointer; font-size: 13px; font-family: inherit; transition: background .15s;
+}
+.hbtn:hover { background: rgba(255,255,255,.28); }
+.hbtn.primary { background: #fff; color: var(--ms-blue); font-weight: 600; border-color: #fff; }
+.hbtn.primary:hover { background: #e8f0fe; }
+.hbtn:disabled { opacity: .45; cursor: not-allowed; }
 
-  /* ── Layout ── */
-  .app { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+/* ── App wrapper ── */
+.app { max-width: 1360px; margin: 0 auto; padding: 28px 20px; }
 
-  /* ── Customer Bar ── */
-  .customer-bar {
-    background: #fff;
-    border: 1px solid var(--ms-border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    box-shadow: var(--shadow);
-  }
-  .customer-bar label { font-weight: 600; font-size: 14px; white-space: nowrap; }
-  .customer-select-wrap { display: flex; gap: 8px; align-items: center; flex: 1; min-width: 220px; }
-  .customer-select-wrap select {
-    flex: 1;
-    padding: 7px 12px;
-    border: 1px solid var(--ms-border);
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-family: inherit;
-    background: #fff;
-    cursor: pointer;
-  }
-  .customer-select-wrap select:focus { outline: 2px solid var(--ms-blue); }
-  .customer-name-display {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--ms-blue);
-    flex: 1;
-  }
-  .btn {
-    padding: 7px 16px;
-    border-radius: var(--radius);
-    border: 1px solid var(--ms-border);
-    background: #fff;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-    white-space: nowrap;
-  }
-  .btn:hover { background: var(--ms-light); }
-  .btn-blue { background: var(--ms-blue); color: #fff; border-color: var(--ms-blue); }
-  .btn-blue:hover { background: var(--ms-blue-dark); border-color: var(--ms-blue-dark); }
-  .btn-danger { color: var(--miss); border-color: var(--miss); }
-  .btn-danger:hover { background: var(--miss-bg); }
+/* ═══════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════ */
+.dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.dash-header h1 { font-size: 22px; font-weight: 700; }
+.dash-header p { font-size: 14px; color: var(--ms-muted); margin-top: 2px; }
 
-  /* ── Status Legend ── */
-  .legend {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    align-items: center;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    color: var(--ms-muted);
-  }
-  .legend-dot {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-  }
+/* Summary strip */
+.dash-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.ds-card {
+  background: #fff; border: 1px solid var(--ms-border); border-radius: var(--radius);
+  padding: 16px 18px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ds-card .ds-num { font-size: 28px; font-weight: 700; }
+.ds-card .ds-lbl { font-size: 12px; color: var(--ms-muted); }
+.ds-card.accent { border-left: 4px solid var(--ms-blue); }
+.ds-card.green   { border-left: 4px solid var(--done); }
+.ds-card.red     { border-left: 4px solid var(--miss); }
+.ds-card.orange  { border-left: 4px solid var(--block); }
 
-  /* ── Grid ── */
-  .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-  }
+/* Customer cards grid */
+.customers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
 
-  /* ── Category Card ── */
-  .category-card {
-    background: #fff;
-    border: 1px solid var(--ms-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
-  }
-  .category-header {
-    padding: 14px 16px 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 2px solid var(--ms-blue);
-  }
-  .category-icon { font-size: 22px; }
-  .category-title { font-size: 15px; font-weight: 700; flex: 1; }
-  .category-count {
-    font-size: 11px;
-    background: var(--ms-light);
-    border-radius: 10px;
-    padding: 2px 8px;
-    color: var(--ms-muted);
-  }
-  .category-body { padding: 10px 12px; flex: 1; }
+.cust-card {
+  background: #fff; border: 1px solid var(--ms-border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  cursor: pointer; transition: box-shadow .18s, transform .15s, border-color .15s;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.cust-card:hover {
+  box-shadow: var(--shadow-md); transform: translateY(-2px);
+  border-color: var(--ms-blue);
+}
 
-  /* ── Item Row ── */
-  .item-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 4px;
-    border-radius: 5px;
-    transition: background .12s;
-    group: item;
-  }
-  .item-row:hover { background: var(--ms-light); }
-  .status-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform .1s;
-    flex-shrink: 0;
-  }
-  .status-btn:hover { transform: scale(1.15); }
-  .status-btn[data-status="done"]    { background: var(--done-bg);    color: var(--done); }
-  .status-btn[data-status="missed"]  { background: var(--miss-bg);    color: var(--miss); }
-  .status-btn[data-status="blocked"] { background: var(--block-bg);   color: var(--block); }
-  .status-btn[data-status="unblock"] { background: var(--unblock-bg); color: var(--unblock); }
-  .status-btn[data-status="pending"] { background: var(--pending-bg); color: var(--pending); }
+.cust-card-top {
+  padding: 18px 18px 12px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.cust-avatar {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--ms-blue); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700; flex-shrink: 0;
+  text-transform: uppercase;
+}
+.cust-info { flex: 1; min-width: 0; }
+.cust-name {
+  font-size: 16px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cust-date { font-size: 11px; color: var(--ms-muted); margin-top: 2px; }
+.cust-pct-badge {
+  font-size: 22px; font-weight: 800;
+  color: var(--ms-blue); align-self: center; flex-shrink: 0;
+}
 
-  .item-label {
-    flex: 1;
-    font-size: 13px;
-    line-height: 1.35;
-    color: var(--ms-text);
-  }
-  .item-label.done-text { text-decoration: line-through; color: var(--ms-muted); }
-  .item-label[contenteditable="true"] {
-    outline: 1px solid var(--ms-blue);
-    border-radius: 3px;
-    padding: 1px 4px;
-    background: #fff;
-  }
-  .item-actions { display: none; gap: 4px; }
-  .item-row:hover .item-actions { display: flex; }
-  .icon-btn {
-    width: 22px;
-    height: 22px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    color: var(--ms-muted);
-  }
-  .icon-btn:hover { background: var(--ms-border); color: var(--ms-text); }
+/* Progress section */
+.cust-progress { padding: 0 18px 12px; }
+.cp-bar-bg { height: 8px; background: #e8e8e8; border-radius: 4px; overflow: hidden; }
+.cp-bar-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--ms-blue) 0%, #50e6ff 100%);
+  transition: width .5s ease;
+}
+.cp-labels {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--ms-muted); margin-top: 5px;
+}
 
-  /* ── Add Item ── */
-  .add-item-row {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-    padding: 0 4px;
-  }
-  .add-item-row input {
-    flex: 1;
-    padding: 5px 10px;
-    border: 1px solid var(--ms-border);
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: inherit;
-  }
-  .add-item-row input:focus { outline: 2px solid var(--ms-blue); }
+/* Status mini-pills */
+.cust-status-row {
+  display: flex; gap: 6px; padding: 0 18px 14px; flex-wrap: wrap;
+}
+.status-pill {
+  display: flex; align-items: center; gap: 4px;
+  border-radius: 12px; padding: 3px 9px;
+  font-size: 11px; font-weight: 600;
+}
 
-  /* ── Progress Bar ── */
-  .progress-wrap { padding: 8px 16px 14px; }
-  .progress-bar-bg {
-    height: 6px;
-    background: var(--ms-light);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--ms-blue), #50e6ff);
-    border-radius: 3px;
-    transition: width .4s ease;
-  }
-  .progress-label {
-    font-size: 11px;
-    color: var(--ms-muted);
-    margin-top: 4px;
-    display: flex;
-    justify-content: space-between;
-  }
+/* Category mini-bars */
+.cust-cats { padding: 0 18px 6px; }
+.cat-mini-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid #f3f2f1;
+}
+.cat-mini-row:first-child { border-top: none; }
+.cat-mini-icon { font-size: 13px; width: 18px; text-align: center; flex-shrink: 0; }
+.cat-mini-label { font-size: 11px; color: var(--ms-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-mini-bar { width: 60px; height: 5px; background: #e0e0e0; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.cat-mini-fill { height: 100%; background: var(--ms-blue); border-radius: 3px; }
+.cat-mini-pct { font-size: 10px; color: var(--ms-muted); width: 26px; text-align: right; flex-shrink: 0; }
 
-  /* ── Empty State ── */
-  .empty { color: var(--ms-muted); font-size: 13px; padding: 8px 4px; font-style: italic; }
+/* Card footer */
+.cust-card-footer {
+  margin-top: auto;
+  padding: 10px 18px;
+  background: #faf9f8;
+  border-top: 1px solid var(--ms-border);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
 
-  /* ── Modal ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.45);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal {
-    background: #fff;
-    border-radius: var(--radius);
-    padding: 28px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.25);
-  }
-  .modal h2 { font-size: 18px; margin-bottom: 18px; color: var(--ms-text); }
-  .modal label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 5px; }
-  .modal input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--ms-border);
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-family: inherit;
-    margin-bottom: 18px;
-  }
-  .modal input:focus { outline: 2px solid var(--ms-blue); }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+/* Empty dashboard */
+.dash-empty {
+  grid-column: 1/-1;
+  text-align: center; padding: 80px 20px;
+  color: var(--ms-muted); background: #fff;
+  border-radius: var(--radius); border: 2px dashed var(--ms-border);
+}
+.dash-empty .de-icon { font-size: 56px; margin-bottom: 14px; }
+.dash-empty h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: var(--ms-text); }
+.dash-empty p { font-size: 14px; margin-bottom: 20px; }
 
-  /* ── Report Modal ── */
-  .report-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.55);
-    display: flex; align-items: flex-start; justify-content: center;
-    z-index: 2000;
-    padding: 30px 20px;
-    overflow-y: auto;
-  }
-  .report-overlay.hidden { display: none; }
-  .report-sheet {
-    background: #fff;
-    width: 100%;
-    max-width: 800px;
-    border-radius: var(--radius);
-    box-shadow: 0 12px 48px rgba(0,0,0,.3);
-    overflow: hidden;
-    position: relative;
-  }
-  .report-toolbar {
-    background: var(--ms-blue);
-    color: #fff;
-    padding: 10px 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .report-toolbar h3 { flex: 1; font-size: 14px; }
+/* ═══════════════════════════════════════
+   DETAIL VIEW
+═══════════════════════════════════════ */
+.detail-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.detail-header h1 { font-size: 22px; font-weight: 700; flex: 1; }
+.detail-overall {
+  background: #fff; border: 1px solid var(--ms-border);
+  border-radius: var(--radius); padding: 14px 20px;
+  margin-bottom: 20px; box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.do-pct { font-size: 36px; font-weight: 800; color: var(--ms-blue); }
+.do-bar-wrap { flex: 1; min-width: 180px; }
+.do-bar-label { font-size: 12px; color: var(--ms-muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
+.do-bar-bg { height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden; }
+.do-bar-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 5px; transition: width .5s; }
+.do-pills { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  /* ── Report Content (print target) ── */
-  #report-content {
-    padding: 32px 36px;
-    font-size: 12px;
-    color: #111;
-    font-family: 'Segoe UI', sans-serif;
-  }
-  .report-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 2px solid var(--ms-blue);
-  }
-  .report-title-block h1 { font-size: 22px; color: var(--ms-blue); margin-bottom: 3px; }
-  .report-title-block p { font-size: 12px; color: #666; }
-  .report-meta { font-size: 11px; color: #666; text-align: right; line-height: 1.6; }
-  .report-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  .report-category { border: 1px solid #d0d0d0; border-radius: 6px; overflow: hidden; }
-  .report-cat-header {
-    background: var(--ms-blue);
-    color: #fff;
-    padding: 7px 12px;
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .report-items { padding: 6px 10px; }
-  .report-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 3px 0;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 11px;
-  }
-  .report-item:last-child { border-bottom: none; }
-  .ri-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    flex-shrink: 0;
-  }
-  .report-summary {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .summary-card {
-    border-radius: 6px;
-    padding: 10px 12px;
-    text-align: center;
-  }
-  .summary-card .sc-num { font-size: 24px; font-weight: 700; }
-  .summary-card .sc-label { font-size: 10px; margin-top: 2px; }
-  .report-footer {
-    border-top: 1px solid #ddd;
-    padding-top: 10px;
-    font-size: 10px;
-    color: #888;
-    display: flex;
-    justify-content: space-between;
-  }
-  .overall-progress {
-    margin-bottom: 16px;
-    background: #f5f5f5;
-    border-radius: 6px;
-    padding: 10px 14px;
-  }
-  .overall-progress .op-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; }
-  .op-bar { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
-  .op-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 4px; }
+/* Legend */
+.legend {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ms-muted); }
+.legend-dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
 
-  /* ── Print ── */
-  @media print {
-    body * { visibility: hidden; }
-    #report-content, #report-content * { visibility: visible; }
-    #report-content {
-      position: fixed; inset: 0;
-      padding: 24px 28px;
-      font-size: 11px;
-    }
-    .report-grid { gap: 10px; }
-    .report-cat-header { padding: 5px 10px; }
-    .report-item { padding: 2px 0; }
-  }
+/* Categories grid */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
 
-  /* ── Responsive ── */
-  @media (max-width: 600px) {
-    .categories-grid { grid-template-columns: 1fr; }
-    .report-grid { grid-template-columns: 1fr; }
-    .report-summary { grid-template-columns: repeat(2, 1fr); }
-  }
+/* Category card */
+.category-card {
+  background: #fff; border: 1px solid var(--ms-border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+}
+.category-header {
+  padding: 13px 16px 9px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 2px solid var(--ms-blue);
+}
+.category-icon { font-size: 20px; }
+.category-title { font-size: 14px; font-weight: 700; flex: 1; }
+.category-count {
+  font-size: 11px; background: var(--ms-light);
+  border-radius: 10px; padding: 2px 8px; color: var(--ms-muted);
+}
+.cat-prog-wrap { padding: 7px 14px 10px; }
+.cat-prog-bg { height: 5px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+.cat-prog-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 3px; transition: width .4s; }
+.cat-prog-lbl { font-size: 10px; color: var(--ms-muted); margin-top: 3px; }
+.category-body { padding: 6px 12px; flex: 1; }
+
+/* Item row */
+.item-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 4px; border-radius: 5px; transition: background .12s;
+}
+.item-row:hover { background: var(--ms-light); }
+.status-btn {
+  width: 26px; height: 26px; border-radius: 50%; border: none;
+  cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .1s; flex-shrink: 0;
+}
+.status-btn:hover { transform: scale(1.2); }
+.status-btn[data-status="done"]    { background: var(--done-bg);    color: var(--done); }
+.status-btn[data-status="missed"]  { background: var(--miss-bg);    color: var(--miss); }
+.status-btn[data-status="blocked"] { background: var(--block-bg);   color: var(--block); }
+.status-btn[data-status="unblock"] { background: var(--unblock-bg); color: var(--unblock); }
+.status-btn[data-status="pending"] { background: var(--pending-bg); color: var(--pending); }
+
+.item-label { flex: 1; font-size: 13px; line-height: 1.35; }
+.item-label.done-text { text-decoration: line-through; color: var(--ms-muted); }
+.item-label[contenteditable="true"] {
+  outline: 1px solid var(--ms-blue); border-radius: 3px;
+  padding: 1px 4px; background: #fff;
+}
+.item-actions { display: none; gap: 3px; }
+.item-row:hover .item-actions { display: flex; }
+.icon-btn {
+  width: 22px; height: 22px; border: none; background: none;
+  cursor: pointer; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--ms-muted);
+}
+.icon-btn:hover { background: var(--ms-border); color: var(--ms-text); }
+
+/* Add item */
+.add-item-row { display: flex; gap: 6px; padding: 6px 12px 12px; }
+.add-item-row input {
+  flex: 1; padding: 5px 10px;
+  border: 1px solid var(--ms-border); border-radius: 6px;
+  font-size: 13px; font-family: inherit;
+}
+.add-item-row input:focus { outline: 2px solid var(--ms-blue); }
+.empty { color: var(--ms-muted); font-size: 13px; padding: 8px 4px; font-style: italic; }
+
+/* ── Shared Buttons ── */
+.btn {
+  padding: 7px 16px; border-radius: var(--radius);
+  border: 1px solid var(--ms-border); background: #fff;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  transition: background .15s, border-color .15s; white-space: nowrap;
+}
+.btn:hover { background: var(--ms-light); }
+.btn-blue { background: var(--ms-blue); color: #fff; border-color: var(--ms-blue); }
+.btn-blue:hover { background: var(--ms-blue-dark); border-color: var(--ms-blue-dark); }
+.btn-danger { color: var(--miss); border-color: #f0a0a5; }
+.btn-danger:hover { background: var(--miss-bg); border-color: var(--miss); }
+.btn-sm { padding: 4px 12px; font-size: 12px; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: #fff; border-radius: var(--radius); padding: 28px;
+  width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.25);
+}
+.modal h2 { font-size: 18px; margin-bottom: 18px; }
+.modal label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 5px; }
+.modal input {
+  width: 100%; padding: 8px 12px;
+  border: 1px solid var(--ms-border); border-radius: var(--radius);
+  font-size: 14px; font-family: inherit; margin-bottom: 18px;
+}
+.modal input:focus { outline: 2px solid var(--ms-blue); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── Report Modal ── */
+.report-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: flex; align-items: flex-start; justify-content: center;
+  z-index: 2000; padding: 30px 20px; overflow-y: auto;
+}
+.report-overlay.hidden { display: none; }
+.report-sheet {
+  background: #fff; width: 100%; max-width: 800px;
+  border-radius: var(--radius); box-shadow: 0 12px 48px rgba(0,0,0,.3);
+  overflow: hidden;
+}
+.report-toolbar {
+  background: var(--ms-blue); color: #fff;
+  padding: 10px 18px; display: flex; align-items: center; gap: 10px;
+}
+.report-toolbar h3 { flex: 1; font-size: 14px; }
+#report-content {
+  padding: 32px 36px; font-size: 12px; color: #111;
+  font-family: 'Segoe UI', sans-serif;
+}
+.report-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid var(--ms-blue);
+}
+.report-title-block h1 { font-size: 22px; color: var(--ms-blue); margin-bottom: 3px; }
+.report-title-block p { font-size: 12px; color: #666; }
+.report-meta { font-size: 11px; color: #666; text-align: right; line-height: 1.6; }
+.report-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 14px; }
+.report-category { border: 1px solid #d0d0d0; border-radius: 6px; overflow: hidden; }
+.report-cat-header {
+  background: var(--ms-blue); color: #fff; padding: 7px 12px;
+  font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+}
+.report-items { padding: 6px 10px; }
+.report-item { display: flex; align-items: center; gap: 7px; padding: 3px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; }
+.report-item:last-child { border-bottom: none; }
+.ri-dot { width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
+.report-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+.summary-card { border-radius: 6px; padding: 10px 12px; text-align: center; }
+.summary-card .sc-num { font-size: 24px; font-weight: 700; }
+.summary-card .sc-label { font-size: 10px; margin-top: 2px; }
+.report-footer { border-top: 1px solid #ddd; padding-top: 10px; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
+.overall-progress { margin-bottom: 14px; background: #f5f5f5; border-radius: 6px; padding: 10px 14px; }
+.overall-progress .op-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.op-bar { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
+.op-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 4px; }
+
+/* ── Print ── */
+@media print {
+  body * { visibility: hidden; }
+  #report-content, #report-content * { visibility: visible; }
+  #report-content { position: fixed; inset: 0; padding: 24px 28px; font-size: 11px; }
+  .report-grid { gap: 10px; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .dash-summary { grid-template-columns: repeat(2,1fr); }
+  .categories-grid { grid-template-columns: 1fr; }
+  .report-grid { grid-template-columns: 1fr; }
+  .report-summary { grid-template-columns: repeat(2,1fr); }
+  .customers-grid { grid-template-columns: 1fr; }
+}
+
+/* view toggle */
+.view { display: none; }
+.view.active { display: block; }
 </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
 <header>
-  <div class="logo">
+  <div class="logo" onclick="goHome()">
     <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="white" fill-opacity=".15"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
     Copilot Adoption Tracker
-    <span>by Microsoft</span>
+    <sub>by Tovik</sub>
+  </div>
+  <div class="breadcrumb" id="breadcrumb" style="display:none">
+    <span class="sep">›</span>
+    <span class="crumb-link" onclick="goHome()">All Customers</span>
+    <span class="sep">›</span>
+    <span id="crumb-name"></span>
   </div>
   <nav>
-    <button onclick="openAddCustomer()">+ Add Customer</button>
-    <button class="primary" onclick="openReport()" id="report-btn" disabled>📄 Generate Report</button>
+    <button class="hbtn" onclick="openAddCustomer()">+ Add Customer</button>
+    <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
   </nav>
 </header>
 
 <!-- ═══════════════════════════ APP ═══════════════════════════ -->
 <div class="app">
 
-  <!-- Customer Bar -->
-  <div class="customer-bar">
-    <label>Customer:</label>
-    <div class="customer-select-wrap">
-      <select id="customer-select" onchange="loadCustomer(this.value)">
-        <option value="">— Select a customer —</option>
-      </select>
-      <button class="btn btn-danger" id="del-customer-btn" onclick="deleteCustomer()" style="display:none">🗑 Delete</button>
+  <!-- ── DASHBOARD VIEW ── -->
+  <div id="view-dashboard" class="view active">
+    <div class="dash-header">
+      <div>
+        <h1>Customer Dashboard</h1>
+        <p id="dash-subtitle">Track Copilot adoption progress across all customers.</p>
+      </div>
     </div>
-    <div class="customer-name-display" id="customer-name-display"></div>
+
+    <!-- Summary strip -->
+    <div class="dash-summary" id="dash-summary">
+      <div class="ds-card accent"><div class="ds-num" id="ds-total">0</div><div class="ds-lbl">Customers</div></div>
+      <div class="ds-card green"><div class="ds-num" id="ds-avg">0%</div><div class="ds-lbl">Avg. Adoption</div></div>
+      <div class="ds-card red"><div class="ds-num" id="ds-items">0</div><div class="ds-lbl">Total Items</div></div>
+      <div class="ds-card orange"><div class="ds-num" id="ds-blocked">0</div><div class="ds-lbl">Blocked Items</div></div>
+    </div>
+
+    <!-- Customer cards -->
+    <div class="customers-grid" id="customers-grid">
+      <!-- filled by JS -->
+    </div>
   </div>
 
-  <!-- Legend -->
-  <div class="legend">
-    <span style="font-size:12px;font-weight:600;color:var(--ms-muted)">Status:</span>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--done-bg);color:var(--done)">✓</div> Done / Will Happen</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--miss-bg);color:var(--miss)">✗</div> Didn't Happen</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--block-bg);color:var(--block)">⊘</div> Blocked</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--unblock-bg);color:var(--unblock)">↻</div> In Unblock Process</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--pending-bg);color:var(--pending)">○</div> Not Started</div>
-    <span style="font-size:11px;color:var(--ms-muted);margin-left:auto">Click status icon to cycle • Hover item to edit/delete</span>
-  </div>
+  <!-- ── DETAIL VIEW ── -->
+  <div id="view-detail" class="view">
 
-  <!-- Categories Grid -->
-  <div class="categories-grid" id="categories-grid">
-    <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ms-muted)">
-      <div style="font-size:48px;margin-bottom:12px">🏢</div>
-      <div style="font-size:18px;font-weight:600;margin-bottom:8px">No customer selected</div>
-      <div style="font-size:14px">Add a customer or select one from the dropdown above to begin tracking adoption.</div>
+    <!-- Overall progress bar -->
+    <div class="detail-overall" id="detail-overall">
+      <div class="do-pct" id="do-pct">0%</div>
+      <div class="do-bar-wrap">
+        <div class="do-bar-label">
+          <span>Overall Adoption Progress</span>
+          <span id="do-counts"></span>
+        </div>
+        <div class="do-bar-bg"><div class="do-bar-fill" id="do-bar" style="width:0%"></div></div>
+      </div>
+      <div class="do-pills" id="do-pills"></div>
+      <button class="btn btn-danger btn-sm" id="del-customer-btn" onclick="deleteCustomer()">🗑 Delete</button>
     </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <span style="font-size:12px;font-weight:600;color:var(--ms-muted)">Status:</span>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--done-bg);color:var(--done)">✓</div> Done / Will Happen</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--miss-bg);color:var(--miss)">✗</div> Didn't Happen</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--block-bg);color:var(--block)">⊘</div> Blocked</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--unblock-bg);color:var(--unblock)">↻</div> Unblocking</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pending-bg);color:var(--pending)">○</div> Not Started</div>
+      <span style="font-size:11px;color:var(--ms-muted);margin-left:auto">Click status to cycle • Hover to edit/delete</span>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories-grid" id="categories-grid"></div>
   </div>
 
 </div>
 
-<!-- ═══════════════════════════ ADD CUSTOMER MODAL ═══════════════════════════ -->
+<!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
 <div class="modal-overlay hidden" id="add-customer-modal">
   <div class="modal">
     <h2>➕ Add Customer</h2>
@@ -523,246 +502,251 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════ REPORT MODAL ═══════════════════════════ -->
 <div class="report-overlay hidden" id="report-modal">
   <div class="report-sheet">
     <div class="report-toolbar">
       <h3>📄 Customer Report Preview</h3>
-      <button class="btn btn-blue" onclick="printReport()">🖨 Print / Save PDF</button>
+      <button class="btn btn-blue" onclick="window.print()">🖨 Print / Save PDF</button>
       <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="closeModal('report-modal')">✕ Close</button>
     </div>
-    <div id="report-content"><!-- dynamically filled --></div>
+    <div id="report-content"></div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  DATA MODEL
+//  CONSTANTS
 // ═══════════════════════════════════════════════════════
 const DEFAULT_CATEGORIES = [
-  {
-    id: 'copilot365',
-    icon: '🤖',
-    title: 'Copilot 365',
-    items: [
-      { id: uid(), label: 'Licenses', status: 'pending' },
-      { id: uid(), label: 'Deploy with KPMG & CSU', status: 'pending' },
-      { id: uid(), label: 'WXP Training', status: 'pending' },
-      { id: uid(), label: 'SharePoint / OD Grounding', status: 'pending' },
-      { id: uid(), label: 'Security DSPM AI', status: 'pending' },
-    ]
-  },
-  {
-    id: 'agents1st3rd',
-    icon: '🔌',
-    title: '1st / 3rd Party Agents',
-    items: [
-      { id: uid(), label: 'Training for DA Agent', status: 'pending' },
-      { id: uid(), label: 'Deploy Training', status: 'pending' },
-      { id: uid(), label: 'Results Satisfaction', status: 'pending' },
-      { id: uid(), label: 'OOT Agents – Limited Access', status: 'pending' },
-      { id: uid(), label: 'Frontier Agents', status: 'pending' },
-      { id: uid(), label: 'Business Impact', status: 'pending' },
-      { id: uid(), label: 'Personal Impact', status: 'pending' },
-      { id: uid(), label: 'Governance and Monitor', status: 'pending' },
-      { id: uid(), label: 'PAYG Philosophy', status: 'pending' },
-    ]
-  },
-  {
-    id: 'copilotstudio',
-    icon: '🛠',
-    title: 'Copilot Studio',
-    items: [
-      { id: uid(), label: 'Training for Moti Team', status: 'pending' },
-      { id: uid(), label: 'Training to Studio', status: 'pending' },
-      { id: uid(), label: 'Training MIS', status: 'pending' },
-      { id: uid(), label: 'Provide Full Access for Makers', status: 'pending' },
-      { id: uid(), label: 'Agent PPP (3P) Offer', status: 'pending' },
-      { id: uid(), label: 'Governance and Monitor', status: 'pending' },
-      { id: uid(), label: 'A2A', status: 'pending' },
-      { id: uid(), label: 'Expand to Foundry', status: 'pending' },
-      { id: uid(), label: 'FDE', status: 'pending' },
-      { id: uid(), label: 'Environment and Billing Philosophy', status: 'pending' },
-    ]
-  },
-  {
-    id: 'connectors3p',
-    icon: '🔗',
-    title: '3rd Party Connectors',
-    items: [
-      { id: uid(), label: 'JIRA – Out of Scope for now', status: 'pending' },
-      { id: uid(), label: 'Confluence – In Progress', status: 'pending' },
-      { id: uid(), label: 'Salesforce – In Progress', status: 'pending' },
-      { id: uid(), label: 'Service Now – Blocked', status: 'pending' },
-      { id: uid(), label: 'SAP – In Progress', status: 'pending' },
-    ]
-  },
-  {
-    id: 'agent365',
-    icon: '🤝',
-    title: 'Agent 365',
-    items: [
-      { id: uid(), label: 'Review MIS – Set for next week', status: 'pending' },
-      { id: uid(), label: 'Review IT – Didn\'t set yet', status: 'pending' },
-      { id: uid(), label: 'Review Studio – Didn\'t set yet', status: 'pending' },
-      { id: uid(), label: 'Review Moti – Didn\'t set yet', status: 'pending' },
-    ]
-  }
+  { id:'copilot365',   icon:'🤖', title:'Copilot 365',           items:['Licenses','Deploy with KPMG & CSU','WXP Training','SharePoint / OD Grounding','Security DSPM AI'] },
+  { id:'agents1st3rd', icon:'🔌', title:'1st / 3rd Party Agents', items:['Training for DA Agent','Deploy Training','Results Satisfaction','OOT Agents – Limited Access','Frontier Agents','Business Impact','Personal Impact','Governance and Monitor','PAYG Philosophy'] },
+  { id:'copilotstudio',icon:'🛠', title:'Copilot Studio',         items:['Training for Moti Team','Training to Studio','Training MIS','Provide Full Access for Makers','Agent PPP (3P) Offer','Governance and Monitor','A2A','Expand to Foundry','FDE','Environment and Billing Philosophy'] },
+  { id:'connectors3p', icon:'🔗', title:'3rd Party Connectors',   items:['JIRA – Out of Scope for now','Confluence – In Progress','Salesforce – In Progress','Service Now – Blocked','SAP – In Progress'] },
+  { id:'agent365',     icon:'🤝', title:'Agent 365',              items:["Review MIS – Set for next week","Review IT – Didn't set yet","Review Studio – Didn't set yet","Review Moti – Didn't set yet"] },
 ];
 
-const STATUS_CYCLE  = ['pending', 'done', 'missed', 'blocked', 'unblock'];
-const STATUS_META = {
-  pending:  { icon: '○', label: 'Not Started',          bg: 'var(--pending-bg)', color: 'var(--pending)' },
-  done:     { icon: '✓', label: 'Done / Will Happen',   bg: 'var(--done-bg)',    color: 'var(--done)'    },
-  missed:   { icon: '✗', label: 'Didn\'t Happen',       bg: 'var(--miss-bg)',    color: 'var(--miss)'    },
-  blocked:  { icon: '⊘', label: 'Blocked',              bg: 'var(--block-bg)',   color: 'var(--block)'   },
-  unblock:  { icon: '↻', label: 'In Unblock Process',   bg: 'var(--unblock-bg)',color: 'var(--unblock)' },
+const STATUS_CYCLE = ['pending','done','missed','blocked','unblock'];
+const STATUS_META  = {
+  pending:  { icon:'○', label:'Not Started',        bg:'var(--pending-bg)', color:'var(--pending)' },
+  done:     { icon:'✓', label:'Done / Will Happen', bg:'var(--done-bg)',    color:'var(--done)'    },
+  missed:   { icon:'✗', label:'Didn\'t Happen',     bg:'var(--miss-bg)',    color:'var(--miss)'    },
+  blocked:  { icon:'⊘', label:'Blocked',            bg:'var(--block-bg)',   color:'var(--block)'   },
+  unblock:  { icon:'↻', label:'Unblocking',         bg:'var(--unblock-bg)', color:'var(--unblock)' },
 };
 
-// ── Persistence ──────────────────────────────────────
-const STORE_KEY = 'copilot-tracker-v2';
-function load() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { customers: [], current: null }; } catch { return { customers: [], current: null }; } }
-function save(state) { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+// ═══════════════════════════════════════════════════════
+//  STATE & PERSISTENCE
+// ═══════════════════════════════════════════════════════
+const STORE_KEY = 'copilot-tracker-v3';
+let state = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {customers:[],current:null}; } catch { return {customers:[],current:null}; } })();
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function uid()  { return Math.random().toString(36).slice(2,10); }
 
-function uid() { return Math.random().toString(36).slice(2, 10); }
-
-let state = load();
-
-// ── Bootstrap ────────────────────────────────────────
+// ── Bootstrap
 window.addEventListener('DOMContentLoaded', () => {
-  rebuildCustomerSelect();
   if (state.current) {
-    document.getElementById('customer-select').value = state.current;
-    loadCustomer(state.current, false);
+    const c = state.customers.find(x => x.id === state.current);
+    if (c) { openDetail(state.current); return; }
   }
+  renderDashboard();
 });
 
 // ═══════════════════════════════════════════════════════
-//  CUSTOMER MANAGEMENT
+//  HELPERS: stats from a customer object
 // ═══════════════════════════════════════════════════════
-function openAddCustomer() {
-  document.getElementById('new-customer-name').value = '';
-  document.getElementById('add-customer-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('new-customer-name').focus(), 80);
+function custStats(customer) {
+  let total=0, done=0, missed=0, blocked=0, unblock=0, pending=0;
+  customer.categories.forEach(cat => cat.items.forEach(item => {
+    total++;
+    if (item.status==='done')    done++;
+    else if (item.status==='missed')  missed++;
+    else if (item.status==='blocked') blocked++;
+    else if (item.status==='unblock') unblock++;
+    else pending++;
+  }));
+  const pct = total ? Math.round((done/total)*100) : 0;
+  return { total, done, missed, blocked, unblock, pending, pct };
 }
 
-function confirmAddCustomer() {
-  const name = document.getElementById('new-customer-name').value.trim();
-  if (!name) return;
-  const id = uid();
-  const customer = {
-    id,
-    name,
-    createdAt: new Date().toISOString(),
-    categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)).map(cat => ({
-      ...cat,
-      id: cat.id,
-      items: cat.items.map(i => ({ ...i, id: uid() }))
-    }))
-  };
-  state.customers.push(customer);
-  state.current = id;
-  save(state);
-  closeModal('add-customer-modal');
-  rebuildCustomerSelect();
-  document.getElementById('customer-select').value = id;
-  loadCustomer(id, false);
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goHome() {
+  state.current = null; save();
+  document.getElementById('view-dashboard').classList.add('active');
+  document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('breadcrumb').style.display = 'none';
+  document.getElementById('report-btn').disabled = true;
+  renderDashboard();
 }
 
-function deleteCustomer() {
-  const id = state.current;
-  if (!id) return;
-  const c = state.customers.find(x => x.id === id);
-  if (!confirm(`Delete customer "${c?.name}"? This cannot be undone.`)) return;
-  state.customers = state.customers.filter(x => x.id !== id);
-  state.current = state.customers[0]?.id || null;
-  save(state);
-  rebuildCustomerSelect();
-  if (state.current) {
-    document.getElementById('customer-select').value = state.current;
-    loadCustomer(state.current, false);
-  } else {
-    loadCustomer(null, false);
-  }
-}
-
-function rebuildCustomerSelect() {
-  const sel = document.getElementById('customer-select');
-  sel.innerHTML = '<option value="">— Select a customer —</option>';
-  state.customers.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.id;
-    opt.textContent = c.name;
-    sel.appendChild(opt);
-  });
-}
-
-function loadCustomer(id, fromEvent = true) {
-  state.current = id || null;
-  if (fromEvent) save(state);
+function openDetail(id, updateHistory=true) {
   const customer = state.customers.find(c => c.id === id);
-  const nameDisplay = document.getElementById('customer-name-display');
-  const delBtn = document.getElementById('del-customer-btn');
-  const reportBtn = document.getElementById('report-btn');
-
-  if (!customer) {
-    nameDisplay.textContent = '';
-    delBtn.style.display = 'none';
-    reportBtn.disabled = true;
-    renderEmpty();
-    return;
-  }
-
-  nameDisplay.textContent = customer.name;
-  delBtn.style.display = '';
-  reportBtn.disabled = false;
+  if (!customer) return;
+  state.current = id; save();
+  document.getElementById('view-dashboard').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+  document.getElementById('breadcrumb').style.display = 'flex';
+  document.getElementById('crumb-name').textContent = customer.name;
+  document.getElementById('report-btn').disabled = false;
+  renderDetailHeader(customer);
   renderCategories(customer);
 }
 
 // ═══════════════════════════════════════════════════════
-//  RENDER
+//  DASHBOARD
 // ═══════════════════════════════════════════════════════
-function renderEmpty() {
-  document.getElementById('categories-grid').innerHTML = `
-    <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ms-muted)">
-      <div style="font-size:48px;margin-bottom:12px">🏢</div>
-      <div style="font-size:18px;font-weight:600;margin-bottom:8px">No customer selected</div>
-      <div style="font-size:14px">Add a customer or select one from the dropdown above to begin tracking adoption.</div>
+function renderDashboard() {
+  const grid = document.getElementById('customers-grid');
+  grid.innerHTML = '';
+
+  if (state.customers.length === 0) {
+    grid.innerHTML = `
+      <div class="dash-empty">
+        <div class="de-icon">🏢</div>
+        <h2>No customers yet</h2>
+        <p>Add your first customer to start tracking Copilot adoption.</p>
+        <button class="btn btn-blue" onclick="openAddCustomer()">+ Add Customer</button>
+      </div>`;
+    updateDashSummary([]);
+    return;
+  }
+
+  updateDashSummary(state.customers);
+  state.customers.forEach(c => grid.appendChild(buildCustomerCard(c)));
+}
+
+function updateDashSummary(customers) {
+  const total = customers.length;
+  let allPcts=[], allItems=0, allBlocked=0;
+  customers.forEach(c => {
+    const s = custStats(c);
+    allPcts.push(s.pct);
+    allItems += s.total;
+    allBlocked += s.blocked + s.unblock;
+  });
+  const avg = total ? Math.round(allPcts.reduce((a,b)=>a+b,0)/total) : 0;
+  document.getElementById('ds-total').textContent   = total;
+  document.getElementById('ds-avg').textContent     = avg + '%';
+  document.getElementById('ds-items').textContent   = allItems;
+  document.getElementById('ds-blocked').textContent = allBlocked;
+  document.getElementById('dash-subtitle').textContent =
+    total ? `Tracking ${total} customer${total>1?'s':''} · ${allItems} total adoption items` : 'Add your first customer to begin.';
+}
+
+function buildCustomerCard(customer) {
+  const s = custStats(customer);
+  const card = document.createElement('div');
+  card.className = 'cust-card';
+  card.onclick = () => openDetail(customer.id);
+
+  // Color the progress bar based on pct
+  const barColor = s.pct >= 75 ? 'linear-gradient(90deg,var(--done),#92d36e)'
+                  : s.pct >= 40 ? 'linear-gradient(90deg,var(--ms-blue),#50e6ff)'
+                  : 'linear-gradient(90deg,#ca5010,#f5a55b)';
+
+  // Avatar letter(s)
+  const initials = customer.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+
+  // Created date
+  const created = customer.createdAt
+    ? new Date(customer.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    : '';
+
+  // Category mini bars
+  const catBars = customer.categories.map(cat => {
+    const done = cat.items.filter(i=>i.status==='done').length;
+    const pct  = cat.items.length ? Math.round(done/cat.items.length*100) : 0;
+    return `<div class="cat-mini-row">
+      <span class="cat-mini-icon">${cat.icon}</span>
+      <span class="cat-mini-label">${escHtml(cat.title)}</span>
+      <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%;background:${pct>=75?'var(--done)':pct>=40?'var(--ms-blue)':'var(--block)'}"></div></div>
+      <span class="cat-mini-pct">${pct}%</span>
     </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="cust-card-top">
+      <div class="cust-avatar">${initials}</div>
+      <div class="cust-info">
+        <div class="cust-name">${escHtml(customer.name)}</div>
+        <div class="cust-date">${created ? 'Since ' + created : ''}</div>
+      </div>
+      <div class="cust-pct-badge">${s.pct}%</div>
+    </div>
+
+    <div class="cust-progress">
+      <div class="cp-bar-bg">
+        <div class="cp-bar-fill" style="width:${s.pct}%;background:${barColor}"></div>
+      </div>
+      <div class="cp-labels">
+        <span>${s.done} done of ${s.total} items</span>
+        <span>${s.pct}% complete</span>
+      </div>
+    </div>
+
+    <div class="cust-status-row">
+      ${s.done    ? `<span class="status-pill" style="background:var(--done-bg);color:var(--done)">✓ ${s.done} Done</span>` : ''}
+      ${s.missed  ? `<span class="status-pill" style="background:var(--miss-bg);color:var(--miss)">✗ ${s.missed} Missed</span>` : ''}
+      ${s.blocked ? `<span class="status-pill" style="background:var(--block-bg);color:var(--block)">⊘ ${s.blocked} Blocked</span>` : ''}
+      ${s.unblock ? `<span class="status-pill" style="background:var(--unblock-bg);color:var(--unblock)">↻ ${s.unblock} Unblocking</span>` : ''}
+      ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending} Pending</span>` : ''}
+    </div>
+
+    <div class="cust-cats">${catBars}</div>
+
+    <div class="cust-card-footer">
+      <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openDetail('${customer.id}')">Open Tracker →</button>
+      <button class="btn btn-sm" onclick="event.stopPropagation();openReportFor('${customer.id}')">📄 Report</button>
+    </div>`;
+  return card;
+}
+
+// ═══════════════════════════════════════════════════════
+//  DETAIL VIEW
+// ═══════════════════════════════════════════════════════
+function renderDetailHeader(customer) {
+  const s = custStats(customer);
+  document.getElementById('do-pct').textContent    = s.pct + '%';
+  document.getElementById('do-bar').style.width    = s.pct + '%';
+  document.getElementById('do-counts').textContent = `${s.done} done · ${s.total} total`;
+  document.getElementById('do-pills').innerHTML    = `
+    ${s.done    ? `<span class="status-pill" style="background:var(--done-bg);color:var(--done)">✓ ${s.done}</span>` : ''}
+    ${s.missed  ? `<span class="status-pill" style="background:var(--miss-bg);color:var(--miss)">✗ ${s.missed}</span>` : ''}
+    ${s.blocked ? `<span class="status-pill" style="background:var(--block-bg);color:var(--block)">⊘ ${s.blocked}</span>` : ''}
+    ${s.unblock ? `<span class="status-pill" style="background:var(--unblock-bg);color:var(--unblock)">↻ ${s.unblock}</span>` : ''}
+    ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending}</span>` : ''}`;
 }
 
 function renderCategories(customer) {
   const grid = document.getElementById('categories-grid');
   grid.innerHTML = '';
-  customer.categories.forEach(cat => {
-    grid.appendChild(buildCategoryCard(customer, cat));
-  });
+  customer.categories.forEach(cat => grid.appendChild(buildCategoryCard(customer, cat)));
 }
 
 function buildCategoryCard(customer, cat) {
   const card = document.createElement('div');
   card.className = 'category-card';
   card.id = `cat-${cat.id}`;
-
-  const doneCount = cat.items.filter(i => i.status === 'done').length;
+  const done  = cat.items.filter(i=>i.status==='done').length;
   const total = cat.items.length;
-  const pct = total ? Math.round((doneCount / total) * 100) : 0;
+  const pct   = total ? Math.round(done/total*100) : 0;
 
   card.innerHTML = `
     <div class="category-header">
       <span class="category-icon">${cat.icon}</span>
       <span class="category-title">${escHtml(cat.title)}</span>
-      <span class="category-count">${doneCount}/${total}</span>
+      <span class="category-count">${done}/${total}</span>
     </div>
-    <div class="progress-wrap">
-      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-      <div class="progress-label"><span>${pct}% complete</span></div>
+    <div class="cat-prog-wrap">
+      <div class="cat-prog-bg"><div class="cat-prog-fill" style="width:${pct}%"></div></div>
+      <div class="cat-prog-lbl">${pct}% complete</div>
     </div>
     <div class="category-body" id="body-${cat.id}"></div>
-    <div class="add-item-row" style="padding:0 12px 12px">
+    <div class="add-item-row">
       <input type="text" placeholder="Add new item…" id="new-item-${cat.id}"
              onkeydown="if(event.key==='Enter') addItem('${customer.id}','${cat.id}')" />
-      <button class="btn btn-blue" onclick="addItem('${customer.id}','${cat.id}')">+</button>
+      <button class="btn btn-blue btn-sm" onclick="addItem('${customer.id}','${cat.id}')">+</button>
     </div>`;
 
   const body = card.querySelector(`#body-${cat.id}`);
@@ -780,13 +764,9 @@ function buildItemRow(customer, cat, item) {
   row.id = `item-${item.id}`;
   const m = STATUS_META[item.status] || STATUS_META.pending;
   row.innerHTML = `
-    <button class="status-btn" data-status="${item.status}"
-            title="${m.label} — click to change"
-            onclick="cycleStatus('${customer.id}','${cat.id}','${item.id}')">
-      ${m.icon}
-    </button>
+    <button class="status-btn" data-status="${item.status}" title="${m.label} — click to cycle"
+            onclick="cycleStatus('${customer.id}','${cat.id}','${item.id}')">${m.icon}</button>
     <span class="item-label${item.status==='done'?' done-text':''}"
-          title="Double-click to rename"
           ondblclick="startRename(this,'${customer.id}','${cat.id}','${item.id}')">${escHtml(item.label)}</span>
     <div class="item-actions">
       <button class="icon-btn" title="Rename" onclick="startRename(this.closest('.item-row').querySelector('.item-label'),'${customer.id}','${cat.id}','${item.id}')">✏️</button>
@@ -799,115 +779,123 @@ function buildItemRow(customer, cat, item) {
 //  ITEM ACTIONS
 // ═══════════════════════════════════════════════════════
 function cycleStatus(custId, catId, itemId) {
-  const customer = state.customers.find(c => c.id === custId);
-  const cat = customer.categories.find(c => c.id === catId);
-  const item = cat.items.find(i => i.id === itemId);
-  const idx = STATUS_CYCLE.indexOf(item.status);
-  item.status = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
-  save(state);
-  // Refresh just the card
-  const card = document.getElementById(`cat-${catId}`);
-  const newCard = buildCategoryCard(customer, cat);
-  card.replaceWith(newCard);
+  const customer = state.customers.find(c=>c.id===custId);
+  const cat  = customer.categories.find(c=>c.id===catId);
+  const item = cat.items.find(i=>i.id===itemId);
+  item.status = STATUS_CYCLE[(STATUS_CYCLE.indexOf(item.status)+1) % STATUS_CYCLE.length];
+  save();
+  document.getElementById(`cat-${catId}`).replaceWith(buildCategoryCard(customer, cat));
+  renderDetailHeader(customer);
 }
 
 function addItem(custId, catId) {
   const input = document.getElementById(`new-item-${catId}`);
   const label = input.value.trim();
   if (!label) return;
-  const customer = state.customers.find(c => c.id === custId);
-  const cat = customer.categories.find(c => c.id === catId);
-  cat.items.push({ id: uid(), label, status: 'pending' });
-  save(state);
+  const customer = state.customers.find(c=>c.id===custId);
+  const cat = customer.categories.find(c=>c.id===catId);
+  cat.items.push({ id:uid(), label, status:'pending' });
+  save();
   input.value = '';
-  const card = document.getElementById(`cat-${catId}`);
-  card.replaceWith(buildCategoryCard(customer, cat));
-  // Refocus add input
+  document.getElementById(`cat-${catId}`).replaceWith(buildCategoryCard(customer, cat));
+  renderDetailHeader(customer);
   document.getElementById(`new-item-${catId}`)?.focus();
 }
 
 function deleteItem(custId, catId, itemId) {
-  const customer = state.customers.find(c => c.id === custId);
-  const cat = customer.categories.find(c => c.id === catId);
-  const item = cat.items.find(i => i.id === itemId);
-  if (!confirm(`Delete item "${item.label}"?`)) return;
-  cat.items = cat.items.filter(i => i.id !== itemId);
-  save(state);
-  const card = document.getElementById(`cat-${catId}`);
-  card.replaceWith(buildCategoryCard(customer, cat));
+  const customer = state.customers.find(c=>c.id===custId);
+  const cat = customer.categories.find(c=>c.id===catId);
+  const item = cat.items.find(i=>i.id===itemId);
+  if (!confirm(`Delete "${item.label}"?`)) return;
+  cat.items = cat.items.filter(i=>i.id!==itemId);
+  save();
+  document.getElementById(`cat-${catId}`).replaceWith(buildCategoryCard(customer, cat));
+  renderDetailHeader(customer);
 }
 
 function startRename(labelEl, custId, catId, itemId) {
-  if (labelEl.getAttribute('contenteditable') === 'true') return;
-  labelEl.setAttribute('contenteditable', 'true');
+  if (labelEl.getAttribute('contenteditable')==='true') return;
+  labelEl.setAttribute('contenteditable','true');
   labelEl.focus();
-  // Move cursor to end
-  const range = document.createRange();
-  range.selectNodeContents(labelEl);
-  range.collapse(false);
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
+  const r = document.createRange(); r.selectNodeContents(labelEl); r.collapse(false);
+  window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
 
   const finish = () => {
     labelEl.removeAttribute('contenteditable');
     const newLabel = labelEl.textContent.trim();
-    if (newLabel) {
-      const customer = state.customers.find(c => c.id === custId);
-      const cat = customer.categories.find(c => c.id === catId);
-      const item = cat.items.find(i => i.id === itemId);
-      item.label = newLabel;
-      save(state);
-    } else {
-      // restore
-      const customer = state.customers.find(c => c.id === custId);
-      const cat = customer.categories.find(c => c.id === catId);
-      const item = cat.items.find(i => i.id === itemId);
-      labelEl.textContent = item.label;
-    }
-    labelEl.removeEventListener('blur', finish);
+    const customer = state.customers.find(c=>c.id===custId);
+    const cat  = customer.categories.find(c=>c.id===catId);
+    const item = cat.items.find(i=>i.id===itemId);
+    if (newLabel) { item.label = newLabel; save(); }
+    else { labelEl.textContent = item.label; }
     labelEl.removeEventListener('keydown', keyHandler);
   };
-  const keyHandler = (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); finish(); }
-    if (e.key === 'Escape') { labelEl.textContent = ''; finish(); }
+  const keyHandler = e => {
+    if (e.key==='Enter') { e.preventDefault(); finish(); }
+    if (e.key==='Escape') { labelEl.textContent=''; finish(); }
   };
-  labelEl.addEventListener('blur', finish, { once: true });
+  labelEl.addEventListener('blur', finish, {once:true});
   labelEl.addEventListener('keydown', keyHandler);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CUSTOMER MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function openAddCustomer() {
+  document.getElementById('new-customer-name').value = '';
+  document.getElementById('add-customer-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('new-customer-name').focus(), 80);
+}
+
+function confirmAddCustomer() {
+  const name = document.getElementById('new-customer-name').value.trim();
+  if (!name) return;
+  const customer = {
+    id: uid(), name, createdAt: new Date().toISOString(),
+    categories: DEFAULT_CATEGORIES.map(cat => ({
+      ...cat,
+      items: cat.items.map(label => ({ id:uid(), label, status:'pending' }))
+    }))
+  };
+  state.customers.push(customer);
+  state.current = customer.id;
+  save();
+  closeModal('add-customer-modal');
+  openDetail(customer.id);
+}
+
+function deleteCustomer() {
+  const c = state.customers.find(x=>x.id===state.current);
+  if (!c || !confirm(`Delete customer "${c.name}"? This cannot be undone.`)) return;
+  state.customers = state.customers.filter(x=>x.id!==state.current);
+  state.current = null;
+  save();
+  goHome();
 }
 
 // ═══════════════════════════════════════════════════════
 //  REPORT
 // ═══════════════════════════════════════════════════════
-function openReport() {
-  const customer = state.customers.find(c => c.id === state.current);
-  if (!customer) return;
+function openReport() { openReportFor(state.current); }
 
-  // Counts
-  let totalItems = 0, doneItems = 0, missedItems = 0, blockedItems = 0;
-  customer.categories.forEach(cat => {
-    cat.items.forEach(item => {
-      totalItems++;
-      if (item.status === 'done')    doneItems++;
-      if (item.status === 'missed')  missedItems++;
-      if (item.status === 'blocked' || item.status === 'unblock') blockedItems++;
-    });
-  });
-  const pct = totalItems ? Math.round((doneItems / totalItems) * 100) : 0;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+function openReportFor(id) {
+  const customer = state.customers.find(c=>c.id===id);
+  if (!customer) return;
+  const s = custStats(customer);
+  const dateStr = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
 
   const catCards = customer.categories.map(cat => {
+    const catDone = cat.items.filter(i=>i.status==='done').length;
     const items = cat.items.map(item => {
-      const m = STATUS_META[item.status] || STATUS_META.pending;
+      const m = STATUS_META[item.status]||STATUS_META.pending;
       return `<div class="report-item">
         <div class="ri-dot" style="background:${m.bg};color:${m.color}">${m.icon}</div>
         <span>${escHtml(item.label)}</span>
       </div>`;
     }).join('');
-    const catDone = cat.items.filter(i=>i.status==='done').length;
     return `<div class="report-category">
       <div class="report-cat-header">${cat.icon} ${escHtml(cat.title)} <span style="margin-left:auto;opacity:.8;font-weight:400;font-size:10px">${catDone}/${cat.items.length}</span></div>
-      <div class="report-items">${items || '<div class="report-item" style="color:#999;font-style:italic">No items</div>'}</div>
+      <div class="report-items">${items||'<div class="report-item" style="color:#999;font-style:italic">No items</div>'}</div>
     </div>`;
   }).join('');
 
@@ -917,65 +905,36 @@ function openReport() {
         <h1>Copilot Adoption Report</h1>
         <p>Customer: <strong>${escHtml(customer.name)}</strong></p>
       </div>
-      <div class="report-meta">
-        <div>📅 ${dateStr}</div>
-        <div>Microsoft Copilot Adoption Tracker</div>
-      </div>
+      <div class="report-meta"><div>📅 ${dateStr}</div><div>Microsoft Copilot Adoption Tracker</div></div>
     </div>
-
     <div class="overall-progress">
-      <div class="op-label">
-        <span>Overall Adoption Progress</span>
-        <span style="color:var(--ms-blue);font-weight:700">${pct}%</span>
-      </div>
-      <div class="op-bar"><div class="op-fill" style="width:${pct}%"></div></div>
+      <div class="op-label"><span>Overall Adoption Progress</span><span style="color:var(--ms-blue);font-weight:700">${s.pct}%</span></div>
+      <div class="op-bar"><div class="op-fill" style="width:${s.pct}%"></div></div>
     </div>
-
     <div class="report-summary">
-      <div class="summary-card" style="background:var(--done-bg)">
-        <div class="sc-num" style="color:var(--done)">${doneItems}</div>
-        <div class="sc-label" style="color:var(--done)">✓ Done</div>
-      </div>
-      <div class="summary-card" style="background:var(--miss-bg)">
-        <div class="sc-num" style="color:var(--miss)">${missedItems}</div>
-        <div class="sc-label" style="color:var(--miss)">✗ Missed</div>
-      </div>
-      <div class="summary-card" style="background:var(--block-bg)">
-        <div class="sc-num" style="color:var(--block)">${blockedItems}</div>
-        <div class="sc-label" style="color:var(--block)">⊘ Blocked</div>
-      </div>
-      <div class="summary-card" style="background:#e8f0fe">
-        <div class="sc-num" style="color:var(--ms-blue)">${totalItems}</div>
-        <div class="sc-label" style="color:var(--ms-blue)">Total Items</div>
-      </div>
+      <div class="summary-card" style="background:var(--done-bg)"><div class="sc-num" style="color:var(--done)">${s.done}</div><div class="sc-label" style="color:var(--done)">✓ Done</div></div>
+      <div class="summary-card" style="background:var(--miss-bg)"><div class="sc-num" style="color:var(--miss)">${s.missed}</div><div class="sc-label" style="color:var(--miss)">✗ Missed</div></div>
+      <div class="summary-card" style="background:var(--block-bg)"><div class="sc-num" style="color:var(--block)">${s.blocked}</div><div class="sc-label" style="color:var(--block)">⊘ Blocked</div></div>
+      <div class="summary-card" style="background:#e8f0fe"><div class="sc-num" style="color:var(--ms-blue)">${s.total}</div><div class="sc-label" style="color:var(--ms-blue)">Total Items</div></div>
     </div>
-
     <div class="report-grid">${catCards}</div>
-
     <div class="report-footer">
       <span>Confidential – For ${escHtml(customer.name)} only</span>
-      <span>Generated on ${dateStr} • Microsoft Copilot Adoption Tracker</span>
+      <span>Generated ${dateStr} • Microsoft Copilot Adoption Tracker</span>
     </div>`;
 
   document.getElementById('report-modal').classList.remove('hidden');
-}
-
-function printReport() {
-  window.print();
 }
 
 // ═══════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// Close modal on overlay click
-document.querySelectorAll('.modal-overlay, .report-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
-});
+document.querySelectorAll('.modal-overlay,.report-overlay').forEach(el =>
+  el.addEventListener('click', e => { if (e.target===el) el.classList.add('hidden'); })
+);
 </script>
 </body>
 </html>
