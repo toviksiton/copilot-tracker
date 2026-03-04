@@ -131,6 +131,16 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .hbtn.primary { background: #fff; color: var(--ms-blue); font-weight: 600; border-color: #fff; }
 .hbtn.primary:hover { background: #e8f0fe; }
 .hbtn:disabled { opacity: .45; cursor: not-allowed; }
+.hbtn-sep { width: 1px; background: rgba(255,255,255,.25); align-self: stretch; margin: 8px 2px; }
+
+/* ── Import result toast ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #323130; color: #fff; padding: 12px 22px; border-radius: var(--radius);
+  font-size: 13px; box-shadow: var(--shadow-md); z-index: 9000;
+  opacity: 0; transition: opacity .25s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
 
 /* ── App wrapper ── */
 .app { max-width: 1360px; margin: 0 auto; padding: 28px 20px; }
@@ -594,6 +604,8 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 </head>
 <body>
 
+<div class="toast" id="toast"></div>
+
 <!-- ═══════════════════════════ LOCK SCREEN ═══════════════════════════ -->
 <div id="lock-screen">
   <div class="lock-box">
@@ -633,6 +645,10 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <button class="hbtn" onclick="openPillars()">⚙️ Pillars</button>
     <button class="hbtn" onclick="openAddCustomer()">+ Add Customer</button>
     <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
+    <div class="hbtn-sep"></div>
+    <button class="hbtn" title="Export all data to a JSON file" onclick="exportData()">💾 Export</button>
+    <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click()">📥 Import</button>
+    <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(this)" />
   </nav>
 </header>
 
@@ -1499,6 +1515,77 @@ function addTemplatePillar() {
   // Auto-expand the new pillar
   const last = state.template[state.template.length - 1];
   togglePillarExpand(last.id);
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════
+function exportData() {
+  const payload = {
+    _version: 1,
+    _exported: new Date().toISOString(),
+    _app: 'Copilot Adoption Tracker by Tovik',
+    customers: state.customers,
+    template:  state.template,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href     = url;
+  a.download = `copilot-tracker-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Data exported successfully');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = ''; // reset so same file can be re-selected
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      // Validate basic structure
+      if (!payload.customers || !Array.isArray(payload.customers)) {
+        throw new Error('Invalid file: missing customers array');
+      }
+      const custCount = payload.customers.length;
+      const mode = confirm(
+        `Import file contains ${custCount} customer(s).\n\n` +
+        `• OK  → REPLACE all current data with imported data\n` +
+        `• Cancel → Merge imported customers into existing data (skip duplicates)`
+      );
+      if (mode) {
+        // Replace
+        state.customers = payload.customers;
+        state.template  = payload.template || state.template;
+        state.current   = null;
+      } else {
+        // Merge — skip customers that share the same id
+        const existingIds = new Set(state.customers.map(c => c.id));
+        const newOnes = payload.customers.filter(c => !existingIds.has(c.id));
+        state.customers.push(...newOnes);
+        if (payload.template) state.template = payload.template;
+      }
+      save();
+      goHome();
+      showToast(`✅ Imported ${custCount} customer(s) successfully`);
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+let _toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
 // ═══════════════════════════════════════════════════════
