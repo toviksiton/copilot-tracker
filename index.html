@@ -443,6 +443,85 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .dm-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--ms-muted); font-weight: 600; }
 .dm-value { font-size: 13px; font-weight: 600; color: var(--ms-text); }
 
+/* ── Pillars Management Panel ── */
+.pillars-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: flex-start; justify-content: center;
+  z-index: 2000; padding: 30px 20px; overflow-y: auto;
+}
+.pillars-overlay.hidden { display: none; }
+.pillars-sheet {
+  background: #fff; width: 100%; max-width: 680px;
+  border-radius: var(--radius); box-shadow: 0 12px 48px rgba(0,0,0,.3);
+  overflow: hidden; margin: auto;
+}
+.pillars-toolbar {
+  background: var(--ms-blue); color: #fff;
+  padding: 12px 20px; display: flex; align-items: center; gap: 10px;
+}
+.pillars-toolbar h3 { flex: 1; font-size: 15px; font-weight: 700; }
+.pillars-toolbar p { font-size: 11px; opacity: .8; }
+.pillars-body { padding: 20px; }
+.pillars-note {
+  font-size: 12px; color: var(--ms-muted); background: #fffbe6;
+  border: 1px solid #ffe58f; border-radius: 6px; padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+/* Pillar template card */
+.pillar-tmpl {
+  border: 1px solid var(--ms-border); border-radius: var(--radius);
+  margin-bottom: 10px; overflow: hidden;
+}
+.pillar-tmpl-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: #faf9f8;
+  cursor: pointer; user-select: none;
+}
+.pillar-tmpl-header:hover { background: var(--ms-light); }
+.pt-icon { font-size: 18px; flex-shrink: 0; }
+.pt-name {
+  flex: 1; font-size: 14px; font-weight: 600;
+  border: none; background: transparent; font-family: inherit;
+  cursor: text; outline: none; padding: 2px 4px; border-radius: 4px;
+}
+.pt-name:focus { background: #fff; outline: 2px solid var(--ms-blue); }
+.pt-count { font-size: 11px; color: var(--ms-muted); }
+.pt-chevron { font-size: 12px; color: var(--ms-muted); transition: transform .2s; }
+.pt-chevron.open { transform: rotate(180deg); }
+.pillar-tmpl-items { display: none; padding: 8px 14px 12px; border-top: 1px solid var(--ms-border); }
+.pillar-tmpl-items.open { display: block; }
+.tmpl-item-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+}
+.tmpl-item-row:last-child { border-bottom: none; }
+.tmpl-item-label { flex: 1; }
+.tmpl-add-row { display: flex; gap: 6px; margin-top: 10px; }
+.tmpl-add-row input {
+  flex: 1; padding: 5px 10px; border: 1px solid var(--ms-border);
+  border-radius: 6px; font-size: 13px; font-family: inherit;
+}
+.tmpl-add-row input:focus { outline: 2px solid var(--ms-blue); }
+
+/* Add new pillar form */
+.add-pillar-section {
+  border: 2px dashed var(--ms-border); border-radius: var(--radius);
+  padding: 14px 16px; margin-top: 16px;
+}
+.add-pillar-section h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--ms-muted); }
+.add-pillar-row { display: flex; gap: 8px; align-items: center; }
+.add-pillar-row select {
+  padding: 7px 10px; border: 1px solid var(--ms-border); border-radius: var(--radius);
+  font-size: 18px; font-family: inherit; background: #fff; cursor: pointer; width: 64px;
+}
+.add-pillar-row input {
+  flex: 1; padding: 7px 12px; border: 1px solid var(--ms-border);
+  border-radius: var(--radius); font-size: 14px; font-family: inherit;
+}
+.add-pillar-row input:focus, .add-pillar-row select:focus { outline: 2px solid var(--ms-blue); }
+
 /* ── Report Modal ── */
 .report-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.55);
@@ -551,6 +630,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <span id="crumb-name"></span>
   </div>
   <nav>
+    <button class="hbtn" onclick="openPillars()">⚙️ Pillars</button>
     <button class="hbtn" onclick="openAddCustomer()">+ Add Customer</button>
     <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
   </nav>
@@ -678,6 +758,40 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   </div>
 </div>
 
+<div class="pillars-overlay hidden" id="pillars-modal">
+  <div class="pillars-sheet">
+    <div class="pillars-toolbar">
+      <div>
+        <h3>⚙️ Manage Pillars</h3>
+        <p>Define the default categories &amp; items used when creating a new customer</p>
+      </div>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);margin-left:auto" onclick="closeModal('pillars-modal')">✕ Close</button>
+    </div>
+    <div class="pillars-body">
+      <div class="pillars-note">
+        ⚠️ Changes here apply to <strong>new customers only</strong>. Existing customer trackers are not affected.
+      </div>
+      <div id="pillars-list"><!-- filled by JS --></div>
+      <div class="add-pillar-section">
+        <h4>+ Add New Pillar</h4>
+        <div class="add-pillar-row">
+          <select id="new-pillar-icon" title="Choose icon">
+            <option>🤖</option><option>🔌</option><option>🛠</option>
+            <option>🔗</option><option>🤝</option><option>📊</option>
+            <option>💼</option><option>🚀</option><option>⚡</option>
+            <option>🎯</option><option>🔧</option><option>🌐</option>
+            <option>🔒</option><option>⭐</option><option>📱</option>
+            <option>🧩</option><option>📋</option><option>💡</option>
+          </select>
+          <input type="text" id="new-pillar-name" placeholder="Pillar name…" maxlength="60"
+                 onkeydown="if(event.key==='Enter') addTemplatePillar()" />
+          <button class="btn btn-blue" onclick="addTemplatePillar()">Add Pillar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="report-overlay hidden" id="report-modal">
   <div class="report-sheet">
     <div class="report-toolbar">
@@ -731,14 +845,14 @@ function checkPassword()       { window.__checkPassword(); }
 function toggleLockVisibility(){ window.__toggleLockVisibility(); }
 
 // ═══════════════════════════════════════════════════════
-//  CONSTANTS
+//  CONSTANTS — seed template (used only to init state.template)
 // ═══════════════════════════════════════════════════════
 const DEFAULT_CATEGORIES = [
-  { id:'copilot365',   icon:'🤖', title:'Copilot 365',           items:['Licenses','Deploy with KPMG & CSU','WXP Training','SharePoint / OD Grounding','Security DSPM AI'] },
+  { id:'copilot365',   icon:'🤖', title:'Copilot 365',           items:['Licenses','Deploy with Partner','WXP Training','SharePoint / OD Grounding','Security DSPM AI'] },
   { id:'agents1st3rd', icon:'🔌', title:'1st / 3rd Party Agents', items:['Training for DA Agent','Deploy Training','Results Satisfaction','OOT Agents – Limited Access','Frontier Agents','Business Impact','Personal Impact','Governance and Monitor','PAYG Philosophy'] },
-  { id:'copilotstudio',icon:'🛠', title:'Copilot Studio',         items:['Training for Moti Team','Training to Studio','Training MIS','Provide Full Access for Makers','Agent PPP (3P) Offer','Governance and Monitor','A2A','Expand to Foundry','FDE','Environment and Billing Philosophy'] },
-  { id:'connectors3p', icon:'🔗', title:'3rd Party Connectors',   items:['JIRA – Out of Scope for now','Confluence – In Progress','Salesforce – In Progress','Service Now – Blocked','SAP – In Progress'] },
-  { id:'agent365',     icon:'🤝', title:'Agent 365',              items:["Review MIS – Set for next week","Review IT – Didn't set yet","Review Studio – Didn't set yet","Review Moti – Didn't set yet"] },
+  { id:'copilotstudio',icon:'🛠', title:'Copilot Studio',         items:['Training to IT','Training MIS','Provide Full Access for Makers','Agent PPP (3P) Offer','Governance and Monitor','A2A','Expand to Foundry','FDE','Environment and Billing Philosophy'] },
+  { id:'connectors3p', icon:'🔗', title:'3rd Party Connectors',   items:['JIRA','Confluence','Salesforce','Service Now','SAP'] },
+  { id:'agent365',     icon:'🤝', title:'Agent 365',              items:['Review MIS','Review IT','Review Studio','Review Moti'] },
 ];
 
 const STATUS_CYCLE = ['pending','done','missed','blocked','unblock'];
@@ -755,6 +869,13 @@ const STATUS_META  = {
 // ═══════════════════════════════════════════════════════
 const STORE_KEY = 'copilot-tracker-v3';
 let state = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {customers:[],current:null}; } catch { return {customers:[],current:null}; } })();
+// Seed template from DEFAULT_CATEGORIES if not yet stored
+if (!state.template) {
+  state.template = DEFAULT_CATEGORIES.map(cat => ({
+    id: cat.id, icon: cat.icon, title: cat.title,
+    items: cat.items.map(label => ({ id: Math.random().toString(36).slice(2,10), label }))
+  }));
+}
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 function uid()  { return Math.random().toString(36).slice(2,10); }
 
@@ -1163,13 +1284,13 @@ function confirmSaveCustomer() {
     document.getElementById('crumb-name').textContent = c.name;
     renderDetailHeader(c);
   } else {
-    // Add new
+    // Add new — use live template
     const customer = {
       id: uid(), createdAt: new Date().toISOString(),
       ...data,
-      categories: DEFAULT_CATEGORIES.map(cat => ({
-        ...cat,
-        items: cat.items.map(label => ({ id:uid(), label, status:'pending' }))
+      categories: state.template.map(cat => ({
+        id: cat.id, icon: cat.icon, title: cat.title,
+        items: cat.items.map(ti => ({ id:uid(), label: ti.label, status:'pending' }))
       }))
     };
     state.customers.push(customer);
@@ -1267,12 +1388,126 @@ function openReportFor(id) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  PILLAR TEMPLATE MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function openPillars() {
+  renderPillarsModal();
+  document.getElementById('pillars-modal').classList.remove('hidden');
+}
+
+function renderPillarsModal() {
+  const list = document.getElementById('pillars-list');
+  if (!state.template.length) {
+    list.innerHTML = '<div class="empty" style="padding:16px 0">No pillars yet — add one below.</div>';
+    return;
+  }
+  list.innerHTML = state.template.map(cat => {
+    const itemsHtml = cat.items.map(item => `
+      <div class="tmpl-item-row" id="ti-${item.id}">
+        <span class="tmpl-item-label">${escHtml(item.label)}</span>
+        <button class="icon-btn" title="Delete item"
+                onclick="deleteTemplateItem('${cat.id}','${item.id}')">🗑</button>
+      </div>`).join('');
+    return `
+      <div class="pillar-tmpl" id="pt-${cat.id}">
+        <div class="pillar-tmpl-header" onclick="togglePillarExpand('${cat.id}')">
+          <span class="pt-icon">${cat.icon}</span>
+          <input class="pt-name" value="${escHtml(cat.title)}" maxlength="60"
+                 onclick="event.stopPropagation()"
+                 onblur="renamePillar('${cat.id}',this.value)"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" />
+          <span class="pt-count">${cat.items.length} items</span>
+          <span class="pt-chevron" id="chev-${cat.id}">▼</span>
+          <button class="icon-btn btn-danger" title="Delete pillar" style="color:var(--miss)"
+                  onclick="event.stopPropagation();deleteTemplatePillar('${cat.id}')">🗑</button>
+        </div>
+        <div class="pillar-tmpl-items" id="pti-${cat.id}">
+          ${itemsHtml || '<div class="empty">No items yet.</div>'}
+          <div class="tmpl-add-row">
+            <input type="text" id="new-ti-${cat.id}" placeholder="Add item to this pillar…" maxlength="100"
+                   onkeydown="if(event.key==='Enter') addTemplateItem('${cat.id}')" />
+            <button class="btn btn-blue btn-sm" onclick="addTemplateItem('${cat.id}')">+</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function togglePillarExpand(catId) {
+  const items  = document.getElementById(`pti-${catId}`);
+  const chev   = document.getElementById(`chev-${catId}`);
+  const isOpen = items.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.pillar-tmpl-items').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.pt-chevron').forEach(el => el.classList.remove('open'));
+  if (!isOpen) {
+    items.classList.add('open');
+    chev.classList.add('open');
+  }
+}
+
+function renamePillar(catId, newTitle) {
+  newTitle = newTitle.trim();
+  if (!newTitle) return;
+  const cat = state.template.find(c => c.id === catId);
+  if (cat) { cat.title = newTitle; save(); }
+}
+
+function deleteTemplatePillar(catId) {
+  const cat = state.template.find(c => c.id === catId);
+  if (!cat || !confirm(`Delete pillar "${cat.title}" from template? Existing customers are not affected.`)) return;
+  state.template = state.template.filter(c => c.id !== catId);
+  save();
+  renderPillarsModal();
+}
+
+function addTemplateItem(catId) {
+  const input = document.getElementById(`new-ti-${catId}`);
+  const label = input.value.trim();
+  if (!label) return;
+  const cat = state.template.find(c => c.id === catId);
+  cat.items.push({ id: uid(), label });
+  save();
+  input.value = '';
+  renderPillarsModal();
+  // Re-expand the pillar
+  const items = document.getElementById(`pti-${catId}`);
+  const chev  = document.getElementById(`chev-${catId}`);
+  if (items) { items.classList.add('open'); chev && chev.classList.add('open'); }
+  document.getElementById(`new-ti-${catId}`)?.focus();
+}
+
+function deleteTemplateItem(catId, itemId) {
+  const cat = state.template.find(c => c.id === catId);
+  cat.items = cat.items.filter(i => i.id !== itemId);
+  save();
+  renderPillarsModal();
+  // Re-expand the pillar
+  const items = document.getElementById(`pti-${catId}`);
+  const chev  = document.getElementById(`chev-${catId}`);
+  if (items) { items.classList.add('open'); chev && chev.classList.add('open'); }
+}
+
+function addTemplatePillar() {
+  const icon  = document.getElementById('new-pillar-icon').value;
+  const name  = document.getElementById('new-pillar-name').value.trim();
+  if (!name) { document.getElementById('new-pillar-name').focus(); return; }
+  state.template.push({ id: uid(), icon, title: name, items: [] });
+  save();
+  document.getElementById('new-pillar-name').value = '';
+  renderPillarsModal();
+  // Auto-expand the new pillar
+  const last = state.template[state.template.length - 1];
+  togglePillarExpand(last.id);
+}
+
+// ═══════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-document.querySelectorAll('.modal-overlay,.report-overlay').forEach(el =>
+document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').forEach(el =>
   el.addEventListener('click', e => { if (e.target===el) el.classList.add('hidden'); })
 );
 
