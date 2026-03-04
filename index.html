@@ -329,6 +329,11 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .cat-prog-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 3px; transition: width .4s; }
 .cat-prog-lbl { font-size: 10px; color: var(--ms-muted); margin-top: 3px; }
 .category-body { padding: 6px 12px; flex: 1; }
+.cat-header-actions { display: none; gap: 2px; margin-left: 2px; }
+.category-header:hover .cat-header-actions { display: flex; }
+.category-title[contenteditable="true"] { outline: 2px solid var(--ms-blue); border-radius: 3px; padding: 1px 4px; background: #fff; color: var(--ms-text); }
+.hbtn.fs-on { background: rgba(16,124,16,.25); border-color: rgba(16,124,16,.5); }
+.add-section-wrap { margin-top: 18px; text-align: center; }
 
 /* Item row */
 .item-row {
@@ -646,6 +651,8 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <button class="hbtn" onclick="openAddCustomer()">+ Add Customer</button>
     <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
     <div class="hbtn-sep"></div>
+    <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile()">📁 Connect File</button>
+    <div class="hbtn-sep"></div>
     <button class="hbtn" title="Export all data to a JSON file" onclick="exportData()">💾 Export</button>
     <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click()">📥 Import</button>
     <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(this)" />
@@ -712,6 +719,9 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 
     <!-- Categories -->
     <div class="categories-grid" id="categories-grid"></div>
+    <div class="add-section-wrap" id="add-section-wrap" style="display:none">
+      <button class="btn btn-blue" onclick="openAddSection()">➕ Add Section</button>
+    </div>
   </div>
 
 </div>
@@ -808,6 +818,29 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="section-modal">
+  <div class="modal" style="max-width:380px">
+    <h2>➕ Add Section</h2>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px">
+      <select id="sf-icon" style="padding:8px;font-size:20px;border:1px solid var(--ms-border);border-radius:var(--radius);background:#fff;width:64px;cursor:pointer">
+        <option>🤖</option><option>🔌</option><option>🛠</option>
+        <option>🔗</option><option>🤝</option><option>📊</option>
+        <option>💼</option><option>🚀</option><option>⚡</option>
+        <option>🎯</option><option>🔧</option><option>🌐</option>
+        <option>🔒</option><option>⭐</option><option>📱</option>
+        <option>🧩</option><option>📋</option><option>💡</option>
+      </select>
+      <input type="text" id="sf-name" placeholder="Section name…" maxlength="60"
+             style="flex:1;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:14px;font-family:inherit"
+             onkeydown="if(event.key==='Enter') confirmAddSection()" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('section-modal')">Cancel</button>
+      <button class="btn btn-blue" onclick="confirmAddSection()">Add Section</button>
+    </div>
+  </div>
+</div>
+
 <div class="report-overlay hidden" id="report-modal">
   <div class="report-sheet">
     <div class="report-toolbar">
@@ -892,11 +925,171 @@ if (!state.template) {
     items: cat.items.map(label => ({ id: Math.random().toString(36).slice(2,10), label }))
   }));
 }
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+// ── FILE SYSTEM AUTOSAVE ────────────────────────────────
+const FS_SUPPORTED = typeof window !== 'undefined' && 'showSaveFilePicker' in window;
+let _fsHandle = null;
+let _pendingFsHandle = null;
+let _fsSaveTimer = null;
+
+async function _idb(mode, value) {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('copilot-tracker-fs', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('h');
+    req.onsuccess = e => {
+      const db  = e.target.result;
+      const tx  = db.transaction('h', mode === 'get' ? 'readonly' : 'readwrite');
+      const r   = mode === 'get' ? tx.objectStore('h').get('f') : tx.objectStore('h').put(value, 'f');
+      r.onsuccess = () => resolve(r.result);
+      r.onerror   = reject;
+    };
+    req.onerror = reject;
+  });
+}
+
+async function saveToFs() {
+  if (!_fsHandle) return;
+  try {
+    const writable = await _fsHandle.createWritable();
+    const payload  = { _version: 1, _app: 'Copilot Adoption Tracker by Tovik', customers: state.customers, template: state.template };
+    await writable.write(JSON.stringify(payload, null, 2));
+    await writable.close();
+  } catch(e) { showToast('⚠️ Autosave failed: ' + e.message); }
+}
+
+async function loadFromFs() {
+  if (!_fsHandle) return false;
+  try {
+    const file = await _fsHandle.getFile();
+    const text = await file.text();
+    if (!text.trim()) return false;
+    const payload = JSON.parse(text);
+    if (!payload.customers || !Array.isArray(payload.customers)) return false;
+    state.customers = payload.customers;
+    state.template  = payload.template || state.template;
+    state.current   = null;
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    return true;
+  } catch(e) { return false; }
+}
+
+async function initFileSystem() {
+  if (!FS_SUPPORTED) return;
+  try {
+    const handle = await _idb('get');
+    if (!handle) return;
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      _fsHandle = handle;
+      const loaded = await loadFromFs();
+      updateFsBtn();
+      if (loaded) { renderDashboard(); showToast('✅ Data loaded from ' + handle.name); }
+    } else {
+      _pendingFsHandle = handle;
+      updateFsBtn();
+    }
+  } catch(e) { /* ignore */ }
+}
+
+async function connectFile() {
+  if (!FS_SUPPORTED) {
+    alert('Autosave requires Chrome or Edge (File System Access API not available in this browser).');
+    return;
+  }
+  // If there's a pending handle (needs permission), try to reconnect it first
+  if (_pendingFsHandle) {
+    try {
+      const perm = await _pendingFsHandle.requestPermission({ mode: 'readwrite' });
+      if (perm === 'granted') {
+        _fsHandle = _pendingFsHandle;
+        _pendingFsHandle = null;
+        await _idb('put', _fsHandle);
+        const loaded = await loadFromFs();
+        updateFsBtn();
+        if (loaded) { renderDashboard(); showToast('✅ Reconnected: ' + _fsHandle.name); }
+        else { await saveToFs(); showToast('✅ Reconnected: ' + _fsHandle.name); }
+        return;
+      }
+    } catch(e) { /* fall through to picker */ }
+  }
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'copilot-tracker-data.json',
+      types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }]
+    });
+    _fsHandle = handle;
+    await _idb('put', handle);
+    // If the file already has valid data, offer to load from it
+    const file = await handle.getFile();
+    const text = await file.text().catch(() => '');
+    if (text.trim()) {
+      try {
+        const payload = JSON.parse(text);
+        if (payload.customers && Array.isArray(payload.customers)) {
+          const load = confirm(`"${handle.name}" already contains data (${payload.customers.length} customer(s)).\n\nOK → Load data from this file\nCancel → Overwrite file with current data`);
+          if (load) {
+            state.customers = payload.customers;
+            state.template  = payload.template || state.template;
+            state.current   = null;
+            localStorage.setItem(STORE_KEY, JSON.stringify(state));
+            renderDashboard();
+            showToast('✅ Loaded from ' + handle.name);
+            updateFsBtn();
+            return;
+          }
+        }
+      } catch(e) { /* ignore parse error, overwrite */ }
+    }
+    await saveToFs();
+    updateFsBtn();
+    showToast('✅ Autosave connected: ' + handle.name);
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('⚠️ Could not connect file: ' + e.message);
+  }
+}
+
+function disconnectFile() {
+  _fsHandle = null;
+  _pendingFsHandle = null;
+  _idb('put', null).catch(() => {});
+  updateFsBtn();
+  showToast('Autosave disconnected');
+}
+
+function updateFsBtn() {
+  const btn = document.getElementById('fs-btn');
+  if (!btn) return;
+  if (_fsHandle) {
+    btn.textContent = '🟢 ' + (_fsHandle.name || 'Autosave');
+    btn.title       = 'Autosave active — click to disconnect';
+    btn.classList.add('fs-on');
+    btn.onclick     = () => { if (confirm('Disconnect autosave file?')) disconnectFile(); };
+  } else if (_pendingFsHandle) {
+    btn.textContent = '🟡 Reconnect File';
+    btn.title       = 'Previously connected file needs permission — click to reconnect';
+    btn.classList.remove('fs-on');
+    btn.onclick     = connectFile;
+  } else {
+    btn.textContent = '📁 Connect File';
+    btn.title       = 'Connect a local .json file for autosave (survives HTML updates)';
+    btn.classList.remove('fs-on');
+    btn.onclick     = connectFile;
+  }
+}
+// ── END FILE SYSTEM ─────────────────────────────────────
+
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  if (_fsHandle) {
+    clearTimeout(_fsSaveTimer);
+    _fsSaveTimer = setTimeout(saveToFs, 400);
+  }
+}
 function uid()  { return Math.random().toString(36).slice(2,10); }
 
 // ── Bootstrap
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await initFileSystem();
   if (state.current) {
     const c = state.customers.find(x => x.id === state.current);
     if (c) { openDetail(state.current); return; }
@@ -930,6 +1123,7 @@ function goHome() {
   document.getElementById('view-detail').classList.remove('active');
   document.getElementById('breadcrumb').style.display = 'none';
   document.getElementById('report-btn').disabled = true;
+  document.getElementById('add-section-wrap').style.display = 'none';
   renderDashboard();
 }
 
@@ -942,6 +1136,7 @@ function openDetail(id, updateHistory=true) {
   document.getElementById('breadcrumb').style.display = 'flex';
   document.getElementById('crumb-name').textContent = customer.name;
   document.getElementById('report-btn').disabled = false;
+  document.getElementById('add-section-wrap').style.display = '';
   renderDetailHeader(customer);
   renderCategories(customer);
 }
@@ -1130,8 +1325,15 @@ function buildCategoryCard(customer, cat) {
   card.innerHTML = `
     <div class="category-header">
       <span class="category-icon">${cat.icon}</span>
-      <span class="category-title">${escHtml(cat.title)}</span>
+      <span class="category-title" title="Double-click to rename"
+            ondblclick="startSectionRename(this,'${customer.id}','${cat.id}')">${escHtml(cat.title)}</span>
       <span class="category-count">${done}/${total}</span>
+      <div class="cat-header-actions">
+        <button class="icon-btn" title="Rename section"
+                onclick="startSectionRename(this.closest('.category-header').querySelector('.category-title'),'${customer.id}','${cat.id}')">✏️</button>
+        <button class="icon-btn" title="Delete section"
+                onclick="deleteCustomerSection('${customer.id}','${cat.id}')">🗑</button>
+      </div>
     </div>
     <div class="cat-prog-wrap">
       <div class="cat-prog-bg"><div class="cat-prog-fill" style="width:${pct}%"></div></div>
@@ -1515,6 +1717,66 @@ function addTemplatePillar() {
   // Auto-expand the new pillar
   const last = state.template[state.template.length - 1];
   togglePillarExpand(last.id);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CUSTOMER SECTION MANAGEMENT (in detail view)
+// ═══════════════════════════════════════════════════════
+let _sectionCustId = null;
+
+function openAddSection() {
+  _sectionCustId = state.current;
+  document.getElementById('sf-name').value = '';
+  document.getElementById('section-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('sf-name').focus(), 80);
+}
+
+function confirmAddSection() {
+  const name = document.getElementById('sf-name').value.trim();
+  if (!name) { document.getElementById('sf-name').focus(); return; }
+  const icon     = document.getElementById('sf-icon').value;
+  const customer = state.customers.find(c => c.id === _sectionCustId);
+  if (!customer) return;
+  customer.categories.push({ id: uid(), icon, title: name, items: [] });
+  save();
+  closeModal('section-modal');
+  renderCategories(customer);
+  renderDetailHeader(customer);
+}
+
+function deleteCustomerSection(custId, catId) {
+  const customer = state.customers.find(c => c.id === custId);
+  const cat = customer && customer.categories.find(c => c.id === catId);
+  if (!cat || !confirm(`Delete section "${cat.title}"?\nAll items in this section will be removed.`)) return;
+  customer.categories = customer.categories.filter(c => c.id !== catId);
+  save();
+  renderCategories(customer);
+  renderDetailHeader(customer);
+}
+
+function startSectionRename(labelEl, custId, catId) {
+  if (labelEl.getAttribute('contenteditable') === 'true') return;
+  labelEl.setAttribute('contenteditable', 'true');
+  labelEl.focus();
+  const r = document.createRange(); r.selectNodeContents(labelEl); r.collapse(false);
+  window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+
+  const finish = () => {
+    labelEl.removeAttribute('contenteditable');
+    const newTitle = labelEl.textContent.trim();
+    const customer = state.customers.find(c => c.id === custId);
+    const cat      = customer && customer.categories.find(c => c.id === catId);
+    if (!cat) return;
+    if (newTitle) { cat.title = newTitle; save(); }
+    else { labelEl.textContent = cat.title; }
+    labelEl.removeEventListener('keydown', kh);
+  };
+  const kh = e => {
+    if (e.key === 'Enter')  { e.preventDefault(); finish(); }
+    if (e.key === 'Escape') { labelEl.textContent = ''; finish(); }
+  };
+  labelEl.addEventListener('blur', finish, { once: true });
+  labelEl.addEventListener('keydown', kh);
 }
 
 // ═══════════════════════════════════════════════════════
