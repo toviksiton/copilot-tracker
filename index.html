@@ -334,6 +334,12 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .category-title[contenteditable="true"] { outline: 2px solid var(--ms-blue); border-radius: 3px; padding: 1px 4px; background: #fff; color: var(--ms-text); }
 .hbtn.fs-on { background: rgba(16,124,16,.25); border-color: rgba(16,124,16,.5); }
 .add-section-wrap { margin-top: 18px; text-align: center; }
+.add-section-card {
+  border: 2px dashed var(--ms-border) !important;
+  cursor: pointer; transition: border-color .15s, background .15s;
+  background: #fafafa;
+}
+.add-section-card:hover { border-color: var(--ms-blue) !important; background: var(--ms-blue-light); color: var(--ms-blue); }
 
 /* Item row */
 .item-row {
@@ -795,7 +801,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     </div>
     <div class="pillars-body">
       <div class="pillars-note">
-        ⚠️ Changes here apply to <strong>new customers only</strong>. Existing customer trackers are not affected.
+        ⚠️ Changes here apply to <strong>new customers only</strong>. To add a section to an existing customer, open that customer's tracker and use the <strong>➕ Add Section</strong> card at the end of their categories.
       </div>
       <div id="pillars-list"><!-- filled by JS --></div>
       <div class="add-pillar-section">
@@ -1312,6 +1318,17 @@ function renderCategories(customer) {
   const grid = document.getElementById('categories-grid');
   grid.innerHTML = '';
   customer.categories.forEach(cat => grid.appendChild(buildCategoryCard(customer, cat)));
+  // "Add Section" card at the end of the grid
+  const addCard = document.createElement('div');
+  addCard.className = 'category-card add-section-card';
+  addCard.onclick = () => openAddSection();
+  addCard.innerHTML = `
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;color:var(--ms-muted)">
+      <div style="font-size:32px">➕</div>
+      <div style="font-size:13px;font-weight:600">Add Section</div>
+      <div style="font-size:11px;text-align:center">Add a custom category to this customer's tracker</div>
+    </div>`;
+  grid.appendChild(addCard);
 }
 
 function buildCategoryCard(customer, cat) {
