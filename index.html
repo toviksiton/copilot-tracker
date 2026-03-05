@@ -202,8 +202,30 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   background: var(--ms-blue); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; font-weight: 700; flex-shrink: 0;
-  text-transform: uppercase;
+  text-transform: uppercase; overflow: hidden;
 }
+.cust-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Logo uploader in modal */
+.logo-uploader {
+  position: relative; width: 84px; height: 84px; border-radius: 14px;
+  background: var(--ms-blue); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700; text-transform: uppercase;
+  cursor: pointer; overflow: hidden; flex-shrink: 0;
+  border: 3px solid var(--ms-border); transition: border-color .15s;
+}
+.logo-uploader:hover { border-color: var(--ms-blue); }
+.logo-uploader img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.logo-uploader-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s; gap: 2px; z-index: 1;
+}
+.logo-uploader:hover .logo-uploader-overlay { opacity: 1; }
+.logo-uploader-overlay .lo-icon { font-size: 20px; }
+.logo-uploader-overlay .lo-lbl { font-size: 10px; color: #fff; font-weight: 700; letter-spacing: .3px; }
 .cust-info { flex: 1; min-width: 0; }
 .cust-name {
   font-size: 16px; font-weight: 700;
@@ -611,6 +633,26 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 /* view toggle */
 .view { display: none; }
 .view.active { display: block; }
+
+/* ── Drag & Drop ── */
+.drag-handle {
+  cursor: grab; color: var(--ms-border); font-size: 13px;
+  flex-shrink: 0; padding: 0 2px; user-select: none; line-height: 1;
+}
+.drag-handle:active { cursor: grabbing; }
+.item-row[draggable="true"].dragging { opacity: .35; }
+.category-body.drag-over {
+  background: var(--ms-blue-light);
+  border-radius: 6px;
+  outline: 2px dashed var(--ms-blue);
+  outline-offset: -2px;
+}
+.drag-placeholder {
+  height: 28px; border-radius: 5px;
+  background: var(--ms-blue-light);
+  border: 2px dashed var(--ms-blue);
+  margin: 2px 0;
+}
 </style>
 </head>
 <body>
@@ -658,6 +700,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile()">📁 Connect File</button>
+    <button class="hbtn" id="od-btn" title="Load or save via OneDrive / URL" onclick="openOneDriveModal()">☁️ OneDrive / URL</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" title="Export all data to a JSON file" onclick="exportData()">💾 Export</button>
     <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click()">📥 Import</button>
@@ -738,10 +781,29 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <h2 id="customer-modal-title">➕ Add Customer</h2>
     <div class="form-grid">
 
+      <!-- Logo uploader -->
+      <div class="form-group full" style="align-items:center;text-align:center">
+        <div class="logo-uploader" id="cf-logo-preview" onclick="document.getElementById('cf-logo-input').click()" title="Click to upload logo">
+          <span id="cf-logo-initials">?</span>
+          <div class="logo-uploader-overlay"><div class="lo-icon">📷</div><div class="lo-lbl">Change</div></div>
+        </div>
+        <input type="file" id="cf-logo-input" accept="image/*" style="display:none" onchange="handleLogoUpload(this)" />
+        <div style="font-size:11px;color:var(--ms-muted);margin-top:4px">
+          Click avatar to upload logo
+          <button type="button" id="cf-logo-remove" onclick="removeLogo()" style="display:none;margin-left:8px;background:none;border:none;cursor:pointer;color:var(--miss);font-size:11px;text-decoration:underline">Remove</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;max-width:360px">
+          <input type="url" id="cf-logo-url" placeholder="Or paste image URL (e.g. OneDrive link)…"
+                 style="flex:1;padding:5px 10px;border:1px solid var(--ms-border);border-radius:6px;font-size:12px;font-family:inherit"
+                 oninput="handleLogoUrlInput(this.value)" />
+        </div>
+      </div>
+
       <!-- Customer name -->
       <div class="form-group full">
         <label>Customer Name *</label>
-        <input type="text" id="cf-name" placeholder="e.g. Contoso Ltd." maxlength="80" />
+        <input type="text" id="cf-name" placeholder="e.g. Contoso Ltd." maxlength="80"
+               oninput="updateLogoInitials(this.value)" />
       </div>
 
       <div class="form-section-label">Account Details</div>
@@ -855,6 +917,34 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
       <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="closeModal('report-modal')">✕ Close</button>
     </div>
     <div id="report-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ONEDRIVE / URL MODAL ═══════════════════════════ -->
+<div class="modal-overlay hidden" id="onedrive-modal">
+  <div class="modal" style="max-width:480px">
+    <h2>☁️ OneDrive / URL</h2>
+    <p style="font-size:13px;color:var(--ms-muted);margin-bottom:18px">
+      Load tracker data from any publicly accessible JSON file URL,
+      including OneDrive shared links. For saving, export the file and upload it to OneDrive.
+    </p>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>File URL</label>
+      <input type="url" id="od-url-input"
+             placeholder="https://… (OneDrive share link or direct URL)"
+             style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
+    </div>
+    <div id="od-status" style="font-size:12px;color:var(--ms-muted);min-height:18px;margin-bottom:6px"></div>
+    <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:6px;padding:10px 12px;font-size:12px;color:#5c4b00;margin-bottom:18px">
+      <strong>Tips:</strong><br>
+      • OneDrive personal: open the shared file → copy link → paste here<br>
+      • OneDrive for Business / SharePoint: use <em>Share → Copy link</em> (Anyone with the link)<br>
+      • The file must be a JSON export from this app
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('onedrive-modal')">Cancel</button>
+      <button class="btn btn-blue" onclick="loadFromOneDriveUrl()">⬇️ Load from URL</button>
+    </div>
   </div>
 </div>
 
@@ -1199,8 +1289,11 @@ function buildCustomerCard(customer) {
                   : s.pct >= 40 ? 'linear-gradient(90deg,var(--ms-blue),#50e6ff)'
                   : 'linear-gradient(90deg,#ca5010,#f5a55b)';
 
-  // Avatar letter(s)
+  // Avatar: logo image or initials
   const initials = customer.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const avatarHtml = customer.logo
+    ? `<div class="cust-avatar" style="background:none;border:1px solid var(--ms-border)"><img src="${customer.logo}" /></div>`
+    : `<div class="cust-avatar">${initials}</div>`;
 
   // Created date
   const created = customer.createdAt
@@ -1238,7 +1331,7 @@ function buildCustomerCard(customer) {
 
   card.innerHTML = `
     <div class="cust-card-top">
-      <div class="cust-avatar">${initials}</div>
+      ${avatarHtml}
       <div class="cust-info">
         <div class="cust-name">${escHtml(customer.name)}</div>
         <div class="cust-date">${created ? 'Since ' + created : ''}</div>
@@ -1369,6 +1462,42 @@ function buildCategoryCard(customer, cat) {
   } else {
     cat.items.forEach(item => body.appendChild(buildItemRow(customer, cat, item)));
   }
+
+  // Drop zone setup
+  body.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    body.classList.add('drag-over');
+  });
+  body.addEventListener('dragleave', e => {
+    if (!body.contains(e.relatedTarget)) body.classList.remove('drag-over');
+  });
+  body.addEventListener('drop', e => {
+    e.preventDefault();
+    body.classList.remove('drag-over');
+    let payload;
+    try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+    const { itemId, srcCatId, custId } = payload;
+    if (srcCatId === cat.id) return; // same section, no-op
+    const cust = state.customers.find(c => c.id === custId);
+    if (!cust) return;
+    const srcCat = cust.categories.find(c => c.id === srcCatId);
+    const dstCat = cust.categories.find(c => c.id === cat.id);
+    if (!srcCat || !dstCat) return;
+    const itemIdx = srcCat.items.findIndex(i => i.id === itemId);
+    if (itemIdx === -1) return;
+    const [movedItem] = srcCat.items.splice(itemIdx, 1);
+    dstCat.items.push(movedItem);
+    save();
+    // Re-render both affected cards
+    const srcCardEl = document.getElementById(`cat-${srcCatId}`);
+    const dstCardEl = document.getElementById(`cat-${cat.id}`);
+    if (srcCardEl) srcCardEl.replaceWith(buildCategoryCard(cust, srcCat));
+    if (dstCardEl) dstCardEl.replaceWith(buildCategoryCard(cust, dstCat));
+    renderDetailHeader(cust);
+    showToast(`✅ Moved "${escHtml(movedItem.label)}" to ${escHtml(dstCat.title)}`);
+  });
+
   return card;
 }
 
@@ -1376,8 +1505,13 @@ function buildItemRow(customer, cat, item) {
   const row = document.createElement('div');
   row.className = 'item-row';
   row.id = `item-${item.id}`;
+  row.setAttribute('draggable', 'true');
+  row.dataset.itemId = item.id;
+  row.dataset.catId  = cat.id;
+  row.dataset.custId = customer.id;
   const m = STATUS_META[item.status] || STATUS_META.pending;
   row.innerHTML = `
+    <span class="drag-handle" title="Drag to move to another section">⠿</span>
     <button class="status-btn" data-status="${item.status}" title="${m.label} — click to cycle"
             onclick="cycleStatus('${customer.id}','${cat.id}','${item.id}')">${m.icon}</button>
     <span class="item-label${item.status==='done'?' done-text':''}"
@@ -1386,6 +1520,13 @@ function buildItemRow(customer, cat, item) {
       <button class="icon-btn" title="Rename" onclick="startRename(this.closest('.item-row').querySelector('.item-label'),'${customer.id}','${cat.id}','${item.id}')">✏️</button>
       <button class="icon-btn" title="Delete" onclick="deleteItem('${customer.id}','${cat.id}','${item.id}')">🗑</button>
     </div>`;
+
+  row.addEventListener('dragstart', e => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ itemId: item.id, srcCatId: cat.id, custId: customer.id }));
+    setTimeout(() => row.classList.add('dragging'), 0);
+  });
+  row.addEventListener('dragend', () => row.classList.remove('dragging'));
   return row;
 }
 
@@ -1456,16 +1597,84 @@ function startRename(labelEl, custId, catId, itemId) {
 //  CUSTOMER MANAGEMENT
 // ═══════════════════════════════════════════════════════
 let _editingCustomerId = null; // null = adding new
+let _logoDataUrl = null;
+
+function handleLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  if (file.size > 3 * 1024 * 1024) { showToast('⚠️ Image too large (max 3 MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _logoDataUrl = e.target.result;
+    const urlInput = document.getElementById('cf-logo-url');
+    if (urlInput) urlInput.value = '';
+    _applyLogoPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleLogoUrlInput(url) {
+  url = url.trim();
+  if (!url) { if (_logoDataUrl && _logoDataUrl.startsWith('http')) { _logoDataUrl = null; _applyLogoPreview(); } return; }
+  // Basic URL validation
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return;
+  _logoDataUrl = url;
+  _applyLogoPreview();
+}
+
+function removeLogo() {
+  _logoDataUrl = null;
+  _applyLogoPreview();
+  const nameVal = document.getElementById('cf-name').value.trim();
+  updateLogoInitials(nameVal);
+}
+
+function updateLogoInitials(nameVal) {
+  if (_logoDataUrl) return; // image set, don't change
+  const el = document.getElementById('cf-logo-initials');
+  if (!el) return;
+  el.textContent = nameVal ? nameVal.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() : '?';
+}
+
+function _applyLogoPreview() {
+  const preview  = document.getElementById('cf-logo-preview');
+  const initials = document.getElementById('cf-logo-initials');
+  const removeBtn = document.getElementById('cf-logo-remove');
+  if (!preview) return;
+  // Remove any existing img
+  preview.querySelectorAll('img').forEach(i => i.remove());
+  if (_logoDataUrl) {
+    const img = document.createElement('img');
+    img.src = _logoDataUrl;
+    preview.insertBefore(img, preview.firstChild);
+    if (initials) initials.style.visibility = 'hidden';
+    if (removeBtn) removeBtn.style.display = '';
+  } else {
+    if (initials) initials.style.visibility = '';
+    if (removeBtn) removeBtn.style.display = 'none';
+  }
+}
 
 function _clearForm() {
+  _logoDataUrl = null;
   ['cf-name','cf-ae','cf-ats','cf-csam','cf-se'].forEach(id => document.getElementById(id).value = '');
   ['cf-users','cf-copilot-users'].forEach(id => document.getElementById(id).value = '');
   ['cf-renewal','cf-aop'].forEach(id => document.getElementById(id).value = '');
+  const urlField = document.getElementById('cf-logo-url');
+  if (urlField) urlField.value = '';
+  // Reset logo preview
+  const initials = document.getElementById('cf-logo-initials');
+  if (initials) { initials.textContent = '?'; initials.style.visibility = ''; }
+  document.getElementById('cf-logo-preview')?.querySelectorAll('img').forEach(i => i.remove());
+  const removeBtn = document.getElementById('cf-logo-remove');
+  if (removeBtn) removeBtn.style.display = 'none';
 }
 
 function _readForm() {
   return {
     name:         document.getElementById('cf-name').value.trim(),
+    logo:         _logoDataUrl,
     users:        document.getElementById('cf-users').value.trim(),
     copilotUsers: document.getElementById('cf-copilot-users').value.trim(),
     renewalDate:  document.getElementById('cf-renewal').value,
@@ -1492,6 +1701,16 @@ function openEditCustomer() {
   _editingCustomerId = c.id;
   _clearForm();
   document.getElementById('cf-name').value          = c.name || '';
+  _logoDataUrl = c.logo || null;
+  const nm = (c.name || '').trim();
+  const initEl = document.getElementById('cf-logo-initials');
+  if (initEl) initEl.textContent = nm ? nm.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() : '?';
+  // If logo is a URL (not data URL), populate the URL field
+  if (c.logo && c.logo.startsWith('http')) {
+    const urlField = document.getElementById('cf-logo-url');
+    if (urlField) urlField.value = c.logo;
+  }
+  _applyLogoPreview();
   document.getElementById('cf-users').value         = c.users || '';
   document.getElementById('cf-copilot-users').value = c.copilotUsers || '';
   document.getElementById('cf-renewal').value       = c.renewalDate || '';
@@ -1856,6 +2075,75 @@ function importData(input) {
     }
   };
   reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+//  ONEDRIVE / URL LOAD
+// ═══════════════════════════════════════════════════════
+function openOneDriveModal() {
+  document.getElementById('od-url-input').value = '';
+  document.getElementById('od-status').textContent = '';
+  document.getElementById('onedrive-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('od-url-input').focus(), 80);
+}
+
+function _resolveOneDriveUrl(url) {
+  // Transform OneDrive personal share links to direct download
+  // e.g. https://1drv.ms/u/s!Abc... → https://api.onedrive.com/v1.0/shares/...
+  if (/^https?:\/\/1drv\.ms\//i.test(url) || /^https?:\/\/onedrive\.live\.com\//i.test(url)) {
+    // Encode URL to base64 for Graph API shares endpoint
+    try {
+      const encoded = btoa(url).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+      return `https://api.onedrive.com/v1.0/shares/u!${encoded}/root/content`;
+    } catch { return url; }
+  }
+  // SharePoint / OneDrive for Business — append download param
+  if (/sharepoint\.com/i.test(url) && !url.includes('download=1')) {
+    const sep = url.includes('?') ? '&' : '?';
+    return url + sep + 'download=1';
+  }
+  return url;
+}
+
+async function loadFromOneDriveUrl() {
+  const rawUrl = document.getElementById('od-url-input').value.trim();
+  const statusEl = document.getElementById('od-status');
+  if (!rawUrl) { statusEl.textContent = '⚠️ Please enter a URL.'; statusEl.style.color = 'var(--miss)'; return; }
+  statusEl.textContent = '⏳ Fetching…'; statusEl.style.color = 'var(--ms-muted)';
+  const url = _resolveOneDriveUrl(rawUrl);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    const text = await res.text();
+    const payload = JSON.parse(text);
+    if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid file: missing customers array');
+    const custCount = payload.customers.length;
+    const mode = confirm(
+      `File contains ${custCount} customer(s).\n\n` +
+      `• OK  → REPLACE all current data\n` +
+      `• Cancel → Merge into existing data (skip duplicates)`
+    );
+    if (mode) {
+      state.customers = payload.customers;
+      state.template  = payload.template || state.template;
+      state.current   = null;
+    } else {
+      const existingIds = new Set(state.customers.map(c => c.id));
+      state.customers.push(...payload.customers.filter(c => !existingIds.has(c.id)));
+      if (payload.template) state.template = payload.template;
+    }
+    save();
+    closeModal('onedrive-modal');
+    goHome();
+    showToast(`✅ Loaded ${custCount} customer(s) from URL`);
+  } catch(e) {
+    statusEl.style.color = 'var(--miss)';
+    if (e.name === 'TypeError' || e.message.toLowerCase().includes('failed to fetch') || e.message.toLowerCase().includes('cors')) {
+      statusEl.textContent = '⚠️ Could not fetch URL — the file may not be publicly accessible or CORS is blocked. Try downloading and using Import instead.';
+    } else {
+      statusEl.textContent = '⚠️ Error: ' + e.message;
+    }
+  }
 }
 
 let _toastTimer = null;
