@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Previews — Copilot Adoption Tracker</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#fff;padding:32px 20px;min-height:100vh;}
+h1{text-align:center;font-size:26px;font-weight:800;margin-bottom:6px;letter-spacing:-.5px;}
+.subtitle{text-align:center;font-size:14px;color:rgba(255,255,255,.55);margin-bottom:36px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:28px;max-width:1280px;margin:0 auto;}
+.preview-wrap{border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5);transition:transform .2s,box-shadow .2s;cursor:pointer;border:2px solid transparent;}
+.preview-wrap:hover{transform:translateY(-4px);box-shadow:0 16px 60px rgba(0,0,0,.7);border-color:rgba(255,255,255,.2);}
+.preview-label{padding:14px 18px;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.preview-label span{font-size:18px;}
+.preview-body{transform-origin:top left;}
+
+/* ─── THEME 1: CURRENT (for reference) ─── */
+.t0-wrap .preview-label{background:#0078d4;color:#fff;}
+.t0{background:#f0f2f5;padding:14px;}
+.t0-header{background:#0078d4;padding:10px 14px;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px;margin:-14px -14px 14px;}
+.t0-header .logo{color:#fff;font-size:13px;font-weight:700;}
+.t0-header nav{margin-left:auto;display:flex;gap:6px;}
+.t0-header nav button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;}
+.t0-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.t0-scard{background:#fff;border-radius:6px;padding:10px 12px;border-left:3px solid #0078d4;}
+.t0-scard .n{font-size:20px;font-weight:800;color:#0078d4;}
+.t0-scard .l{font-size:10px;color:#605e5c;}
+.t0-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.t0-card{background:#fff;border:1px solid #d2d0ce;border-radius:8px;padding:12px;cursor:pointer;transition:box-shadow .15s;}
+.t0-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.14);border-color:#0078d4;}
+.t0-cname{font-size:13px;font-weight:700;margin-bottom:6px;}
+.t0-bar-bg{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;}
+.t0-bar-fill{height:100%;background:linear-gradient(90deg,#0078d4,#50e6ff);border-radius:3px;}
+.t0-cpct{font-size:11px;color:#605e5c;margin-top:4px;}
+.t0-pills{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.t0-pill{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+.pill-g{background:#dff6dd;color:#107c10;}
+.pill-r{background:#fde7e9;color:#a4262c;}
+.pill-o{background:#fed9cc;color:#ca5010;}
+
+/* ─── THEME 1: DARK MIDNIGHT ─── */
+.t1-wrap .preview-label{background:linear-gradient(135deg,#0d1b3e,#1a3a6b);color:#7eb3ff;}
+.t1{background:#0d1117;padding:14px;}
+.t1-header{background:linear-gradient(90deg,#0d1b3e,#162447);padding:10px 14px;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px;margin:-14px -14px 14px;border-bottom:1px solid #1e3a5f;}
+.t1-header .logo{color:#60a0ff;font-size:13px;font-weight:700;}
+.t1-header nav{margin-left:auto;display:flex;gap:6px;}
+.t1-header nav button{background:rgba(96,160,255,.12);border:1px solid rgba(96,160,255,.25);color:#7eb3ff;padding:4px 10px;border-radius:6px;font-size:11px;}
+.t1-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.t1-scard{background:#161b27;border:1px solid #1e3a5f;border-radius:6px;padding:10px 12px;border-left:3px solid #60a0ff;}
+.t1-scard .n{font-size:20px;font-weight:800;color:#60a0ff;}
+.t1-scard .l{font-size:10px;color:#4a6fa5;}
+.t1-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.t1-card{background:#161b27;border:1px solid #1e3a5f;border-radius:8px;padding:12px;transition:border-color .15s,box-shadow .15s;}
+.t1-card:hover{border-color:#60a0ff;box-shadow:0 0 20px rgba(96,160,255,.15);}
+.t1-cname{font-size:13px;font-weight:700;color:#c9d8f0;margin-bottom:6px;}
+.t1-bar-bg{height:6px;background:#1e3a5f;border-radius:3px;overflow:hidden;}
+.t1-bar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#60a0ff);border-radius:3px;box-shadow:0 0 6px rgba(96,160,255,.5);}
+.t1-cpct{font-size:11px;color:#4a6fa5;margin-top:4px;}
+.t1-pills{display:flex;gap:4px;margin-top:6px;}
+.t1-pill{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+.t1p-g{background:rgba(16,124,16,.2);color:#4ade80;border:1px solid rgba(74,222,128,.2);}
+.t1p-r{background:rgba(164,38,44,.2);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+.t1p-o{background:rgba(202,80,16,.2);color:#fb923c;border:1px solid rgba(251,146,60,.2);}
+
+/* ─── THEME 2: GLASSMORPHISM ─── */
+.t2-wrap .preview-label{background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;}
+.t2{background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 40%,#a855f7 70%,#ec4899 100%);padding:14px;position:relative;}
+.t2::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.t2-header{background:rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);padding:10px 14px;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px;margin:-14px -14px 14px;}
+.t2-header .logo{color:#fff;font-size:13px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);}
+.t2-header nav{margin-left:auto;display:flex;gap:6px;}
+.t2-header nav button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;backdrop-filter:blur(4px);}
+.t2-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;position:relative;}
+.t2-scard{background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.t2-scard .n{font-size:20px;font-weight:800;color:#fff;}
+.t2-scard .l{font-size:10px;color:rgba(255,255,255,.7);}
+.t2-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;}
+.t2-card{background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);transition:background .2s,box-shadow .2s;}
+.t2-card:hover{background:rgba(255,255,255,.22);box-shadow:0 8px 30px rgba(0,0,0,.25);}
+.t2-cname{font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;}
+.t2-bar-bg{height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden;}
+.t2-bar-fill{height:100%;background:linear-gradient(90deg,#a5f3fc,#fff);border-radius:3px;}
+.t2-cpct{font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;}
+.t2-pills{display:flex;gap:4px;margin-top:6px;}
+.t2-pill{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;backdrop-filter:blur(4px);}
+.t2p-g{background:rgba(74,222,128,.25);color:#86efac;border:1px solid rgba(134,239,172,.3);}
+.t2p-r{background:rgba(248,113,113,.25);color:#fca5a5;border:1px solid rgba(252,165,165,.3);}
+.t2p-o{background:rgba(251,191,36,.25);color:#fde68a;border:1px solid rgba(253,230,138,.3);}
+
+/* ─── THEME 3: SIDEBAR LAYOUT ─── */
+.t3-wrap .preview-label{background:linear-gradient(135deg,#1e293b,#334155);color:#94a3b8;}
+.t3{background:#f8fafc;padding:0;display:flex;height:220px;overflow:hidden;}
+.t3-sidebar{width:130px;background:#1e293b;display:flex;flex-direction:column;flex-shrink:0;}
+.t3-sb-logo{padding:12px 10px;color:#60a5fa;font-size:11px;font-weight:800;border-bottom:1px solid #2d3f55;display:flex;align-items:center;gap:5px;}
+.t3-sb-logo svg{flex-shrink:0;}
+.t3-search{margin:8px;background:#0f172a;border:1px solid #2d3f55;border-radius:5px;padding:5px 8px;font-size:10px;color:#64748b;display:flex;align-items:center;gap:4px;}
+.t3-cust-list{overflow:auto;flex:1;}
+.t3-cust-item{padding:7px 10px;font-size:11px;color:#94a3b8;cursor:pointer;border-left:3px solid transparent;display:flex;align-items:center;gap:6px;}
+.t3-cust-item.active{background:#0f172a;color:#60a5fa;border-left-color:#60a5fa;}
+.t3-cust-item:hover:not(.active){background:#263347;color:#cbd5e1;}
+.t3-cust-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.t3-main{flex:1;overflow:auto;padding:12px;}
+.t3-company-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.t3-avatar{width:36px;height:36px;border-radius:8px;background:#3b82f6;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;flex-shrink:0;}
+.t3-cname{font-size:14px;font-weight:700;color:#1e293b;}
+.t3-csub{font-size:11px;color:#94a3b8;}
+.t3-pct-big{font-size:28px;font-weight:800;color:#3b82f6;margin-left:auto;}
+.t3-bar-bg{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-bottom:10px;}
+.t3-bar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:4px;}
+.t3-items{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.t3-item{background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:7px 10px;display:flex;align-items:center;gap:7px;}
+.t3-item-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dot-g{background:#22c55e;} .dot-r{background:#ef4444;} .dot-o{background:#f97316;} .dot-b{background:#3b82f6;}
+.t3-item-txt{font-size:10px;color:#475569;flex:1;}
+.t3-item-badge{font-size:9px;padding:2px 5px;border-radius:8px;font-weight:700;}
+.badge-g{background:#dcfce7;color:#16a34a;}
+.badge-r{background:#fee2e2;color:#dc2626;}
+.badge-o{background:#ffedd5;color:#ea580c;}
+
+/* ─── THEME 4: CLEAN MINIMAL ─── */
+.t4-wrap .preview-label{background:#fff;color:#1a1a1a;border-bottom:2px solid #f0f0f0;}
+.t4-wrap .preview-label span{opacity:.7;}
+.t4{background:#fff;padding:14px;}
+.t4-header{background:#fff;border-bottom:1px solid #f0f0f0;padding:10px 14px;margin:-14px -14px 14px;display:flex;align-items:center;gap:8px;}
+.t4-header .logo{color:#000;font-size:13px;font-weight:800;letter-spacing:-.3px;}
+.t4-header nav{margin-left:auto;display:flex;gap:6px;}
+.t4-header nav button{background:#f7f7f7;border:1px solid #e8e8e8;color:#333;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;}
+.t4-header nav button.primary{background:#000;color:#fff;border-color:#000;}
+.t4-title{font-size:15px;font-weight:800;margin-bottom:12px;color:#000;}
+.t4-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.t4-scard{border:1px solid #f0f0f0;border-radius:8px;padding:10px 12px;}
+.t4-scard .n{font-size:20px;font-weight:800;color:#000;}
+.t4-scard .l{font-size:10px;color:#999;}
+.t4-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.t4-card{border:1px solid #f0f0f0;border-radius:8px;padding:12px;transition:border-color .15s;}
+.t4-card:hover{border-color:#000;}
+.t4-cname{font-size:12px;font-weight:700;color:#000;margin-bottom:6px;}
+.t4-bar-bg{height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden;}
+.t4-bar-fill{height:100%;background:#000;border-radius:2px;}
+.t4-cpct{font-size:10px;color:#999;margin-top:4px;}
+.t4-pills{display:flex;gap:4px;margin-top:6px;}
+.t4-pill{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;border:1px solid;}
+.t4p-g{background:transparent;color:#16a34a;border-color:#bbf7d0;}
+.t4p-r{background:transparent;color:#dc2626;border-color:#fecaca;}
+.t4p-o{background:transparent;color:#d97706;border-color:#fde68a;}
+
+/* ─── THEME 5: INDIGO/PURPLE BRANDED ─── */
+.t5-wrap .preview-label{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#c4b5fd;}
+.t5{background:#faf8ff;padding:14px;}
+.t5-header{background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:10px 14px;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px;margin:-14px -14px 14px;}
+.t5-header .logo{color:#fff;font-size:13px;font-weight:700;}
+.t5-header nav{margin-left:auto;display:flex;gap:6px;}
+.t5-header nav button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;}
+.t5-header nav button.primary{background:#fff;color:#4f46e5;font-weight:600;}
+.t5-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.t5-scard{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 2px 12px rgba(79,70,229,.1);border:1px solid #ede9fe;}
+.t5-scard .n{font-size:20px;font-weight:800;color:#4f46e5;}
+.t5-scard .l{font-size:10px;color:#8b5cf6;}
+.t5-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.t5-card{background:#fff;border:1px solid #ede9fe;border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(79,70,229,.07);transition:box-shadow .15s,border-color .15s;}
+.t5-card:hover{box-shadow:0 6px 20px rgba(79,70,229,.18);border-color:#c4b5fd;}
+.t5-cname{font-size:12px;font-weight:700;color:#1e1b4b;margin-bottom:6px;}
+.t5-bar-bg{height:6px;background:#ede9fe;border-radius:3px;overflow:hidden;}
+.t5-bar-fill{height:100%;background:linear-gradient(90deg,#4f46e5,#a78bfa);border-radius:3px;}
+.t5-cpct{font-size:11px;color:#8b5cf6;margin-top:4px;}
+.t5-pills{display:flex;gap:4px;margin-top:6px;}
+.t5-pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.t5p-g{background:#d1fae5;color:#065f46;}
+.t5p-r{background:#fee2e2;color:#991b1b;}
+.t5p-o{background:#ffedd5;color:#9a3412;}
+
+.choose-btn{
+  display:block;width:100%;margin-top:12px;padding:10px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.7);border-radius:8px;font-size:12px;font-weight:600;
+  cursor:pointer;transition:background .15s,color .15s;font-family:inherit;
+  letter-spacing:.3px;
+}
+.choose-btn:hover{background:rgba(255,255,255,.2);color:#fff;}
+.t4-wrap .choose-btn{background:#f7f7f7;border-color:#e0e0e0;color:#333;}
+.t4-wrap .choose-btn:hover{background:#000;color:#fff;border-color:#000;}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-bottom:8px;letter-spacing:.3px;}
+.tag-new{background:#fbbf24;color:#000;}
+.tag-ref{background:#6b7280;color:#fff;}
+</style>
+</head>
+<body>
+
+<h1>Design Previews</h1>
+<p class="subtitle">Click any design below to see it applied. Each preview shows the real layout and colors.</p>
+
+<div class="grid">
+
+  <!-- CURRENT (reference) -->
+  <div class="preview-wrap t0-wrap">
+    <div class="preview-label"><span>🔵</span> Current Design <span class="tag tag-ref">CURRENT</span></div>
+    <div class="t0">
+      <div class="t0-header">
+        <span class="logo">⏱ Copilot Tracker <sub style="opacity:.6;font-size:10px">by Tovik</sub></span>
+        <nav><button>+ Add</button><button>📄 Report</button><button>☁️ OneDrive</button></nav>
+      </div>
+      <div class="t0-summary">
+        <div class="t0-scard"><div class="n" style="color:#0078d4">12</div><div class="l">Customers</div></div>
+        <div class="t0-scard" style="border-left-color:#107c10"><div class="n" style="color:#107c10">67%</div><div class="l">Avg Adoption</div></div>
+        <div class="t0-scard" style="border-left-color:#a4262c"><div class="n" style="color:#a4262c">84</div><div class="l">Total Items</div></div>
+        <div class="t0-scard" style="border-left-color:#ca5010"><div class="n" style="color:#ca5010">11</div><div class="l">Blocked</div></div>
+      </div>
+      <div class="t0-cards">
+        <div class="t0-card">
+          <div class="t0-cname">Contoso Ltd</div>
+          <div class="t0-bar-bg"><div class="t0-bar-fill" style="width:78%"></div></div>
+          <div class="t0-cpct">78% adoption</div>
+          <div class="t0-pills">
+            <span class="t0-pill pill-g">✓ 14 done</span>
+            <span class="t0-pill pill-r">✗ 3 missed</span>
+            <span class="t0-pill pill-o">⚠ 1 blocked</span>
+          </div>
+        </div>
+        <div class="t0-card">
+          <div class="t0-cname">Fabrikam Inc</div>
+          <div class="t0-bar-bg"><div class="t0-bar-fill" style="width:45%"></div></div>
+          <div class="t0-cpct">45% adoption</div>
+          <div class="t0-pills">
+            <span class="t0-pill pill-g">✓ 8 done</span>
+            <span class="t0-pill pill-r">✗ 5 missed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEME 1: DARK MIDNIGHT -->
+  <div class="preview-wrap t1-wrap">
+    <div class="preview-label"><span>🌑</span> Dark Midnight <span class="tag tag-new">OPTION 1</span></div>
+    <div class="t1">
+      <div class="t1-header">
+        <span class="logo">⏱ Copilot Tracker</span>
+        <nav><button>+ Add</button><button>📄 Report</button><button>☁️</button></nav>
+      </div>
+      <div class="t1-summary">
+        <div class="t1-scard"><div class="n">12</div><div class="l">Customers</div></div>
+        <div class="t1-scard" style="border-left-color:#4ade80"><div class="n" style="color:#4ade80">67%</div><div class="l">Avg Adoption</div></div>
+        <div class="t1-scard" style="border-left-color:#f87171"><div class="n" style="color:#f87171">84</div><div class="l">Total Items</div></div>
+        <div class="t1-scard" style="border-left-color:#fb923c"><div class="n" style="color:#fb923c">11</div><div class="l">Blocked</div></div>
+      </div>
+      <div class="t1-cards">
+        <div class="t1-card">
+          <div class="t1-cname">Contoso Ltd</div>
+          <div class="t1-bar-bg"><div class="t1-bar-fill" style="width:78%"></div></div>
+          <div class="t1-cpct">78% adoption</div>
+          <div class="t1-pills">
+            <span class="t1-pill t1p-g">✓ 14 done</span>
+            <span class="t1-pill t1p-r">✗ 3</span>
+            <span class="t1-pill t1p-o">⚠ 1</span>
+          </div>
+        </div>
+        <div class="t1-card">
+          <div class="t1-cname">Fabrikam Inc</div>
+          <div class="t1-bar-bg"><div class="t1-bar-fill" style="width:45%"></div></div>
+          <div class="t1-cpct">45% adoption</div>
+          <div class="t1-pills">
+            <span class="t1-pill t1p-g">✓ 8 done</span>
+            <span class="t1-pill t1p-r">✗ 5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="choose-btn" onclick="applyTheme('dark')">Apply this design →</button>
+  </div>
+
+  <!-- THEME 2: GLASSMORPHISM -->
+  <div class="preview-wrap t2-wrap">
+    <div class="preview-label"><span>🪟</span> Glassmorphism <span class="tag tag-new">OPTION 2</span></div>
+    <div class="t2">
+      <div class="t2-header">
+        <span class="logo">⏱ Copilot Tracker</span>
+        <nav><button>+ Add</button><button>📄 Report</button><button>☁️</button></nav>
+      </div>
+      <div class="t2-summary">
+        <div class="t2-scard"><div class="n">12</div><div class="l">Customers</div></div>
+        <div class="t2-scard"><div class="n">67%</div><div class="l">Avg Adoption</div></div>
+        <div class="t2-scard"><div class="n">84</div><div class="l">Total Items</div></div>
+        <div class="t2-scard"><div class="n">11</div><div class="l">Blocked</div></div>
+      </div>
+      <div class="t2-cards">
+        <div class="t2-card">
+          <div class="t2-cname">Contoso Ltd</div>
+          <div class="t2-bar-bg"><div class="t2-bar-fill" style="width:78%"></div></div>
+          <div class="t2-cpct">78% adoption</div>
+          <div class="t2-pills">
+            <span class="t2-pill t2p-g">✓ 14 done</span>
+            <span class="t2-pill t2p-r">✗ 3</span>
+            <span class="t2-pill t2p-o">⚠ 1</span>
+          </div>
+        </div>
+        <div class="t2-card">
+          <div class="t2-cname">Fabrikam Inc</div>
+          <div class="t2-bar-bg"><div class="t2-bar-fill" style="width:45%"></div></div>
+          <div class="t2-cpct">45% adoption</div>
+          <div class="t2-pills">
+            <span class="t2-pill t2p-g">✓ 8</span>
+            <span class="t2-pill t2p-r">✗ 5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="choose-btn" onclick="applyTheme('glass')">Apply this design →</button>
+  </div>
+
+  <!-- THEME 3: SIDEBAR -->
+  <div class="preview-wrap t3-wrap">
+    <div class="preview-label"><span>📊</span> Sidebar Layout <span class="tag tag-new">OPTION 3</span></div>
+    <div class="t3">
+      <div class="t3-sidebar">
+        <div class="t3-sb-logo">
+          <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#60a5fa" fill-opacity=".2"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="#60a5fa" stroke-width="2"/></svg>
+          Tracker
+        </div>
+        <div class="t3-search"><span>🔍</span> Search…</div>
+        <div class="t3-cust-list">
+          <div class="t3-cust-item active"><div class="t3-cust-dot dot-g"></div>Contoso Ltd</div>
+          <div class="t3-cust-item"><div class="t3-cust-dot dot-o"></div>Fabrikam</div>
+          <div class="t3-cust-item"><div class="t3-cust-dot dot-r"></div>Northwind</div>
+          <div class="t3-cust-item"><div class="t3-cust-dot dot-g"></div>Adventure</div>
+          <div class="t3-cust-item"><div class="t3-cust-dot dot-b"></div>Tailspin</div>
+        </div>
+      </div>
+      <div class="t3-main">
+        <div class="t3-company-header">
+          <div class="t3-avatar">C</div>
+          <div>
+            <div class="t3-cname">Contoso Ltd</div>
+            <div class="t3-csub">Since Jan 2025 · 18 items</div>
+          </div>
+          <div class="t3-pct-big">78%</div>
+        </div>
+        <div class="t3-bar-bg"><div class="t3-bar-fill" style="width:78%"></div></div>
+        <div class="t3-items">
+          <div class="t3-item"><div class="t3-item-dot dot-g"></div><div class="t3-item-txt">Copilot License Setup</div><span class="t3-item-badge badge-g">Done</span></div>
+          <div class="t3-item"><div class="t3-item-dot dot-g"></div><div class="t3-item-txt">Training Completed</div><span class="t3-item-badge badge-g">Done</span></div>
+          <div class="t3-item"><div class="t3-item-dot dot-o"></div><div class="t3-item-txt">IT Policy Update</div><span class="t3-item-badge badge-o">Blocked</span></div>
+          <div class="t3-item"><div class="t3-item-dot dot-r"></div><div class="t3-item-txt">Feedback Collection</div><span class="t3-item-badge badge-r">Missed</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="choose-btn" onclick="applyTheme('sidebar')">Apply this design →</button>
+  </div>
+
+  <!-- THEME 4: CLEAN MINIMAL -->
+  <div class="preview-wrap t4-wrap" style="background:#fff;border:1px solid #e8e8e8;">
+    <div class="preview-label"><span>⬜</span> Clean Minimal <span class="tag tag-new" style="background:#e8e8e8;color:#333">OPTION 4</span></div>
+    <div class="t4">
+      <div class="t4-header">
+        <span class="logo">Copilot Tracker</span>
+        <nav>
+          <button>+ Add</button>
+          <button>Report</button>
+          <button class="primary">Export</button>
+        </nav>
+      </div>
+      <div class="t4-title">Customer Dashboard</div>
+      <div class="t4-summary">
+        <div class="t4-scard"><div class="n">12</div><div class="l">Customers</div></div>
+        <div class="t4-scard"><div class="n">67%</div><div class="l">Avg Adoption</div></div>
+        <div class="t4-scard"><div class="n">84</div><div class="l">Items</div></div>
+        <div class="t4-scard"><div class="n">11</div><div class="l">Blocked</div></div>
+      </div>
+      <div class="t4-cards">
+        <div class="t4-card">
+          <div class="t4-cname">Contoso Ltd</div>
+          <div class="t4-bar-bg"><div class="t4-bar-fill" style="width:78%"></div></div>
+          <div class="t4-cpct">78% adoption</div>
+          <div class="t4-pills">
+            <span class="t4-pill t4p-g">14 done</span>
+            <span class="t4-pill t4p-r">3 missed</span>
+            <span class="t4-pill t4p-o">1 blocked</span>
+          </div>
+        </div>
+        <div class="t4-card">
+          <div class="t4-cname">Fabrikam Inc</div>
+          <div class="t4-bar-bg"><div class="t4-bar-fill" style="width:45%"></div></div>
+          <div class="t4-cpct">45% adoption</div>
+          <div class="t4-pills">
+            <span class="t4-pill t4p-g">8 done</span>
+            <span class="t4-pill t4p-r">5 missed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="choose-btn" onclick="applyTheme('minimal')">Apply this design →</button>
+  </div>
+
+  <!-- THEME 5: INDIGO/PURPLE -->
+  <div class="preview-wrap t5-wrap">
+    <div class="preview-label"><span>🎨</span> Indigo / Purple <span class="tag tag-new">OPTION 5</span></div>
+    <div class="t5">
+      <div class="t5-header">
+        <span class="logo">⏱ Copilot Tracker</span>
+        <nav>
+          <button>+ Add</button>
+          <button>📄 Report</button>
+          <button class="primary">☁️ OneDrive</button>
+        </nav>
+      </div>
+      <div class="t5-summary">
+        <div class="t5-scard"><div class="n">12</div><div class="l">Customers</div></div>
+        <div class="t5-scard"><div class="n">67%</div><div class="l">Avg Adoption</div></div>
+        <div class="t5-scard"><div class="n">84</div><div class="l">Total Items</div></div>
+        <div class="t5-scard"><div class="n">11</div><div class="l">Blocked</div></div>
+      </div>
+      <div class="t5-cards">
+        <div class="t5-card">
+          <div class="t5-cname">Contoso Ltd</div>
+          <div class="t5-bar-bg"><div class="t5-bar-fill" style="width:78%"></div></div>
+          <div class="t5-cpct">78% adoption</div>
+          <div class="t5-pills">
+            <span class="t5-pill t5p-g">✓ 14 done</span>
+            <span class="t5-pill t5p-r">✗ 3</span>
+            <span class="t5-pill t5p-o">⚠ 1</span>
+          </div>
+        </div>
+        <div class="t5-card">
+          <div class="t5-cname">Fabrikam Inc</div>
+          <div class="t5-bar-bg"><div class="t5-bar-fill" style="width:45%"></div></div>
+          <div class="t5-cpct">45% adoption</div>
+          <div class="t5-pills">
+            <span class="t5-pill t5p-g">✓ 8</span>
+            <span class="t5-pill t5p-r">✗ 5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="choose-btn" onclick="applyTheme('indigo')">Apply this design →</button>
+  </div>
+
+</div>
+
+<p style="text-align:center;margin-top:40px;font-size:13px;color:rgba(255,255,255,.4);">
+  Click "Apply this design" on any card to apply it to the main app, or tell me which one you like and I'll implement it.
+</p>
+
+<script>
+function applyTheme(name) {
+  const labels = {
+    dark: 'Dark Midnight (Option 1)',
+    glass: 'Glassmorphism (Option 2)',
+    sidebar: 'Sidebar Layout (Option 3)',
+    minimal: 'Clean Minimal (Option 4)',
+    indigo: 'Indigo / Purple (Option 5)',
+  };
+  alert('You selected: ' + labels[name] + '\n\nTell the AI assistant "Apply Option ' + {dark:1,glass:2,sidebar:3,minimal:4,indigo:5}[name] + '" and it will apply this design to the main app.');
+}
+</script>
+</body>
+</html>
