@@ -634,6 +634,17 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .view { display: none; }
 .view.active { display: block; }
 
+/* ── OneDrive tabs ── */
+.od-tabs { display: flex; gap: 0; border: 1px solid var(--ms-border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+.od-tab { flex: 1; padding: 8px 12px; background: #faf9f8; border: none; border-right: 1px solid var(--ms-border); cursor: pointer; font-size: 13px; font-family: inherit; color: var(--ms-muted); }
+.od-tab:last-child { border-right: none; }
+.od-tab.active { background: var(--ms-blue); color: #fff; font-weight: 600; }
+.od-tab:hover:not(.active) { background: var(--ms-light); }
+.od-info-box { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #5c4b00; margin-bottom: 14px; line-height: 1.6; }
+.od-help-box { background: #f0f6ff; border: 1px solid #cce0ff; border-radius: 6px; padding: 12px; font-size: 12px; line-height: 1.6; margin-top: 12px; }
+.od-connected-box { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--done-bg); border-radius: 6px; margin-bottom: 14px; }
+.hbtn.od-on { background: rgba(16,124,16,.25); border-color: rgba(16,124,16,.5); }
+
 /* ── Drag & Drop ── */
 .drag-handle {
   cursor: grab; color: var(--ms-border); font-size: 13px;
@@ -922,32 +933,96 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 
 <!-- ═══════════════════════════ ONEDRIVE / URL MODAL ═══════════════════════════ -->
 <div class="modal-overlay hidden" id="onedrive-modal">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:500px">
     <h2>☁️ OneDrive / URL</h2>
-    <p style="font-size:13px;color:var(--ms-muted);margin-bottom:18px">
-      Load tracker data from any publicly accessible JSON file URL,
-      including OneDrive shared links. For saving, export the file and upload it to OneDrive.
-    </p>
-    <div class="form-group" style="margin-bottom:14px">
-      <label>File URL</label>
-      <input type="url" id="od-url-input"
-             placeholder="https://… (OneDrive share link or direct URL)"
-             style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
+    <div class="od-tabs">
+      <button class="od-tab active" id="od-tab-msft" onclick="switchOdTab('msft')">Microsoft OneDrive</button>
+      <button class="od-tab" id="od-tab-url" onclick="switchOdTab('url')">Load from URL</button>
     </div>
-    <div id="od-status" style="font-size:12px;color:var(--ms-muted);min-height:18px;margin-bottom:6px"></div>
-    <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:6px;padding:10px 12px;font-size:12px;color:#5c4b00;margin-bottom:18px">
-      <strong>Tips:</strong><br>
-      • OneDrive personal: open the shared file → copy link → paste here<br>
-      • OneDrive for Business / SharePoint: use <em>Share → Copy link</em> (Anyone with the link)<br>
-      • The file must be a JSON export from this app
+
+    <!-- ── Microsoft OneDrive Panel ── -->
+    <div id="od-panel-msft">
+      <!-- Signed-out state -->
+      <div id="od-signed-out-panel">
+        <p style="font-size:13px;color:var(--ms-muted);margin-bottom:14px">
+          Sign in with your Microsoft account to <strong>save</strong> and <strong>load</strong> data directly
+          from your OneDrive. The file is stored as <code>copilot-tracker-data.json</code> in your OneDrive root.
+        </p>
+        <div class="form-group" style="margin-bottom:4px">
+          <label>Azure App Client ID</label>
+          <input type="text" id="od-client-id"
+                 placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
+        </div>
+        <div style="font-size:11px;color:var(--ms-muted);margin-bottom:14px">
+          Need a Client ID?
+          <a href="#" style="color:var(--ms-blue)" onclick="toggleClientIdHelp();return false">How to register an Azure app →</a>
+        </div>
+        <div id="od-clientid-help" class="od-help-box" style="display:none">
+          <strong>Steps to register an Azure app (one-time setup):</strong><br>
+          1. Go to <strong>portal.azure.com</strong> → Azure Active Directory → App registrations<br>
+          2. Click <strong>New registration</strong>, give it any name<br>
+          3. Under "Supported account types" choose <em>Any organizational directory and personal Microsoft accounts</em><br>
+          4. Under "Redirect URI" choose <em>Single-page application (SPA)</em> and enter this page's URL<br>
+          5. Click <strong>Register</strong>, then copy the <strong>Application (client) ID</strong> and paste above
+        </div>
+        <button class="btn btn-blue" onclick="signInOneDrive()">Sign in with Microsoft →</button>
+      </div>
+
+      <!-- Signed-in state -->
+      <div id="od-signed-in-panel" style="display:none">
+        <div class="od-connected-box">
+          <span style="font-size:22px">✅</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:var(--done)">Connected to OneDrive</div>
+            <div id="od-username-label" style="font-size:12px;color:var(--ms-muted)"></div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="signOutOneDrive()">Sign Out</button>
+        </div>
+        <p style="font-size:12px;color:var(--ms-muted);margin-bottom:14px">
+          File: <strong>copilot-tracker-data.json</strong> in your OneDrive root
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-blue" onclick="saveToOneDrive()">💾 Save to OneDrive</button>
+          <button class="btn" onclick="loadFromOneDriveMsft()">⬇️ Load from OneDrive</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="od-autosave-toggle" onchange="toggleOdAutosave(this.checked)" />
+          Auto-save to OneDrive on every change
+        </label>
+      </div>
+
+      <div id="od-msft-status" style="font-size:12px;min-height:18px;margin-top:10px"></div>
     </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('onedrive-modal')">Cancel</button>
+
+    <!-- ── Load from URL Panel ── -->
+    <div id="od-panel-url" style="display:none">
+      <p style="font-size:13px;color:var(--ms-muted);margin-bottom:14px">
+        Load tracker data from any publicly accessible JSON URL (e.g. an OneDrive "Anyone with the link" share).
+      </p>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>File URL</label>
+        <input type="url" id="od-url-input"
+               placeholder="https://… (OneDrive share link or direct JSON URL)"
+               style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
+      </div>
+      <div id="od-url-status" style="font-size:12px;min-height:18px;margin-bottom:10px"></div>
+      <div class="od-info-box">
+        <strong>Tips:</strong><br>
+        • OneDrive personal: share file → copy link → paste here<br>
+        • OneDrive for Business: <em>Share → Anyone with the link → Copy</em><br>
+        • The file must be a JSON export from this app
+      </div>
       <button class="btn btn-blue" onclick="loadFromOneDriveUrl()">⬇️ Load from URL</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('onedrive-modal')">Close</button>
     </div>
   </div>
 </div>
 
+<script src="https://alcdn.msauth.net/browser/3.28.1/js/msal-browser.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
 //  LOCK SCREEN
@@ -1180,12 +1255,14 @@ function save() {
     clearTimeout(_fsSaveTimer);
     _fsSaveTimer = setTimeout(saveToFs, 400);
   }
+  if (_odAutosave && _msalAccount) _scheduleOdSave();
 }
 function uid()  { return Math.random().toString(36).slice(2,10); }
 
 // ── Bootstrap
 window.addEventListener('DOMContentLoaded', async () => {
   await initFileSystem();
+  await initOneDrive();
   if (state.current) {
     const c = state.customers.find(x => x.id === state.current);
     if (c) { openDetail(state.current); return; }
@@ -2078,58 +2155,267 @@ function importData(input) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  ONEDRIVE / URL LOAD
+//  ONEDRIVE — MICROSOFT GRAPH (MSAL)
 // ═══════════════════════════════════════════════════════
-function openOneDriveModal() {
-  document.getElementById('od-url-input').value = '';
-  document.getElementById('od-status').textContent = '';
-  document.getElementById('onedrive-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('od-url-input').focus(), 80);
+const OD_FILE_NAME  = 'copilot-tracker-data.json';
+const GRAPH_SCOPES  = ['Files.ReadWrite', 'User.Read'];
+const OD_STORE_KEY  = 'copilot-tracker-od';
+const OD_CID_KEY    = 'copilot-tracker-od-clientid';
+
+let _msalApp     = null;
+let _msalAccount = null;
+let _odAutosave  = false;
+let _odSaveTimer = null;
+
+async function initOneDrive() {
+  // Restore autosave preference and attempt silent sign-in
+  try {
+    const od = JSON.parse(localStorage.getItem(OD_STORE_KEY) || '{}');
+    _odAutosave = !!od.autosave;
+    const clientId = localStorage.getItem(OD_CID_KEY);
+    if (!clientId) return;
+    if (typeof msal === 'undefined') return;
+    const app = await _buildMsalApp(clientId);
+    const accounts = app.getAllAccounts();
+    if (accounts.length > 0) {
+      _msalAccount = accounts[0];
+      updateOdBtn();
+    }
+  } catch { /* silent fail */ }
 }
 
-function _resolveOneDriveUrl(url) {
-  // Transform OneDrive personal share links to direct download
-  // e.g. https://1drv.ms/u/s!Abc... → https://api.onedrive.com/v1.0/shares/...
-  if (/^https?:\/\/1drv\.ms\//i.test(url) || /^https?:\/\/onedrive\.live\.com\//i.test(url)) {
-    // Encode URL to base64 for Graph API shares endpoint
+async function _buildMsalApp(clientId) {
+  if (_msalApp && _msalApp._config && _msalApp._config.auth.clientId === clientId) return _msalApp;
+  const app = new msal.PublicClientApplication({
+    auth: {
+      clientId,
+      authority: 'https://login.microsoftonline.com/common',
+      redirectUri: window.location.href.split('?')[0].split('#')[0],
+    },
+    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false },
+  });
+  await app.initialize();
+  _msalApp = app;
+  return app;
+}
+
+async function _getAccessToken() {
+  if (!_msalApp || !_msalAccount) throw new Error('Not signed in to OneDrive');
+  try {
+    const r = await _msalApp.acquireTokenSilent({ scopes: GRAPH_SCOPES, account: _msalAccount });
+    return r.accessToken;
+  } catch {
+    const r = await _msalApp.acquireTokenPopup({ scopes: GRAPH_SCOPES, account: _msalAccount });
+    _msalAccount = r.account;
+    return r.accessToken;
+  }
+}
+
+function openOneDriveModal() {
+  const saved = localStorage.getItem(OD_CID_KEY) || '';
+  const cidEl = document.getElementById('od-client-id');
+  if (cidEl && saved) cidEl.value = saved;
+  _renderOdState();
+  document.getElementById('od-msft-status').textContent = '';
+  switchOdTab('msft');
+  document.getElementById('onedrive-modal').classList.remove('hidden');
+}
+
+function switchOdTab(tab) {
+  document.getElementById('od-panel-msft').style.display = tab === 'msft' ? '' : 'none';
+  document.getElementById('od-panel-url').style.display  = tab === 'url'  ? '' : 'none';
+  document.getElementById('od-tab-msft').classList.toggle('active', tab === 'msft');
+  document.getElementById('od-tab-url').classList.toggle('active', tab === 'url');
+}
+
+function _renderOdState() {
+  const signedIn = !!_msalAccount;
+  document.getElementById('od-signed-out-panel').style.display = signedIn ? 'none' : '';
+  document.getElementById('od-signed-in-panel').style.display  = signedIn ? '' : 'none';
+  if (signedIn) {
+    document.getElementById('od-username-label').textContent = _msalAccount.username || _msalAccount.name || '';
+    document.getElementById('od-autosave-toggle').checked = _odAutosave;
+  }
+}
+
+function toggleClientIdHelp() {
+  const el = document.getElementById('od-clientid-help');
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+async function signInOneDrive() {
+  const clientId = document.getElementById('od-client-id').value.trim();
+  const st = document.getElementById('od-msft-status');
+  if (!clientId) { st.style.color = 'var(--miss)'; st.textContent = '⚠️ Enter your Client ID first.'; return; }
+  if (typeof msal === 'undefined') { st.style.color = 'var(--miss)'; st.textContent = '⚠️ MSAL library failed to load. Check your internet connection.'; return; }
+  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Opening Microsoft sign-in…';
+  try {
+    localStorage.setItem(OD_CID_KEY, clientId);
+    const app = await _buildMsalApp(clientId);
+    const result = await app.loginPopup({ scopes: GRAPH_SCOPES });
+    _msalAccount = result.account;
+    st.textContent = '';
+    _renderOdState();
+    updateOdBtn();
+    showToast('✅ Signed in as ' + (_msalAccount.username || _msalAccount.name));
+  } catch(e) {
+    if (e.errorCode !== 'user_cancelled') {
+      st.style.color = 'var(--miss)';
+      st.textContent = '⚠️ Sign-in failed: ' + (e.message || e.errorCode || String(e));
+    } else { st.textContent = ''; }
+  }
+}
+
+function signOutOneDrive() {
+  if (_msalApp && _msalAccount) _msalApp.logoutPopup({ account: _msalAccount }).catch(() => {});
+  _msalAccount = null;
+  _odAutosave = false;
+  localStorage.setItem(OD_STORE_KEY, JSON.stringify({ autosave: false }));
+  _renderOdState();
+  updateOdBtn();
+  showToast('Signed out from OneDrive');
+}
+
+function toggleOdAutosave(enabled) {
+  _odAutosave = enabled;
+  localStorage.setItem(OD_STORE_KEY, JSON.stringify({ autosave: enabled }));
+  updateOdBtn();
+  showToast(enabled ? '✅ OneDrive auto-save enabled' : 'OneDrive auto-save disabled');
+  if (enabled) _scheduleOdSave();
+}
+
+function _scheduleOdSave() {
+  if (!_odAutosave || !_msalAccount) return;
+  clearTimeout(_odSaveTimer);
+  _odSaveTimer = setTimeout(_doOdSave, 800);
+}
+
+async function _doOdSave() {
+  try {
+    const token = await _getAccessToken();
+    const payload = {
+      _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
+      _saved: new Date().toISOString(),
+      customers: state.customers, template: state.template,
+    };
+    const res = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/root:/${OD_FILE_NAME}:/content`,
+      { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload, null, 2) }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    updateOdBtn(true); // flash green
+  } catch(e) { showToast('⚠️ OneDrive auto-save failed: ' + e.message); }
+}
+
+async function saveToOneDrive() {
+  const st = document.getElementById('od-msft-status');
+  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Saving…';
+  try {
+    const token = await _getAccessToken();
+    const payload = {
+      _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
+      _saved: new Date().toISOString(),
+      customers: state.customers, template: state.template,
+    };
+    const res = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/root:/${OD_FILE_NAME}:/content`,
+      { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload, null, 2) }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    st.style.color = 'var(--done)'; st.textContent = '✅ Saved to OneDrive successfully';
+    showToast('✅ Saved to OneDrive');
+    updateOdBtn();
+  } catch(e) {
+    st.style.color = 'var(--miss)'; st.textContent = '⚠️ Save failed: ' + e.message;
+    showToast('⚠️ OneDrive save failed');
+  }
+}
+
+async function loadFromOneDriveMsft() {
+  const st = document.getElementById('od-msft-status');
+  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Loading from OneDrive…';
+  try {
+    const token = await _getAccessToken();
+    const res = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/root:/${OD_FILE_NAME}:/content`,
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    if (res.status === 404) throw new Error('File not found in OneDrive — save first to create it.');
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    const payload = JSON.parse(await res.text());
+    if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid file format');
+    const custCount = payload.customers.length;
+    const replace = confirm(
+      `OneDrive file has ${custCount} customer(s).\n\nOK → Replace all current data\nCancel → Merge (skip duplicates)`
+    );
+    if (replace) {
+      state.customers = payload.customers;
+      state.template  = payload.template || state.template;
+      state.current   = null;
+    } else {
+      const ids = new Set(state.customers.map(c => c.id));
+      state.customers.push(...payload.customers.filter(c => !ids.has(c.id)));
+      if (payload.template) state.template = payload.template;
+    }
+    save();
+    closeModal('onedrive-modal');
+    goHome();
+    showToast(`✅ Loaded ${custCount} customer(s) from OneDrive`);
+  } catch(e) {
+    st.style.color = 'var(--miss)'; st.textContent = '⚠️ Load failed: ' + e.message;
+  }
+}
+
+function updateOdBtn() {
+  const btn = document.getElementById('od-btn');
+  if (!btn) return;
+  if (_msalAccount) {
+    const name = (_msalAccount.name || _msalAccount.username || 'OneDrive').split(' ')[0];
+    btn.textContent = '🟢 ' + name + (_odAutosave ? ' ●' : '');
+    btn.title = 'OneDrive: ' + (_msalAccount.username || '') + (_odAutosave ? ' (auto-save on)' : '') + ' — click to manage';
+    btn.classList.add('od-on');
+  } else {
+    btn.textContent = '☁️ OneDrive / URL';
+    btn.title = 'Save and load via OneDrive or URL';
+    btn.classList.remove('od-on');
+  }
+}
+
+// ── Load from URL (anonymous public URL) ────────────────
+function _resolveOdShareUrl(url) {
+  if (/^https?:\/\/(1drv\.ms|onedrive\.live\.com)\//i.test(url)) {
     try {
       const encoded = btoa(url).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
       return `https://api.onedrive.com/v1.0/shares/u!${encoded}/root/content`;
     } catch { return url; }
   }
-  // SharePoint / OneDrive for Business — append download param
   if (/sharepoint\.com/i.test(url) && !url.includes('download=1')) {
-    const sep = url.includes('?') ? '&' : '?';
-    return url + sep + 'download=1';
+    return url + (url.includes('?') ? '&' : '?') + 'download=1';
   }
   return url;
 }
 
 async function loadFromOneDriveUrl() {
   const rawUrl = document.getElementById('od-url-input').value.trim();
-  const statusEl = document.getElementById('od-status');
-  if (!rawUrl) { statusEl.textContent = '⚠️ Please enter a URL.'; statusEl.style.color = 'var(--miss)'; return; }
-  statusEl.textContent = '⏳ Fetching…'; statusEl.style.color = 'var(--ms-muted)';
-  const url = _resolveOneDriveUrl(rawUrl);
+  const st = document.getElementById('od-url-status');
+  if (!rawUrl) { st.style.color = 'var(--miss)'; st.textContent = '⚠️ Please enter a URL.'; return; }
+  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Fetching…';
   try {
-    const res = await fetch(url);
+    const res = await fetch(_resolveOdShareUrl(rawUrl));
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    const text = await res.text();
-    const payload = JSON.parse(text);
+    const payload = JSON.parse(await res.text());
     if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid file: missing customers array');
     const custCount = payload.customers.length;
-    const mode = confirm(
-      `File contains ${custCount} customer(s).\n\n` +
-      `• OK  → REPLACE all current data\n` +
-      `• Cancel → Merge into existing data (skip duplicates)`
+    const replace = confirm(
+      `File has ${custCount} customer(s).\n\nOK → Replace all current data\nCancel → Merge (skip duplicates)`
     );
-    if (mode) {
+    if (replace) {
       state.customers = payload.customers;
       state.template  = payload.template || state.template;
       state.current   = null;
     } else {
-      const existingIds = new Set(state.customers.map(c => c.id));
-      state.customers.push(...payload.customers.filter(c => !existingIds.has(c.id)));
+      const ids = new Set(state.customers.map(c => c.id));
+      state.customers.push(...payload.customers.filter(c => !ids.has(c.id)));
       if (payload.template) state.template = payload.template;
     }
     save();
@@ -2137,11 +2423,12 @@ async function loadFromOneDriveUrl() {
     goHome();
     showToast(`✅ Loaded ${custCount} customer(s) from URL`);
   } catch(e) {
-    statusEl.style.color = 'var(--miss)';
-    if (e.name === 'TypeError' || e.message.toLowerCase().includes('failed to fetch') || e.message.toLowerCase().includes('cors')) {
-      statusEl.textContent = '⚠️ Could not fetch URL — the file may not be publicly accessible or CORS is blocked. Try downloading and using Import instead.';
+    st.style.color = 'var(--miss)';
+    const msg = e.message || '';
+    if (e.name === 'TypeError' || msg.toLowerCase().includes('failed to fetch')) {
+      st.textContent = '⚠️ Could not reach URL — the file may not be publicly accessible or CORS is blocked. Use the Microsoft OneDrive tab (signed-in) for reliable access.';
     } else {
-      statusEl.textContent = '⚠️ Error: ' + e.message;
+      st.textContent = '⚠️ Error: ' + msg;
     }
   }
 }
