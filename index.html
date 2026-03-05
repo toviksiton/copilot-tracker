@@ -8,11 +8,11 @@
 /* ── Reset & Root ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --ms-blue: #0078d4;
-  --ms-blue-dark: #005a9e;
-  --ms-blue-light: #e8f0fe;
+  --ms-blue: #7c3aed;
+  --ms-blue-dark: #6d28d9;
+  --ms-blue-light: #f5f3ff;
   --ms-light: #f3f2f1;
-  --ms-border: #d2d0ce;
+  --ms-border: #e5e7eb;
   --ms-text: #201f1e;
   --ms-muted: #605e5c;
   --done: #107c10;    --done-bg: #dff6dd;
@@ -27,7 +27,7 @@
 
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #f0f2f5;
+  background: #f9fafb;
   color: var(--ms-text);
   min-height: 100vh;
 }
@@ -35,7 +35,7 @@ body {
 /* ── Lock Screen ── */
 #lock-screen {
   position: fixed; inset: 0; z-index: 9999;
-  background: linear-gradient(135deg, #0050a0 0%, #0078d4 60%, #50e6ff 100%);
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 60%, #db2777 100%);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
 }
@@ -97,7 +97,7 @@ body {
 
 /* ── Header ── */
 header {
-  background: var(--ms-blue);
+  background: #111827;
   color: #fff;
   padding: 0 24px;
   display: flex;
@@ -128,8 +128,8 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   cursor: pointer; font-size: 13px; font-family: inherit; transition: background .15s;
 }
 .hbtn:hover { background: rgba(255,255,255,.28); }
-.hbtn.primary { background: #fff; color: var(--ms-blue); font-weight: 600; border-color: #fff; }
-.hbtn.primary:hover { background: #e8f0fe; }
+.hbtn.primary { background: linear-gradient(135deg,#7c3aed,#db2777); color: #fff; font-weight: 600; border-color: transparent; }
+.hbtn.primary:hover { background: linear-gradient(135deg,#6d28d9,#be185d); }
 .hbtn:disabled { opacity: .45; cursor: not-allowed; }
 .hbtn-sep { width: 1px; background: rgba(255,255,255,.25); align-self: stretch; margin: 8px 2px; }
 
@@ -163,16 +163,17 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   margin-bottom: 28px;
 }
 .ds-card {
-  background: #fff; border: 1px solid var(--ms-border); border-radius: var(--radius);
-  padding: 16px 18px; box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
   display: flex; flex-direction: column; gap: 4px;
+  position: relative; overflow: hidden;
 }
-.ds-card .ds-num { font-size: 28px; font-weight: 700; }
-.ds-card .ds-lbl { font-size: 12px; color: var(--ms-muted); }
-.ds-card.accent { border-left: 4px solid var(--ms-blue); }
-.ds-card.green   { border-left: 4px solid var(--done); }
-.ds-card.red     { border-left: 4px solid var(--miss); }
-.ds-card.orange  { border-left: 4px solid var(--block); }
+.ds-card::after { content:''; position:absolute; right:-14px; top:-14px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.12); pointer-events:none; }
+.ds-card .ds-num { font-size: 28px; font-weight: 700; color: #fff; }
+.ds-card .ds-lbl { font-size: 12px; color: rgba(255,255,255,.8); }
+.ds-card.accent { background: linear-gradient(135deg,#2563eb,#3b82f6); }
+.ds-card.green   { background: linear-gradient(135deg,#059669,#10b981); }
+.ds-card.red     { background: linear-gradient(135deg,#d97706,#f59e0b); }
+.ds-card.orange  { background: linear-gradient(135deg,#dc2626,#ef4444); }
 
 /* Customer cards grid */
 .customers-grid {
@@ -242,7 +243,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .cp-bar-bg { height: 8px; background: #e8e8e8; border-radius: 4px; overflow: hidden; }
 .cp-bar-fill {
   height: 100%; border-radius: 4px;
-  background: linear-gradient(90deg, var(--ms-blue) 0%, #50e6ff 100%);
+  background: linear-gradient(90deg, #7c3aed, #db2777);
   transition: width .5s ease;
 }
 .cp-labels {
@@ -312,7 +313,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .do-bar-wrap { flex: 1; min-width: 180px; }
 .do-bar-label { font-size: 12px; color: var(--ms-muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
 .do-bar-bg { height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden; }
-.do-bar-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 5px; transition: width .5s; }
+.do-bar-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 5px; transition: width .5s; }
 .do-pills { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* Legend */
@@ -348,7 +349,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 }
 .cat-prog-wrap { padding: 7px 14px 10px; }
 .cat-prog-bg { height: 5px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
-.cat-prog-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 3px; transition: width .4s; }
+.cat-prog-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 3px; transition: width .4s; }
 .cat-prog-lbl { font-size: 10px; color: var(--ms-muted); margin-top: 3px; }
 .category-body { padding: 6px 12px; flex: 1; }
 .cat-header-actions { display: none; gap: 2px; margin-left: 2px; }
@@ -611,7 +612,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .overall-progress { margin-bottom: 14px; background: #f5f5f5; border-radius: 6px; padding: 10px 14px; }
 .overall-progress .op-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; }
 .op-bar { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
-.op-fill { height: 100%; background: linear-gradient(90deg, var(--ms-blue), #50e6ff); border-radius: 4px; }
+.op-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 4px; }
 
 /* ── Print ── */
 @media print {
@@ -1363,7 +1364,7 @@ function buildCustomerCard(customer) {
 
   // Color the progress bar based on pct
   const barColor = s.pct >= 75 ? 'linear-gradient(90deg,var(--done),#92d36e)'
-                  : s.pct >= 40 ? 'linear-gradient(90deg,var(--ms-blue),#50e6ff)'
+                  : s.pct >= 40 ? 'linear-gradient(90deg,#7c3aed,#db2777)'
                   : 'linear-gradient(90deg,#ca5010,#f5a55b)';
 
   // Avatar: logo image or initials
