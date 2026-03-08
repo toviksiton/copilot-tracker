@@ -2282,7 +2282,9 @@ function openOneDriveModal() {
   if (cidEl && saved) cidEl.value = saved;
   _renderOdState();
   document.getElementById('od-msft-status').textContent = '';
-  switchOdTab('msft');
+  // If a ?gist= param is present, jump straight to the GitHub tab
+  const urlGist = new URLSearchParams(window.location.search).get('gist');
+  switchOdTab(urlGist ? 'github' : 'msft');
   document.getElementById('onedrive-modal').classList.remove('hidden');
 }
 
@@ -2661,11 +2663,12 @@ function _renderGhState() {
       shareEl.value = base + '?gist=' + _ghGistId;
     }
   } else {
-    // Pre-fill saved values in the inputs
+    // Pre-fill saved values in the inputs; also check URL param as fallback
+    const urlGist = new URLSearchParams(window.location.search).get('gist');
     const patEl  = document.getElementById('gh-pat-input');
     const gistEl = document.getElementById('gh-gist-input');
-    if (patEl && _ghPat)     patEl.value  = _ghPat;
-    if (gistEl && _ghGistId) gistEl.value = _ghGistId;
+    if (patEl && _ghPat)                       patEl.value  = _ghPat;
+    if (gistEl && (_ghGistId || urlGist))      gistEl.value = _ghGistId || urlGist;
   }
 }
 
