@@ -935,10 +935,11 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 <!-- ═══════════════════════════ ONEDRIVE / URL MODAL ═══════════════════════════ -->
 <div class="modal-overlay hidden" id="onedrive-modal">
   <div class="modal" style="max-width:500px">
-    <h2>☁️ OneDrive / URL</h2>
+    <h2>☁️ Cloud Sync</h2>
     <div class="od-tabs">
       <button class="od-tab active" id="od-tab-msft" onclick="switchOdTab('msft')">Microsoft OneDrive</button>
       <button class="od-tab" id="od-tab-url" onclick="switchOdTab('url')">Load from URL</button>
+      <button class="od-tab" id="od-tab-github" onclick="switchOdTab('github')">GitHub Gist</button>
     </div>
 
     <!-- ── Microsoft OneDrive Panel ── -->
@@ -1015,6 +1016,59 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
         • The file must be a JSON export from this app
       </div>
       <button class="btn btn-blue" onclick="loadFromOneDriveUrl()">⬇️ Load from URL</button>
+    </div>
+
+    <!-- ── GitHub Gist Panel ── -->
+    <div id="od-panel-github" style="display:none">
+      <!-- Disconnected state -->
+      <div id="gh-disconnected-panel">
+        <p style="font-size:13px;color:var(--ms-muted);margin-bottom:14px">
+          Sync data via a public GitHub Gist. Every page load fetches <strong>fresh data from GitHub</strong>
+          (browser cache bypassed). Every change auto-saves back to the Gist, and the page polls for
+          remote updates every 30 seconds.
+        </p>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>GitHub Personal Access Token (PAT)</label>
+          <input type="password" id="gh-pat-input"
+                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
+        </div>
+        <div style="font-size:11px;color:var(--ms-muted);margin-bottom:10px">
+          Generate at <strong>github.com → Settings → Developer settings → Personal access tokens</strong><br>
+          Required scope: <code>gist</code> (for read/write) — leave blank for read-only from a public Gist.
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Gist ID <span style="font-weight:400;color:var(--ms-muted)">(leave blank to create a new Gist automatically)</span></label>
+          <input type="text" id="gh-gist-input"
+                 placeholder="e.g. a1b2c3d4e5f6… (optional)"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
+        </div>
+        <button class="btn btn-blue" onclick="connectGitHub()">Connect GitHub Gist →</button>
+      </div>
+      <!-- Connected state -->
+      <div id="gh-connected-panel" style="display:none">
+        <div class="od-connected-box">
+          <span style="font-size:22px">✅</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--done)">Connected to GitHub Gist</div>
+            <div id="gh-gist-label" style="font-size:11px;color:var(--ms-muted);word-break:break-all"></div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="disconnectGitHub()">Disconnect</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-blue" onclick="saveToGistManual()">💾 Save Now</button>
+          <button class="btn" onclick="loadFromGistManual()">⬇️ Load Now</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:12px">
+          <input type="checkbox" id="gh-autosave-toggle" onchange="toggleGhAutosave(this.checked)" />
+          Auto-sync: save on every change &amp; poll every 30 s
+        </label>
+        <div class="od-info-box" style="font-size:11px">
+          📌 Data is fetched fresh from GitHub on every page load — browser cache is bypassed.<br>
+          🔄 With auto-sync enabled, changes save immediately and remote updates are pulled every 30 s.
+        </div>
+      </div>
+      <div id="gh-status" style="font-size:12px;min-height:18px;margin-top:10px"></div>
     </div>
 
     <div class="modal-actions">
@@ -1257,6 +1311,7 @@ function save() {
     _fsSaveTimer = setTimeout(saveToFs, 400);
   }
   if (_odAutosave && _msalAccount) _scheduleOdSave();
+  if (_ghAutosave && _ghPat && _ghGistId) _scheduleGhSave();
 }
 function uid()  { return Math.random().toString(36).slice(2,10); }
 
@@ -1264,6 +1319,7 @@ function uid()  { return Math.random().toString(36).slice(2,10); }
 window.addEventListener('DOMContentLoaded', async () => {
   await initFileSystem();
   await initOneDrive();
+  await initGitHub();   // fetches fresh JSON from GitHub on every page load
   if (state.current) {
     const c = state.customers.find(x => x.id === state.current);
     if (c) { openDetail(state.current); return; }
@@ -2223,10 +2279,13 @@ function openOneDriveModal() {
 }
 
 function switchOdTab(tab) {
-  document.getElementById('od-panel-msft').style.display = tab === 'msft' ? '' : 'none';
-  document.getElementById('od-panel-url').style.display  = tab === 'url'  ? '' : 'none';
+  document.getElementById('od-panel-msft').style.display   = tab === 'msft'   ? '' : 'none';
+  document.getElementById('od-panel-url').style.display    = tab === 'url'    ? '' : 'none';
+  document.getElementById('od-panel-github').style.display = tab === 'github' ? '' : 'none';
   document.getElementById('od-tab-msft').classList.toggle('active', tab === 'msft');
   document.getElementById('od-tab-url').classList.toggle('active', tab === 'url');
+  document.getElementById('od-tab-github').classList.toggle('active', tab === 'github');
+  if (tab === 'github') _renderGhState();
 }
 
 function _renderOdState() {
@@ -2432,6 +2491,249 @@ async function loadFromOneDriveUrl() {
       st.textContent = '⚠️ Error: ' + msg;
     }
   }
+}
+
+// ═══════════════════════════════════════════════════════
+//  GITHUB GIST SYNC
+//  • On page load  → fetch fresh JSON from Gist (no browser cache)
+//  • On every save → debounced PATCH to Gist (800 ms)
+//  • Auto-poll     → re-fetch every 30 s for remote changes
+// ═══════════════════════════════════════════════════════
+const GH_PAT_KEY   = 'copilot-tracker-gh-pat';
+const GH_GIST_KEY  = 'copilot-tracker-gh-gist';
+const GH_RAW_KEY   = 'copilot-tracker-gh-raw';   // raw URL for cache-busting reads
+const GH_AUTO_KEY  = 'copilot-tracker-gh-auto';
+const GH_FILE      = 'copilot-tracker-data.json';
+
+let _ghPat      = localStorage.getItem(GH_PAT_KEY)  || '';
+let _ghGistId   = localStorage.getItem(GH_GIST_KEY) || '';
+let _ghRawUrl   = localStorage.getItem(GH_RAW_KEY)  || '';
+let _ghAutosave = localStorage.getItem(GH_AUTO_KEY) === 'true';
+let _ghSaveTimer = null;
+let _ghPollTimer = null;
+
+// ── Init: called on DOMContentLoaded ─────────────────
+async function initGitHub() {
+  if (!_ghGistId) return;
+  // Always load fresh from GitHub on page load — never use browser cache
+  const loaded = await _loadFromGist(true);
+  if (loaded) {
+    renderDashboard();
+    showToast('✅ Data loaded from GitHub Gist');
+  }
+  if (_ghAutosave) _startGhPoll();
+}
+
+// ── Read: fetch Gist content, bypassing all browser caches ──
+async function _loadFromGist(silent) {
+  if (!_ghGistId) return false;
+  try {
+    let payload;
+    if (_ghRawUrl) {
+      // Raw URL + timestamp query = guaranteed fresh response
+      const res = await fetch(_ghRawUrl + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      payload = JSON.parse(await res.text());
+    } else {
+      // Fall back to GitHub API (always fresh, CORS-safe, no auth needed for public gists)
+      const headers = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+      if (_ghPat) headers['Authorization'] = 'token ' + _ghPat;
+      const res = await fetch('https://api.github.com/gists/' + _ghGistId, { headers, cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const gist = await res.json();
+      const file = gist.files[GH_FILE];
+      if (!file) throw new Error('File "' + GH_FILE + '" not found in Gist');
+      // Store raw_url so future reads skip the API overhead
+      _ghRawUrl = file.raw_url.split('?')[0]; // strip any existing query
+      localStorage.setItem(GH_RAW_KEY, _ghRawUrl);
+      // Large gists: content may be truncated; use raw_url in that case
+      const content = file.truncated
+        ? await (await fetch(_ghRawUrl + '?t=' + Date.now(), { cache: 'no-store' })).text()
+        : file.content;
+      payload = JSON.parse(content);
+    }
+    if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid data structure');
+    state.customers = payload.customers;
+    state.template  = payload.template || state.template;
+    state.current   = null;
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    _ghStatus('✅ Synced from GitHub · ' + new Date().toLocaleTimeString(), 'var(--done)');
+    return true;
+  } catch(e) {
+    if (!silent) _ghStatus('⚠️ Load failed: ' + e.message, 'var(--miss)');
+    return false;
+  }
+}
+
+// ── Write: push current state to Gist ────────────────
+function _scheduleGhSave() {
+  if (!_ghPat || !_ghGistId) return;
+  clearTimeout(_ghSaveTimer);
+  _ghSaveTimer = setTimeout(_doGhSave, 800);
+}
+
+async function _doGhSave() {
+  if (!_ghPat || !_ghGistId) return;
+  try {
+    const payload = {
+      _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
+      _saved: new Date().toISOString(),
+      customers: state.customers, template: state.template,
+    };
+    const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'token ' + _ghPat,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: JSON.stringify({ files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const gist = await res.json();
+    // Update raw_url to the latest revision so next read gets this exact version
+    const file = gist.files[GH_FILE];
+    if (file && file.raw_url) {
+      _ghRawUrl = file.raw_url.split('?')[0];
+      localStorage.setItem(GH_RAW_KEY, _ghRawUrl);
+    }
+    _ghStatus('✅ Saved to GitHub · ' + new Date().toLocaleTimeString(), 'var(--done)');
+  } catch(e) {
+    showToast('⚠️ GitHub save failed: ' + e.message);
+    _ghStatus('⚠️ Save failed: ' + e.message, 'var(--miss)');
+  }
+}
+
+// ── Polling: pull remote changes every 30 s ──────────
+function _startGhPoll() {
+  clearInterval(_ghPollTimer);
+  _ghPollTimer = setInterval(async () => {
+    const loaded = await _loadFromGist(true);
+    if (loaded) renderDashboard();
+  }, 30000);
+}
+function _stopGhPoll() { clearInterval(_ghPollTimer); _ghPollTimer = null; }
+
+// ── UI helpers ────────────────────────────────────────
+function _ghStatus(msg, color) {
+  const el = document.getElementById('gh-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--ms-muted)'; }
+}
+
+function _renderGhState() {
+  const connected = !!(_ghGistId);
+  const outEl = document.getElementById('gh-disconnected-panel');
+  const inEl  = document.getElementById('gh-connected-panel');
+  if (!outEl || !inEl) return;
+  outEl.style.display = connected ? 'none' : '';
+  inEl.style.display  = connected ? '' : 'none';
+  if (connected) {
+    const lbl = document.getElementById('gh-gist-label');
+    if (lbl) lbl.textContent = 'Gist ID: ' + _ghGistId;
+    const tog = document.getElementById('gh-autosave-toggle');
+    if (tog) tog.checked = _ghAutosave;
+  } else {
+    // Pre-fill saved values in the inputs
+    const patEl  = document.getElementById('gh-pat-input');
+    const gistEl = document.getElementById('gh-gist-input');
+    if (patEl && _ghPat)    patEl.value  = _ghPat;
+    if (gistEl && _ghGistId) gistEl.value = _ghGistId;
+  }
+}
+
+// ── Connect / Disconnect ──────────────────────────────
+async function connectGitHub() {
+  const pat    = (document.getElementById('gh-pat-input').value  || '').trim();
+  const gistId = (document.getElementById('gh-gist-input').value || '').trim();
+  if (!pat && !gistId) {
+    _ghStatus('⚠️ Enter a PAT and/or Gist ID to connect.', 'var(--miss)'); return;
+  }
+  _ghStatus('⏳ Connecting…', 'var(--ms-muted)');
+
+  let resolvedGistId = gistId;
+
+  if (pat) {
+    // Verify PAT
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    });
+    if (!userRes.ok) { _ghStatus('⚠️ Invalid PAT (HTTP ' + userRes.status + ')', 'var(--miss)'); return; }
+    const user = await userRes.json();
+
+    if (!resolvedGistId) {
+      // Create a new public Gist with current data
+      const payload = {
+        _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
+        _saved: new Date().toISOString(),
+        customers: state.customers, template: state.template,
+      };
+      const createRes = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: { 'Authorization': 'token ' + pat, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+        body: JSON.stringify({ description: 'Copilot Adoption Tracker data', public: true, files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
+      });
+      if (!createRes.ok) { _ghStatus('⚠️ Could not create Gist (HTTP ' + createRes.status + ')', 'var(--miss)'); return; }
+      const gist = await createRes.json();
+      resolvedGistId = gist.id;
+      const file = gist.files[GH_FILE];
+      if (file && file.raw_url) { _ghRawUrl = file.raw_url.split('?')[0]; localStorage.setItem(GH_RAW_KEY, _ghRawUrl); }
+      showToast('✅ New Gist created! ID: ' + resolvedGistId);
+    }
+
+    _ghPat = pat;
+    localStorage.setItem(GH_PAT_KEY, pat);
+    _ghStatus('✅ Connected as ' + user.login, 'var(--done)');
+  }
+
+  _ghGistId = resolvedGistId;
+  localStorage.setItem(GH_GIST_KEY, _ghGistId);
+
+  // Load existing Gist data (or save current data if Gist was just created)
+  _ghStatus('⏳ Loading from Gist…', 'var(--ms-muted)');
+  const loaded = await _loadFromGist(false);
+  if (loaded) {
+    renderDashboard();
+    showToast('✅ Connected & loaded from GitHub Gist');
+  } else if (pat && gistId) {
+    // Gist exists but couldn't load — try saving current data to it
+    await _doGhSave();
+  }
+
+  _renderGhState();
+  if (_ghAutosave && _ghPat) _startGhPoll();
+}
+
+function disconnectGitHub() {
+  _stopGhPoll();
+  _ghPat = ''; _ghGistId = ''; _ghRawUrl = ''; _ghAutosave = false;
+  localStorage.removeItem(GH_PAT_KEY);
+  localStorage.removeItem(GH_GIST_KEY);
+  localStorage.removeItem(GH_RAW_KEY);
+  localStorage.removeItem(GH_AUTO_KEY);
+  _renderGhState();
+  _ghStatus('', '');
+  showToast('Disconnected from GitHub Gist');
+}
+
+function toggleGhAutosave(enabled) {
+  _ghAutosave = enabled;
+  localStorage.setItem(GH_AUTO_KEY, enabled ? 'true' : 'false');
+  if (enabled) { _scheduleGhSave(); _startGhPoll(); }
+  else { _stopGhPoll(); }
+  showToast(enabled ? '✅ GitHub auto-sync enabled' : 'GitHub auto-sync disabled');
+}
+
+// ── Manual actions ────────────────────────────────────
+async function saveToGistManual() {
+  _ghStatus('⏳ Saving…', 'var(--ms-muted)');
+  await _doGhSave();
+}
+
+async function loadFromGistManual() {
+  _ghStatus('⏳ Loading…', 'var(--ms-muted)');
+  const loaded = await _loadFromGist(false);
+  if (loaded) { renderDashboard(); showToast('✅ Data loaded from GitHub Gist'); }
 }
 
 let _toastTimer = null;
