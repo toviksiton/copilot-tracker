@@ -2640,6 +2640,8 @@ const GH_GIST_KEY  = 'copilot-tracker-gh-gist';
 const GH_RAW_KEY   = 'copilot-tracker-gh-raw';   // raw URL for cache-busting reads
 const GH_AUTO_KEY  = 'copilot-tracker-gh-auto';
 const GH_FILE      = 'copilot-tracker-data.json';
+// GitHub username — used to auto-discover the public Gist in any browser (no setup needed)
+const GH_OWNER     = 'toviksiton';
 
 let _ghPat      = localStorage.getItem(GH_PAT_KEY)  || '';
 let _ghGistId   = localStorage.getItem(GH_GIST_KEY) || '';
@@ -2650,16 +2652,35 @@ let _ghPollTimer = null;
 
 // ── Init: called on DOMContentLoaded ─────────────────
 async function initGitHub() {
-  // If a ?gist=ID param is in the URL, use it — no PAT needed for public gists
+  // Layer 1: ?gist=ID URL param (from share link)
   const urlGist = new URLSearchParams(window.location.search).get('gist');
   if (urlGist && urlGist !== _ghGistId) {
     _ghGistId = urlGist;
     localStorage.setItem(GH_GIST_KEY, _ghGistId);
-    // Don't override existing PAT; just set the gist id
   }
+
+  // Layer 2: Auto-discover — search the owner's public gists (no PAT, no URL param needed)
+  if (!_ghGistId && GH_OWNER) {
+    try {
+      const res = await fetch(
+        `https://api.github.com/users/${GH_OWNER}/gists?per_page=30`,
+        { cache: 'no-store' }
+      );
+      if (res.ok) {
+        const list = await res.json();
+        const found = Array.isArray(list) && list.find(
+          g => g.description === 'Copilot Adoption Tracker data' && g.files && g.files[GH_FILE]
+        );
+        if (found) {
+          _ghGistId = found.id;
+          localStorage.setItem(GH_GIST_KEY, _ghGistId);
+        }
+      }
+    } catch(e) { /* no network or no gist yet — silent */ }
+  }
+
   if (!_ghGistId) return;
-  updateOdBtn(); // show connected state immediately on page load
-  // Always load fresh from GitHub on page load — never use browser cache
+  updateOdBtn();
   const loaded = await _loadFromGist(true);
   if (loaded) {
     renderDashboard();
