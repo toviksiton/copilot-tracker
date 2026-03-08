@@ -1063,9 +1063,17 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
           <input type="checkbox" id="gh-autosave-toggle" onchange="toggleGhAutosave(this.checked)" />
           Auto-sync: save on every change &amp; poll every 30 s
         </label>
-        <div class="od-info-box" style="font-size:11px">
+        <div class="od-info-box" style="font-size:11px;margin-bottom:10px">
           📌 Data is fetched fresh from GitHub on every page load — browser cache is bypassed.<br>
           🔄 With auto-sync enabled, changes save immediately and remote updates are pulled every 30 s.
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="gh-share-url" type="text" readonly
+                 style="flex:1;padding:6px 10px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:11px;font-family:monospace;background:#faf9f8;color:var(--ms-text);min-width:0" />
+          <button class="btn btn-sm" onclick="copyGhShareUrl()" title="Copy share link">📋 Copy link</button>
+        </div>
+        <div style="font-size:11px;color:var(--ms-muted);margin-top:4px">
+          Share this URL — any browser opening it auto-loads data (read-only, no PAT needed).
         </div>
       </div>
       <div id="gh-status" style="font-size:12px;min-height:18px;margin-top:10px"></div>
@@ -2518,13 +2526,21 @@ let _ghPollTimer = null;
 
 // ── Init: called on DOMContentLoaded ─────────────────
 async function initGitHub() {
+  // If a ?gist=ID param is in the URL, use it — no PAT needed for public gists
+  const urlGist = new URLSearchParams(window.location.search).get('gist');
+  if (urlGist && urlGist !== _ghGistId) {
+    _ghGistId = urlGist;
+    localStorage.setItem(GH_GIST_KEY, _ghGistId);
+    // Don't override existing PAT; just set the gist id
+  }
   if (!_ghGistId) return;
   updateOdBtn(); // show connected state immediately on page load
   // Always load fresh from GitHub on page load — never use browser cache
   const loaded = await _loadFromGist(true);
   if (loaded) {
     renderDashboard();
-    showToast('✅ Data loaded from GitHub Gist');
+    if (urlGist) showToast('✅ Data loaded from shared GitHub Gist');
+    else         showToast('✅ Data loaded from GitHub Gist');
   }
   if (_ghAutosave) _startGhPoll();
 }
@@ -2638,13 +2654,25 @@ function _renderGhState() {
     if (lbl) lbl.textContent = 'Gist ID: ' + _ghGistId;
     const tog = document.getElementById('gh-autosave-toggle');
     if (tog) tog.checked = _ghAutosave;
+    // Populate share URL
+    const shareEl = document.getElementById('gh-share-url');
+    if (shareEl) {
+      const base = window.location.origin + window.location.pathname;
+      shareEl.value = base + '?gist=' + _ghGistId;
+    }
   } else {
     // Pre-fill saved values in the inputs
     const patEl  = document.getElementById('gh-pat-input');
     const gistEl = document.getElementById('gh-gist-input');
-    if (patEl && _ghPat)    patEl.value  = _ghPat;
+    if (patEl && _ghPat)     patEl.value  = _ghPat;
     if (gistEl && _ghGistId) gistEl.value = _ghGistId;
   }
+}
+
+function copyGhShareUrl() {
+  const el = document.getElementById('gh-share-url');
+  if (!el) return;
+  navigator.clipboard.writeText(el.value).then(() => showToast('📋 Share link copied!'));
 }
 
 // ── Connect / Disconnect ──────────────────────────────
