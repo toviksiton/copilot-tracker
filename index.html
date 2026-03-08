@@ -631,6 +631,106 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   .customers-grid { grid-template-columns: 1fr; }
 }
 
+/* ── Hamburger button (hidden on desktop) ── */
+.nav-hamburger {
+  display: none;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff; font-size: 20px; line-height: 1;
+  width: 38px; height: 38px;
+  border-radius: var(--radius); cursor: pointer;
+  align-items: center; justify-content: center;
+  margin-left: auto; flex-shrink: 0;
+}
+
+/* ── Mobile layout (≤640px) ── */
+@media (max-width: 640px) {
+  /* Header */
+  header {
+    padding: 8px 14px;
+    height: auto; min-height: 52px;
+    flex-wrap: wrap; gap: 0;
+  }
+  .logo { font-size: 15px; gap: 6px; }
+  .logo sub { display: none; }
+  .breadcrumb {
+    font-size: 11px;
+    max-width: calc(100vw - 160px);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .nav-hamburger { display: flex; }
+  header nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    margin-left: 0; margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.15);
+    gap: 4px;
+  }
+  header nav.open { display: flex; }
+  .hbtn-sep { display: none; }
+  .hbtn { padding: 10px 14px; font-size: 14px; text-align: left; width: 100%; }
+
+  /* App */
+  .app { padding: 14px 12px; }
+  .dash-header h1 { font-size: 18px; }
+  .dash-header p { font-size: 13px; }
+  .ds-card { padding: 12px 14px; }
+  .ds-card .ds-num { font-size: 22px; }
+
+  /* Detail overall panel */
+  .detail-overall { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+  .do-pct { font-size: 28px; }
+  .do-bar-wrap { min-width: 100%; order: 2; }
+  .do-pills { width: 100%; order: 3; }
+  .detail-overall .btn { order: 4; }
+
+  /* Form grid collapses to 1 column */
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: 1; }
+
+  /* Modals */
+  .modal-overlay { padding: 10px; align-items: flex-start; padding-top: 16px; }
+  .modal { padding: 18px 14px; }
+  .modal h2 { font-size: 16px; margin-bottom: 14px; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions .btn { flex: 1; text-align: center; }
+
+  /* Legend */
+  .legend { gap: 6px 10px; font-size: 11px; }
+  .legend > span:last-child { display: none; }
+
+  /* Item rows: always show actions (no hover on touch) */
+  .item-actions { display: flex !important; }
+  .cat-header-actions { display: flex !important; }
+  .icon-btn { width: 28px; height: 28px; font-size: 13px; }
+  .status-btn { width: 30px; height: 30px; font-size: 14px; }
+  .item-label { font-size: 12px; }
+
+  /* Pillars / Report overlays */
+  .pillars-overlay { padding: 0; align-items: flex-start; }
+  .pillars-sheet { border-radius: 0; max-width: 100%; min-height: 100dvh; }
+  .pillars-body { padding: 14px 12px; }
+  .report-overlay { padding: 0; align-items: flex-start; }
+  .report-sheet { border-radius: 0; max-width: 100%; min-height: 100dvh; }
+  #report-content { padding: 16px 12px; }
+  .report-header { flex-direction: column; gap: 8px; }
+  .report-meta { text-align: left; }
+  .report-summary { grid-template-columns: repeat(2,1fr); }
+
+  /* Card footer */
+  .cust-card-footer { flex-wrap: wrap; gap: 6px; }
+  .cust-card-footer .btn { flex: 1; text-align: center; }
+
+  /* Cloud Sync modal tabs */
+  .od-tabs { flex-wrap: wrap; }
+  .od-tab { flex: none; min-width: 50%; }
+
+  /* Toast: wider on mobile */
+  .toast { width: calc(100% - 28px); text-align: center; left: 14px; transform: none; }
+}
+
 /* view toggle */
 .view { display: none; }
 .view.active { display: block; }
@@ -706,16 +806,17 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <span class="sep">›</span>
     <span id="crumb-name"></span>
   </div>
-  <nav>
-    <button class="hbtn" onclick="openPillars()">⚙️ Pillars</button>
-    <button class="hbtn" onclick="openAddCustomer()">+ Add Customer</button>
-    <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">☰</button>
+  <nav id="main-nav">
+    <button class="hbtn" onclick="openPillars();closeNav()">⚙️ Pillars</button>
+    <button class="hbtn" onclick="openAddCustomer();closeNav()">+ Add Customer</button>
+    <button class="hbtn primary" id="report-btn" onclick="openReport();closeNav()" disabled>📄 Report</button>
     <div class="hbtn-sep"></div>
-    <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile()">📁 Connect File</button>
-    <button class="hbtn" id="od-btn" title="Save and load via OneDrive, GitHub Gist, or URL" onclick="openOneDriveModal()">☁️ Cloud Sync</button>
+    <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile();closeNav()">📁 Connect File</button>
+    <button class="hbtn" id="od-btn" title="Save and load via OneDrive, GitHub Gist, or URL" onclick="openOneDriveModal();closeNav()">☁️ Cloud Sync</button>
     <div class="hbtn-sep"></div>
-    <button class="hbtn" title="Export all data to a JSON file" onclick="exportData()">💾 Export</button>
-    <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click()">📥 Import</button>
+    <button class="hbtn" title="Export all data to a JSON file" onclick="exportData();closeNav()">💾 Export</button>
+    <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click();closeNav()">📥 Import</button>
     <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(this)" />
   </nav>
 </header>
@@ -1351,6 +1452,27 @@ function custStats(customer) {
   const pct = total ? Math.round((done/total)*100) : 0;
   return { total, done, missed, blocked, unblock, pending, pct };
 }
+
+// ═══════════════════════════════════════════════════════
+//  MOBILE NAV HAMBURGER
+// ═══════════════════════════════════════════════════════
+function toggleNav() {
+  const nav = document.getElementById('main-nav');
+  const btn = document.getElementById('nav-hamburger');
+  const open = nav.classList.toggle('open');
+  btn.textContent = open ? '✕' : '☰';
+}
+function closeNav() {
+  const nav = document.getElementById('main-nav');
+  const btn = document.getElementById('nav-hamburger');
+  nav.classList.remove('open');
+  btn.textContent = '☰';
+}
+document.addEventListener('click', function(e) {
+  const nav = document.getElementById('main-nav');
+  if (!nav || !nav.classList.contains('open')) return;
+  if (!e.target.closest('#main-nav') && !e.target.closest('#nav-hamburger')) closeNav();
+});
 
 // ═══════════════════════════════════════════════════════
 //  NAVIGATION
