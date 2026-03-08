@@ -637,7 +637,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 
 /* ── OneDrive tabs ── */
 .od-tabs { display: flex; gap: 0; border: 1px solid var(--ms-border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
-.od-tab { flex: 1; padding: 8px 12px; background: #faf9f8; border: none; border-right: 1px solid var(--ms-border); cursor: pointer; font-size: 13px; font-family: inherit; color: var(--ms-muted); }
+.od-tab { flex: 1; padding: 8px 8px; background: #faf9f8; border: none; border-right: 1px solid var(--ms-border); cursor: pointer; font-size: 12px; font-family: inherit; color: var(--ms-muted); text-align: center; }
 .od-tab:last-child { border-right: none; }
 .od-tab.active { background: var(--ms-blue); color: #fff; font-weight: 600; }
 .od-tab:hover:not(.active) { background: var(--ms-light); }
@@ -712,7 +712,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile()">📁 Connect File</button>
-    <button class="hbtn" id="od-btn" title="Load or save via OneDrive / URL" onclick="openOneDriveModal()">☁️ OneDrive / URL</button>
+    <button class="hbtn" id="od-btn" title="Save and load via OneDrive, GitHub Gist, or URL" onclick="openOneDriveModal()">☁️ Cloud Sync</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" title="Export all data to a JSON file" onclick="exportData()">💾 Export</button>
     <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click()">📥 Import</button>
@@ -2434,9 +2434,13 @@ function updateOdBtn() {
     btn.textContent = '🟢 ' + name + (_odAutosave ? ' ●' : '');
     btn.title = 'OneDrive: ' + (_msalAccount.username || '') + (_odAutosave ? ' (auto-save on)' : '') + ' — click to manage';
     btn.classList.add('od-on');
+  } else if (_ghGistId) {
+    btn.textContent = '🐙 GitHub' + (_ghAutosave ? ' ●' : '');
+    btn.title = 'GitHub Gist: ' + _ghGistId + (_ghAutosave ? ' (auto-sync on)' : '') + ' — click to manage';
+    btn.classList.add('od-on');
   } else {
-    btn.textContent = '☁️ OneDrive / URL';
-    btn.title = 'Save and load via OneDrive or URL';
+    btn.textContent = '☁️ Cloud Sync';
+    btn.title = 'Save and load via OneDrive, GitHub Gist, or URL';
     btn.classList.remove('od-on');
   }
 }
@@ -2515,6 +2519,7 @@ let _ghPollTimer = null;
 // ── Init: called on DOMContentLoaded ─────────────────
 async function initGitHub() {
   if (!_ghGistId) return;
+  updateOdBtn(); // show connected state immediately on page load
   // Always load fresh from GitHub on page load — never use browser cache
   const loaded = await _loadFromGist(true);
   if (loaded) {
@@ -2701,6 +2706,7 @@ async function connectGitHub() {
   }
 
   _renderGhState();
+  updateOdBtn();
   if (_ghAutosave && _ghPat) _startGhPoll();
 }
 
@@ -2713,6 +2719,7 @@ function disconnectGitHub() {
   localStorage.removeItem(GH_AUTO_KEY);
   _renderGhState();
   _ghStatus('', '');
+  updateOdBtn();
   showToast('Disconnected from GitHub Gist');
 }
 
@@ -2721,6 +2728,7 @@ function toggleGhAutosave(enabled) {
   localStorage.setItem(GH_AUTO_KEY, enabled ? 'true' : 'false');
   if (enabled) { _scheduleGhSave(); _startGhPoll(); }
   else { _stopGhPoll(); }
+  updateOdBtn();
   showToast(enabled ? '✅ GitHub auto-sync enabled' : 'GitHub auto-sync disabled');
 }
 
