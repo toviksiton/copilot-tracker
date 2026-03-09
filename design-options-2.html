@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Designs — Pick Your Direction</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #080808;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 48px 40px 64px;
+  }
+  h1 {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .preview-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .preview-container {
+    width: 450px;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 12px;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .preview-inner {
+    width: 900px;
+    height: 600px;
+    transform: scale(0.5);
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .label {
+    color: #ffffff;
+    padding: 0 4px;
+  }
+  .label strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    letter-spacing: -0.2px;
+  }
+  .label span {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+  }
+
+  /* ===================== DESIGN 1: BENTO GRID ===================== */
+  .d1 {
+    background: #ffffff;
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .d1-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .d1-wordmark {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: -0.5px;
+  }
+  .d1-bento {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto auto;
+    gap: 12px;
+    flex: 1;
+  }
+  .d1-tile {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+  }
+  .d1-tile-large {
+    grid-column: span 2;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    background: #000;
+  }
+  .d1-tile-large .d1-tile-text {
+    flex: 1;
+  }
+  .d1-tile-large .d1-tile-number {
+    font-size: 44px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+  .d1-tile-large .d1-tile-label {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+  }
+  .d1-tile-large .d1-tile-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+  }
+  .d1-donut {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(#fff 0% 37%, rgba(255,255,255,0.15) 37% 100%);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .d1-donut::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    background: #000;
+    border-radius: 50%;
+  }
+  .d1-blocked {
+    background: #fff0f0;
+  }
+  .d1-blocked .d1-tile-number {
+    font-size: 40px;
+    font-weight: 800;
+    color: #ef4444;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+  .d1-blocked .d1-tile-label { font-size: 13px; color: #888; }
+  .d1-blocked-icon {
+    width: 28px; height: 28px;
+    background: #ef4444;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .d1-customer .d1-tile-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: -0.2px;
+  }
+  .d1-customer .d1-tile-pct {
+    font-size: 32px;
+    font-weight: 800;
+    color: #000;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin: 6px 0;
+  }
+  .d1-bar-track {
+    height: 4px;
+    background: #f0f0f0;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .d1-bar-fill {
+    height: 100%;
+    background: #000;
+    border-radius: 99px;
+  }
+  .d1-tile-stat {
+    background: #f7f7f7;
+  }
+  .d1-tile-stat .d1-tile-number {
+    font-size: 36px;
+    font-weight: 800;
+    color: #000;
+    letter-spacing: -1.5px;
+    line-height: 1;
+  }
+  .d1-tile-stat .d1-tile-label { font-size: 12px; color: #999; margin-top: 4px; }
+
+  /* ===================== DESIGN 2: DARK NEON ===================== */
+  .d2 {
+    background: #0a0a0a;
+    background-image: radial-gradient(circle at 20% 50%, rgba(59,130,246,0.03) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, rgba(139,92,246,0.03) 0%, transparent 50%);
+    width: 100%;
+    height: 100%;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .d2-header {
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .d2-logo { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .d2-nav { display: flex; gap: 20px; }
+  .d2-nav a { font-size: 12px; color: #555; text-decoration: none; }
+  .d2-nav a.active { color: #fff; }
+  .d2-body { padding: 20px 28px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .d2-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .d2-stat-card {
+    background: #141414;
+    border: 1px solid #1f1f1f;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .d2-stat-num { font-size: 26px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+  .d2-stat-label { font-size: 10px; color: #444; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .d2-blue { color: #3b82f6; }
+  .d2-green { color: #22c55e; }
+  .d2-orange { color: #f59e0b; }
+  .d2-red { color: #ef4444; }
+  .d2-customers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; }
+  .d2-card {
+    background: #111111;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .d2-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  }
+  .d2-card-name { font-size: 12px; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
+  .d2-card-pct { font-size: 36px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
+  .d2-card-bar-track { height: 3px; background: #1f1f1f; border-radius: 99px; overflow: hidden; }
+  .d2-card-bar-fill { height: 100%; border-radius: 99px; }
+  .d2-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .d2-pill-green { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+  .d2-pill-orange { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+
+  /* ===================== DESIGN 3: GLASSMORPHISM ===================== */
+  .d3 {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .d3-orb1 {
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(168,85,247,0.25) 0%, transparent 70%);
+    top: -100px; left: -100px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .d3-orb2 {
+    position: absolute;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%);
+    bottom: -80px; right: -60px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .d3-orb3 {
+    position: absolute;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%);
+    top: 50%; right: 20%;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .d3-header {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  .d3-logo { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .d3-nav { display: flex; gap: 20px; }
+  .d3-nav a { font-size: 12px; color: rgba(255,255,255,0.5); text-decoration: none; }
+  .d3-body { padding: 20px 28px; flex: 1; display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
+  .d3-glass {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+  }
+  .d3-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .d3-stat {
+    padding: 16px;
+    text-align: center;
+  }
+  .d3-stat-num { font-size: 28px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+  .d3-stat-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .d3-cyan { color: #67e8f9; }
+  .d3-mint { color: #6ee7b7; }
+  .d3-pink { color: #f9a8d4; }
+  .d3-lavender { color: #c4b5fd; }
+  .d3-customers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; }
+  .d3-card { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .d3-card-name { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 0.5px; }
+  .d3-card-pct { font-size: 38px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: #67e8f9; }
+  .d3-bar-track { height: 3px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+  .d3-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #67e8f9, #6ee7b7); }
+  .d3-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 10px;
+    background: rgba(103,232,249,0.1);
+    color: #67e8f9;
+    border: 1px solid rgba(103,232,249,0.2);
+    width: fit-content;
+  }
+
+  /* ===================== DESIGN 4: NEO-BRUTALISM ===================== */
+  .d4 {
+    background: #f5f0e8;
+    width: 100%;
+    height: 100%;
+    font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .d4-header {
+    background: #000;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid #000;
+  }
+  .d4-logo { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: -0.5px; text-transform: uppercase; }
+  .d4-nav { display: flex; gap: 12px; }
+  .d4-nav a {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    padding: 4px 10px;
+    border: 2px solid #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .d4-body { padding: 20px 28px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .d4-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .d4-stat-box {
+    border: 2px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    padding: 14px;
+  }
+  .d4-yellow { background: #ffd60a; }
+  .d4-green2 { background: #06d6a0; }
+  .d4-red2 { background: #ef233c; }
+  .d4-blue2 { background: #4361ee; color: #fff; }
+  .d4-stat-num { font-size: 30px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; }
+  .d4-stat-label { font-size: 10px; font-weight: 700; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .d4-customers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex: 1; }
+  .d4-card {
+    background: #f5f0e8;
+    border: 2px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .d4-card-name { font-size: 13px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 0.5px; }
+  .d4-card-pct { font-size: 40px; font-weight: 900; color: #000; letter-spacing: -2px; line-height: 1; }
+  .d4-thick-track { height: 8px; background: #fff; border: 2px solid #000; overflow: hidden; }
+  .d4-thick-fill { height: 100%; }
+  .d4-btn {
+    background: #000;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 10px;
+    border: 2px solid #000;
+    box-shadow: 2px 2px 0 #555;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ===================== DESIGN 5: AURORA MESH ===================== */
+  .d5 {
+    background: #fff;
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .d5-aurora {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 300px;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 20%, rgba(236,72,153,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 70% 10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 50% 40%, rgba(139,92,246,0.07) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .d5-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  .d5-logo { font-size: 16px; font-weight: 700; color: #111; letter-spacing: -0.3px; }
+  .d5-nav { display: flex; gap: 20px; }
+  .d5-nav a { font-size: 13px; color: #888; text-decoration: none; }
+  .d5-kpi-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 28px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+    z-index: 1;
+  }
+  .d5-kpi-item { display: flex; align-items: center; gap: 8px; padding: 0 24px; }
+  .d5-kpi-item:first-child { padding-left: 0; }
+  .d5-kpi-num { font-size: 20px; font-weight: 700; color: #111; letter-spacing: -0.8px; }
+  .d5-kpi-label { font-size: 12px; color: #999; }
+  .d5-divider { width: 1px; height: 28px; background: #e8e8e8; flex-shrink: 0; }
+  .d5-body { padding: 20px 28px; flex: 1; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+  .d5-section-title { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.7px; }
+  .d5-customers { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .d5-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .d5-logo-circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .d5-card-info { flex: 1; }
+  .d5-card-name { font-size: 14px; font-weight: 600; color: #111; letter-spacing: -0.2px; }
+  .d5-card-date { font-size: 11px; color: #bbb; margin-top: 1px; }
+  .d5-card-bar-wrap { flex: 1; }
+  .d5-card-bar-track { height: 3px; background: #f4f4f4; border-radius: 99px; overflow: hidden; margin-top: 6px; }
+  .d5-card-bar-fill { height: 100%; border-radius: 99px; }
+  .d5-card-pct {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    flex-shrink: 0;
+    min-width: 65px;
+    text-align: right;
+  }
+  .d5-pill {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* ===================== DESIGN 6: COMMAND DASHBOARD ===================== */
+  .d6 {
+    background: #ffffff;
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .d6-topbar {
+    height: 44px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+  }
+  .d6-breadcrumb { font-size: 12px; color: #aaa; letter-spacing: -0.1px; }
+  .d6-breadcrumb span { color: #222; font-weight: 500; }
+  .d6-topbar-right { display: flex; align-items: center; gap: 12px; }
+  .d6-icon-btn { width: 28px; height: 28px; background: #f8f8f8; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .d6-avatar { width: 28px; height: 28px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; }
+  .d6-kpi-strip {
+    display: flex;
+    gap: 8px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+  .d6-kpi-mini {
+    height: 52px;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .d6-kpi-mini::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+  }
+  .d6-kpi-b1::before { background: #3b82f6; }
+  .d6-kpi-b2::before { background: #22c55e; }
+  .d6-kpi-b3::before { background: #8b5cf6; }
+  .d6-kpi-b4::before { background: #ef4444; }
+  .d6-kpi-icon { font-size: 16px; }
+  .d6-kpi-mini-num { font-size: 18px; font-weight: 700; color: #111; letter-spacing: -0.8px; line-height: 1; }
+  .d6-kpi-mini-label { font-size: 10px; color: #aaa; margin-top: 1px; }
+  .d6-main { display: flex; flex: 1; overflow: hidden; }
+  .d6-list { width: 40%; border-right: 1px solid #f0f0f0; display: flex; flex-direction: column; overflow: hidden; }
+  .d6-list-header { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+  .d6-list-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f9f9f9;
+    cursor: pointer;
+  }
+  .d6-list-row.active { background: #f8f8ff; }
+  .d6-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .d6-list-name { font-size: 13px; font-weight: 500; color: #222; flex: 1; }
+  .d6-list-pct { font-size: 13px; font-weight: 700; color: #555; }
+  .d6-spark { display: flex; align-items: flex-end; gap: 1.5px; height: 16px; }
+  .d6-spark-bar { width: 3px; background: #e0e0e0; border-radius: 1px; }
+  .d6-spark-bar.lit { background: #3b82f6; }
+  .d6-detail { flex: 1; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+  .d6-detail-header { display: flex; align-items: center; justify-content: space-between; }
+  .d6-detail-name { font-size: 18px; font-weight: 700; color: #111; letter-spacing: -0.5px; }
+  .d6-status-badge { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .d6-arc-row { display: flex; align-items: center; gap: 16px; }
+  .d6-arc {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(#3b82f6 0% 24%, #f0f0f0 24% 100%);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .d6-arc::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    background: #fff;
+    border-radius: 50%;
+  }
+  .d6-arc-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #111;
+    z-index: 1;
+    letter-spacing: -0.5px;
+  }
+  .d6-pillars { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .d6-pillar-row { display: flex; align-items: center; gap: 8px; }
+  .d6-pillar-label { font-size: 10px; color: #aaa; width: 60px; flex-shrink: 0; }
+  .d6-pillar-track { flex: 1; height: 5px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
+  .d6-pillar-fill { height: 100%; border-radius: 99px; background: #3b82f6; }
+  .d6-pillar-val { font-size: 10px; font-weight: 600; color: #555; width: 28px; text-align: right; }
+  .d6-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .d6-info-cell { background: #fafafa; border-radius: 8px; padding: 8px 10px; }
+  .d6-info-key { font-size: 10px; color: #bbb; margin-bottom: 2px; }
+  .d6-info-val { font-size: 12px; font-weight: 600; color: #333; }
+</style>
+</head>
+<body>
+<h1>Modern Designs — Pick Your Direction</h1>
+<div class="grid">
+
+  <!-- ==================== DESIGN 1: BENTO GRID ==================== -->
+  <div class="preview-wrap">
+    <div class="preview-container">
+      <div class="preview-inner">
+        <div class="d1">
+          <div class="d1-header">
+            <div class="d1-wordmark">Copilot Tracker</div>
+          </div>
+          <div class="d1-bento">
+
+            <!-- Large tile: donut -->
+            <div class="d1-tile d1-tile-large">
+              <div class="d1-tile-text">
+                <div class="d1-tile-number">37%</div>
+                <div class="d1-tile-label">Average Adoption</div>
+                <div class="d1-tile-sub">Across 3 customers</div>
+              </div>
+              <div class="d1-donut"></div>
+            </div>
+
+            <!-- Blocked -->
+            <div class="d1-tile d1-blocked" style="flex-direction:row;align-items:center;gap:12px;">
+              <div style="flex:1">
+                <div class="d1-tile-number">5</div>
+                <div class="d1-tile-label">Blocked Items</div>
+              </div>
+              <div class="d1-blocked-icon">!</div>
+            </div>
+
+            <!-- Strauss small -->
+            <div class="d1-tile d1-customer" style="background:#f7f7f7;">
+              <div class="d1-tile-name">Strauss Group</div>
+              <div class="d1-tile-pct">42%</div>
+              <div class="d1-bar-track"><div class="d1-bar-fill" style="width:42%;"></div></div>
+            </div>
+
+            <!-- AMDOCS medium -->
+            <div class="d1-tile d1-customer">
+              <div class="d1-tile-name">AMDOCS</div>
+              <div class="d1-tile-pct">24%</div>
+              <div class="d1-bar-track"><div class="d1-bar-fill" style="width:24%;"></div></div>
+            </div>
+
+            <!-- NiCE medium -->
+            <div class="d1-tile d1-customer">
+              <div class="d1-tile-name">NiCE</div>
+              <div class="d1-tile-pct">46%</div>
+              <div class="d1-bar-track"><div class="d1-bar-fill" style="width:46%;"></div></div>
+            </div>
+
+            <!-- 136 items -->
+            <div class="d1-tile d1-tile-stat" style="grid-column:span 2;">
+              <div class="d1-tile-number">136</div>
+              <div class="d1-tile-label">Total Items</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="label">
+      <strong>Design 1 — Bento Grid</strong>
+      <span>Apple-style asymmetric tiles with clean black-and-white hierarchy</span>
+    </div>
+  </div>
+
+  <!-- ==================== DESIGN 2: DARK NEON ==================== -->
+  <div class="preview-wrap">
+    <div class="preview-container">
+      <div class="preview-inner">
+        <div class="d2">
+          <div class="d2-header">
+            <div class="d2-logo">// copilot-tracker</div>
+            <div class="d2-nav">
+              <a href="#" class="active">overview</a>
+              <a href="#">customers</a>
+              <a href="#">items</a>
+            </div>
+          </div>
+          <div class="d2-body">
+            <div class="d2-stats">
+              <div class="d2-stat-card">
+                <div class="d2-stat-num d2-blue">3</div>
+                <div class="d2-stat-label">Customers</div>
+              </div>
+              <div class="d2-stat-card">
+                <div class="d2-stat-num d2-green">37%</div>
+                <div class="d2-stat-label">Avg Adoption</div>
+              </div>
+              <div class="d2-stat-card">
+                <div class="d2-stat-num d2-orange">136</div>
+                <div class="d2-stat-label">Total Items</div>
+              </div>
+              <div class="d2-stat-card">
+                <div class="d2-stat-num d2-red">5</div>
+                <div class="d2-stat-label">Blocked</div>
+              </div>
+            </div>
+            <div class="d2-customers">
+              <div class="d2-card">
+                <div class="d2-card-name">AMDOCS</div>
+                <div class="d2-card-pct d2-orange">24%</div>
+                <div class="d2-card-bar-track">
+                  <div class="d2-card-bar-fill" style="width:24%;background:#f59e0b;"></div>
+                </div>
+                <span class="d2-pill d2-pill-orange">at-risk</span>
+              </div>
+              <div class="d2-card">
+                <div class="d2-card-name">NiCE</div>
+                <div class="d2-card-pct d2-green">46%</div>
+                <div class="d2-card-bar-track">
+                  <div class="d2-card-bar-fill" style="width:46%;background:#22c55e;"></div>
+                </div>
+                <span class="d2-pill d2-pill-green">on-track</span>
+              </div>
+              <div class="d2-card">
+                <div class="d2-card-name">Strauss</div>
+                <div class="d2-card-pct d2-green">42%</div>
+                <div class="d2-card-bar-track">
+                  <div class="d2-card-bar-fill" style="width:42%;background:#22c55e;"></div>
+                </div>
+                <span class="d2-pill d2-pill-green">on-track</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="label">
+      <strong>Design 2 — Dark Neon</strong>
+      <span>Raycast/Linear dark mode with monospace type and neon accent colors</span>
+    </div>
+  </div>
+
+  <!-- ==================== DESIGN 3: GLASSMORPHISM ==================== -->
+  <div class="preview-wrap">
+    <div class="preview-container">
+      <div class="preview-inner">
+        <div class="d3">
+          <div class="d3-orb1"></div>
+          <div class="d3-orb2"></div>
+          <div class="d3-orb3"></div>
+          <div class="d3-header">
+            <div class="d3-logo">Copilot Tracker</div>
+            <div class="d3-nav">
+              <a href="#">Overview</a>
+              <a href="#">Customers</a>
+              <a href="#">Reports</a>
+            </div>
+          </div>
+          <div class="d3-body">
+            <div class="d3-stats">
+              <div class="d3-glass d3-stat">
+                <div class="d3-stat-num d3-cyan">3</div>
+                <div class="d3-stat-label">Customers</div>
+              </div>
+              <div class="d3-glass d3-stat">
+                <div class="d3-stat-num d3-mint">37%</div>
+                <div class="d3-stat-label">Avg Adoption</div>
+              </div>
+              <div class="d3-glass d3-stat">
+                <div class="d3-stat-num d3-lavender">136</div>
+                <div class="d3-stat-label">Total Items</div>
+              </div>
+              <div class="d3-glass d3-stat">
+                <div class="d3-stat-num d3-pink">5</div>
+                <div class="d3-stat-label">Blocked</div>
+              </div>
+            </div>
+            <div class="d3-customers">
+              <div class="d3-glass d3-card">
+                <div class="d3-card-name">AMDOCS</div>
+                <div class="d3-card-pct" style="color:#f9a8d4;">24%</div>
+                <div class="d3-bar-track">
+                  <div class="d3-bar-fill" style="width:24%;background:linear-gradient(90deg,#f9a8d4,#c084fc);"></div>
+                </div>
+                <div class="d3-pill" style="background:rgba(249,168,212,0.1);color:#f9a8d4;border-color:rgba(249,168,212,0.2);">at-risk</div>
+              </div>
+              <div class="d3-glass d3-card">
+                <div class="d3-card-name">NiCE</div>
+                <div class="d3-card-pct">46%</div>
+                <div class="d3-bar-track">
+                  <div class="d3-bar-fill" style="width:46%;"></div>
+                </div>
+                <div class="d3-pill">on-track</div>
+              </div>
+              <div class="d3-glass d3-card">
+                <div class="d3-card-name">Strauss Group</div>
+                <div class="d3-card-pct" style="color:#6ee7b7;">42%</div>
+                <div class="d3-bar-track">
+                  <div class="d3-bar-fill" style="width:42%;background:linear-gradient(90deg,#6ee7b7,#67e8f9);"></div>
+                </div>
+                <div class="d3-pill" style="background:rgba(110,231,183,0.1);color:#6ee7b7;border-color:rgba(110,231,183,0.2);">on-track</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="label">
+      <strong>Design 3 — Glassmorphism Dark</strong>
+      <span>visionOS-inspired floating glass cards over deep purple gradient with glowing orbs</span>
+    </div>
+  </div>
+
+  <!-- ==================== DESIGN 4: NEO-BRUTALISM ==================== -->
+  <div class="preview-wrap">
+    <div class="preview-container">
+      <div class="preview-inner">
+        <div class="d4">
+          <div class="d4-header">
+            <div class="d4-logo">Copilot Tracker</div>
+            <div class="d4-nav">
+              <a href="#">Customers</a>
+              <a href="#">Items</a>
+            </div>
+          </div>
+          <div class="d4-body">
+            <div class="d4-stats">
+              <div class="d4-stat-box d4-yellow">
+                <div class="d4-stat-num">3</div>
+                <div class="d4-stat-label">Customers</div>
+              </div>
+              <div class="d4-stat-box d4-green2">
+                <div class="d4-stat-num">37%</div>
+                <div class="d4-stat-label">Avg Adoption</div>
+              </div>
+              <div class="d4-stat-box d4-blue2">
+                <div class="d4-stat-num">136</div>
+                <div class="d4-stat-label">Total Items</div>
+              </div>
+              <div class="d4-stat-box d4-red2">
+                <div class="d4-stat-num" style="color:#fff;">5</div>
+                <div class="d4-stat-label" style="color:#fff;">Blocked</div>
+              </div>
+            </div>
+            <div class="d4-customers">
+              <div class="d4-card">
+                <div class="d4-card-name">AMDOCS</div>
+                <div class="d4-card-pct">24%</div>
+                <div class="d4-thick-track">
+                  <div class="d4-thick-fill" style="width:24%;background:#ffd60a;"></div>
+                </div>
+                <div class="d4-btn">VIEW →</div>
+              </div>
+              <div class="d4-card">
+                <div class="d4-card-name">NiCE</div>
+                <div class="d4-card-pct">46%</div>
+                <div class="d4-thick-track">
+                  <div class="d4-thick-fill" style="width:46%;background:#06d6a0;"></div>
+                </div>
+                <div class="d4-btn">VIEW →</div>
+              </div>
+              <div class="d4-card">
+                <div class="d4-card-name">Strauss</div>
+                <div class="d4-card-pct">42%</div>
+                <div class="d4-thick-track">
+                  <div class="d4-thick-fill" style="width:42%;background:#4361ee;"></div>
+                </div>
+                <div class="d4-btn">VIEW →</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="label">
+      <strong>Design 4 — Neo-Brutalism</strong>
+      <span>Bold editorial style with flat colors, hard shadows, and zero border-radius</span>
+    </div>
+  </div>
+
+  <!-- ==================== DESIGN 5: AURORA MESH ==================== -->
+  <div class="preview-wrap">
+    <div class="preview-container">
+      <div class="preview-inner">
+        <div class="d5">
+          <div class="d5-aurora"></div>
+          <div class="d5-header">
+            <div class="d5-logo">Copilot Tracker</div>
+            <div class="d5-nav">
+              <a href="#">Overview</a>
+              <a href="#">Customers</a>
+              <a href="#">Reports</a>
+            </div>
+          </div>
+          <div class="d5-kpi-row">
+            <div class="d5-kpi-item">
+              <div>
+                <div class="d5-kpi-num">3</div>
+                <div class="d5-kpi-label">Customers</div>
+              </div>
+            </div>
+            <div class="d5-divider"></div>
+            <div class="d5-kpi-item">
+              <div>
+                <div class="d5-kpi-num">37%</div>
+                <div class="d5-kpi-label">Avg Adoption</div>
+              </div>
+            </div>
+            <div class="d5-divider"></div>
+            <div class="d5-kpi-item">
+              <div>
+                <div class="d5-kpi-num">136</div>
+                <div class="d5-kpi-label">Items</div>
+              </div>
+            </div>
+            <div class="d5-divider"></div>
+            <div class="d5-kpi-item">
+              <div>
+                <div class="d5-kpi-num" style="color:#ef4444;">5</div>
+                <div class="d5-kpi-label">Blocked</div>
+              </div>
+            </div>
+          </div>
+          <div class="d5-body">
+            <div class="d5-section-title">Customers</div>
+            <div class="d5-customers">
+              <div class="d5-card">
+                <div class="d5-logo-circle" style="background:linear-gradient(135deg,#667eea,#764ba2);">A</div>
+                <div class="d5-card-info">
+                  <div class="d5-card-name">AMDOCS</div>
+                  <div class="d5-card-date">Renewal: Sep 2025</div>
+                  <div class="d5-card-bar-track">
+                    <div class="d5-card-bar-fill" style="width:24%;background:linear-gradient(90deg,#667eea,#764ba2);"></div>
+                  </div>
+                </div>
+                <div class="d5-card-pct" style="background:linear-gradient(135deg,#f093fb,#f5576c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">24%</div>
+                <div class="d5-pill" style="background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;">At Risk</div>
+              </div>
+              <div class="d5-card">
+                <div class="d5-logo-circle" style="background:linear-gradient(135deg,#11998e,#38ef7d);">N</div>
+                <div class="d5-card-info">
+                  <div class="d5-card-name">NiCE</div>
+                  <div class="d5-card-date">Renewal: Dec 2025</div>
+                  <div class="d5-card-bar-track">
+                    <div class="d5-card-bar-fill" style="width:46%;background:linear-gradient(90deg,#11998e,#38ef7d);"></div>
+                  </div>
+                </div>
+                <div class="d5-card-pct" style="background:linear-gradient(135deg,#11998e,#38ef7d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">46%</div>
+                <div class="d5-pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">On Track</div>
+              </div>
+              <div class="d5-card">
+                <div class="d5-logo-circle" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">S</div>
+                <div class="d5-card-info">
+                  <div class="d5-card-name">Strauss Group</div>
+                  <div class="d5-card-date">Renewal: Mar 2026</div>
+                  <div class="d5-card-bar-track">
+                    <div class="d5-card-bar-fill" style="width:42%;background:linear-gradient(90deg,#4facfe,#00f2fe);"></div>
+                  </div>
+                </div>
+                <div class="d5-card-pct" style="background:linear-gradient(135deg,#4facfe,#00f2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">42%</div>
+                <div class="d5-pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">On Track</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="label">
+      <strong>Design 5 — Aurora Mesh</strong>
+      <span>Stripe/Linear homepage softness — aurora gradient blobs, gradient text percentages</span>
+    </div>
+  </div>
+
+  <!-- ==================== DESIGN 6: COMMAND DASHBOARD ==================== -->
+  <div class="preview-wrap">
+    <div class="preview-container">
+      <div class="preview-inner">
+        <div class="d6">
+          <div class="d6-topbar">
+            <div class="d6-breadcrumb">Dashboard › <span>Customers</span></div>
+            <div class="d6-topbar-right">
+              <div class="d6-icon-btn">⌕</div>
+              <div class="d6-avatar"></div>
+            </div>
+          </div>
+          <div class="d6-kpi-strip">
+            <div class="d6-kpi-mini d6-kpi-b1">
+              <div class="d6-kpi-icon">👥</div>
+              <div>
+                <div class="d6-kpi-mini-num">3</div>
+                <div class="d6-kpi-mini-label">Customers</div>
+              </div>
+            </div>
+            <div class="d6-kpi-mini d6-kpi-b2">
+              <div class="d6-kpi-icon">📈</div>
+              <div>
+                <div class="d6-kpi-mini-num">37%</div>
+                <div class="d6-kpi-mini-label">Avg Adoption</div>
+              </div>
+            </div>
+            <div class="d6-kpi-mini d6-kpi-b3">
+              <div class="d6-kpi-icon">📋</div>
+              <div>
+                <div class="d6-kpi-mini-num">136</div>
+                <div class="d6-kpi-mini-label">Items</div>
+              </div>
+            </div>
+            <div class="d6-kpi-mini d6-kpi-b4">
+              <div class="d6-kpi-icon">🚫</div>
+              <div>
+                <div class="d6-kpi-mini-num">5</div>
+                <div class="d6-kpi-mini-label">Blocked</div>
+              </div>
+            </div>
+          </div>
+          <div class="d6-main">
+            <div class="d6-list">
+              <div class="d6-list-header">Customers</div>
+              <div class="d6-list-row active">
+                <div class="d6-dot" style="background:#f59e0b;"></div>
+                <div class="d6-list-name">AMDOCS</div>
+                <div class="d6-spark">
+                  <div class="d6-spark-bar" style="height:4px;"></div>
+                  <div class="d6-spark-bar" style="height:6px;"></div>
+                  <div class="d6-spark-bar" style="height:8px;"></div>
+                  <div class="d6-spark-bar lit" style="height:10px;"></div>
+                  <div class="d6-spark-bar lit" style="height:12px;"></div>
+                </div>
+                <div class="d6-list-pct" style="color:#f59e0b;">24%</div>
+              </div>
+              <div class="d6-list-row">
+                <div class="d6-dot" style="background:#22c55e;"></div>
+                <div class="d6-list-name">NiCE</div>
+                <div class="d6-spark">
+                  <div class="d6-spark-bar" style="height:6px;"></div>
+                  <div class="d6-spark-bar lit" style="height:9px;"></div>
+                  <div class="d6-spark-bar lit" style="height:11px;"></div>
+                  <div class="d6-spark-bar lit" style="height:13px;"></div>
+                  <div class="d6-spark-bar lit" style="height:15px;"></div>
+                </div>
+                <div class="d6-list-pct" style="color:#22c55e;">46%</div>
+              </div>
+              <div class="d6-list-row">
+                <div class="d6-dot" style="background:#3b82f6;"></div>
+                <div class="d6-list-name">Strauss Group</div>
+                <div class="d6-spark">
+                  <div class="d6-spark-bar" style="height:5px;"></div>
+                  <div class="d6-spark-bar" style="height:7px;"></div>
+                  <div class="d6-spark-bar lit" style="height:10px;"></div>
+                  <div class="d6-spark-bar lit" style="height:12px;"></div>
+                  <div class="d6-spark-bar lit" style="height:13px;"></div>
+                </div>
+                <div class="d6-list-pct" style="color:#3b82f6;">42%</div>
+              </div>
+            </div>
+            <div class="d6-detail">
+              <div class="d6-detail-header">
+                <div class="d6-detail-name">AMDOCS</div>
+                <div class="d6-status-badge">Active</div>
+              </div>
+              <div class="d6-arc-row">
+                <div class="d6-arc">
+                  <div class="d6-arc-label">24%</div>
+                </div>
+                <div class="d6-pillars">
+                  <div class="d6-pillar-row">
+                    <div class="d6-pillar-label">Adoption</div>
+                    <div class="d6-pillar-track"><div class="d6-pillar-fill" style="width:24%;background:#f59e0b;"></div></div>
+                    <div class="d6-pillar-val">24%</div>
+                  </div>
+                  <div class="d6-pillar-row">
+                    <div class="d6-pillar-label">Enablement</div>
+                    <div class="d6-pillar-track"><div class="d6-pillar-fill" style="width:60%;background:#8b5cf6;"></div></div>
+                    <div class="d6-pillar-val">60%</div>
+                  </div>
+                  <div class="d6-pillar-row">
+                    <div class="d6-pillar-label">Completion</div>
+                    <div class="d6-pillar-track"><div class="d6-pillar-fill" style="width:38%;background:#3b82f6;"></div></div>
+                    <div class="d6-pillar-val">38%</div>
+                  </div>
+                  <div class="d6-pillar-row">
+                    <div class="d6-pillar-label">Engagement</div>
+                    <div class="d6-pillar-track"><div class="d6-pillar-fill" style="width:31%;background:#22c55e;"></div></div>
+                    <div class="d6-pillar-val">31%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="d6-info-grid">
+                <div class="d6-info-cell">
+                  <div class="d6-info-key">AE</div>
+                  <div class="d6-info-val">Sarah Cohen</div>
+                </div>
+                <div class="d6-info-cell">
+                  <div class="d6-info-key">CSAM</div>
+                  <div class="d6-info-val">David Levi</div>
+                </div>
+                <div class="d6-info-cell">
+                  <div class="d6-info-key">Renewal</div>
+                  <div class="d6-info-val">Sep 2025</div>
+                </div>
+                <div class="d6-info-cell">
+                  <div class="d6-info-key">Items</div>
+                  <div class="d6-info-val">48 / 5 blocked</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="label">
+      <strong>Design 6 — Command Dashboard</strong>
+      <span>High-density pro tool feel — breadcrumb nav, KPI strip, two-panel list + detail view</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
