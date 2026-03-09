@@ -831,13 +831,6 @@ body.read-only .hbtn-sep             { display: none !important; }
 .ai-panel-close { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 2px 7px; border-radius: 4px; line-height: 1; }
 .ai-panel-close:hover { background: rgba(255,255,255,.18); }
 
-.ai-key-setup { padding: 12px 16px; border-bottom: 1px solid var(--ms-border); flex-shrink: 0; font-size: 12px; }
-.ai-key-setup p { color: var(--ms-muted); margin-bottom: 8px; }
-.ai-key-row { display: flex; gap: 7px; }
-.ai-key-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--ms-border); border-radius: var(--radius); font-size: 12px; font-family: inherit; }
-.ai-key-btn { padding: 6px 12px; background: var(--ms-blue); color: #fff; border: none; border-radius: var(--radius); font-size: 12px; cursor: pointer; white-space: nowrap; }
-.ai-key-saved { display: flex; align-items: center; gap: 6px; color: var(--done); font-size: 12px; }
-.ai-key-change { background: none; border: none; color: var(--ms-blue); font-size: 11px; cursor: pointer; text-decoration: underline; margin-left: auto; }
 
 .ai-messages { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 .ai-msg { max-width: 90%; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.55; word-break: break-word; }
@@ -3203,49 +3196,19 @@ document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').for
 // ═══════════════════════════════════════════════════════
 //  AI CHAT ASSISTANT
 // ═══════════════════════════════════════════════════════
-const AI_KEY_STORE = 'copilot-tracker-ai-key';
-let _aiKey       = localStorage.getItem(AI_KEY_STORE) || '';
-let _aiHistory   = [];   // [{role, content}]
-let _aiStreaming  = false;
+// ↓ Paste your Anthropic API key from console.anthropic.com
+const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
+
+let _aiHistory  = [];   // [{role, content}]
+let _aiStreaming = false;
 
 function toggleAiChat() {
   const panel = document.getElementById('ai-panel');
+  const fab   = document.getElementById('ai-fab');
   panel.classList.toggle('open');
-  if (panel.classList.contains('open')) {
-    _renderAiKeyState();
-    setTimeout(() => document.getElementById('ai-input')?.focus(), 320);
-  }
-}
-
-function _renderAiKeyState() {
-  const box = document.getElementById('ai-key-setup');
-  if (!box) return;
-  if (_aiKey) {
-    box.innerHTML = `<div class="ai-key-saved">✅ API key saved<button class="ai-key-change" onclick="_changeAiKey()">Change</button></div>`;
-  } else {
-    box.innerHTML = `
-      <p>Enter your Anthropic API key (stored in your browser only).</p>
-      <div class="ai-key-row">
-        <input type="password" id="ai-key-input" placeholder="sk-ant-…" />
-        <button class="ai-key-btn" onclick="saveAiKey()">Save</button>
-      </div>
-      <div style="font-size:10px;color:var(--ms-muted);margin-top:5px">Get a key at <strong>console.anthropic.com</strong></div>`;
-  }
-}
-
-function saveAiKey() {
-  const val = (document.getElementById('ai-key-input')?.value || '').trim();
-  if (!val) return;
-  _aiKey = val;
-  localStorage.setItem(AI_KEY_STORE, val);
-  _renderAiKeyState();
-  document.getElementById('ai-input')?.focus();
-}
-
-function _changeAiKey() {
-  _aiKey = '';
-  localStorage.removeItem(AI_KEY_STORE);
-  _renderAiKeyState();
+  const isOpen = panel.classList.contains('open');
+  fab.style.display = isOpen ? 'none' : '';
+  if (isOpen) setTimeout(() => document.getElementById('ai-input')?.focus(), 320);
 }
 
 function clearAiChat() {
@@ -3312,7 +3275,9 @@ function _appendMsg(role, html, id) {
 
 async function sendAiMessage() {
   if (_aiStreaming) return;
-  if (!_aiKey) { showToast('⚠️ Enter your Anthropic API key first'); _renderAiKeyState(); return; }
+  if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY === 'YOUR_API_KEY_HERE') {
+    showToast('⚠️ Set ANTHROPIC_API_KEY in the source code first'); return;
+  }
   const input = document.getElementById('ai-input');
   const text  = (input.value || '').trim();
   if (!text) return;
@@ -3330,7 +3295,7 @@ async function sendAiMessage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': _aiKey,
+        'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
@@ -3411,10 +3376,6 @@ document.addEventListener('keydown', e => {
     <span style="font-size:19px">🤖</span>
     <div class="ai-panel-title">AI Assistant</div>
     <button class="ai-panel-close" onclick="toggleAiChat()">✕</button>
-  </div>
-
-  <div class="ai-key-setup" id="ai-key-setup">
-    <!-- populated by _renderAiKeyState() -->
   </div>
 
   <div class="ai-messages" id="ai-messages">
