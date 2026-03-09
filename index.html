@@ -1179,6 +1179,15 @@ body.read-only .hbtn-sep             { display: none !important; }
           </div>
           <button class="btn btn-sm btn-danger" onclick="disconnectGitHub()">Disconnect</button>
         </div>
+        <!-- No-PAT warning (hidden when PAT is present) -->
+        <div id="gh-no-pat-warning" style="display:none;background:#fde7e9;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#7f1d1d">
+          ⚠️ <strong>Read-only:</strong> Changes load from GitHub but won't save back. Enter your PAT to enable saving.
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <input type="password" id="gh-pat-update" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                   style="flex:1;padding:6px 10px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;font-family:inherit" />
+            <button class="btn btn-sm btn-blue" onclick="updateGhPat()">Save PAT</button>
+          </div>
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
           <button class="btn btn-blue" onclick="saveToGistManual()">💾 Save Now</button>
           <button class="btn" onclick="loadFromGistManual()">⬇️ Load Now</button>
@@ -1453,7 +1462,14 @@ function save() {
     _fsSaveTimer = setTimeout(saveToFs, 400);
   }
   if (_odAutosave && _msalAccount) _scheduleOdSave();
-  if (_ghAutosave && _ghPat && _ghGistId) _scheduleGhSave();
+  if (_ghGistId) {
+    if (_ghPat && _ghAutosave) {
+      _scheduleGhSave();
+    } else if (!_ghPat && !window.__ghNoPatWarned) {
+      window.__ghNoPatWarned = true;
+      showToast('⚠️ Changes saved locally only — open Cloud Sync to enter your PAT');
+    }
+  }
 }
 function uid()  { return Math.random().toString(36).slice(2,10); }
 
@@ -2685,6 +2701,16 @@ let _ghRawUrl   = localStorage.getItem(GH_RAW_KEY)  || '';
 let _ghAutosave = localStorage.getItem(GH_AUTO_KEY) === 'true';
 let _ghSaveTimer = null;
 let _ghPollTimer = null;
+let _ghSaving    = false;  // true while PATCH is in-flight
+
+// Warn before refresh/close when a save is pending or in-flight
+window.addEventListener('beforeunload', e => {
+  if (_ghSaveTimer || _ghSaving) {
+    e.preventDefault();
+    e.returnValue = 'Changes are still being saved to GitHub. Leave anyway?';
+    return e.returnValue;
+  }
+});
 
 // ── Init: called on DOMContentLoaded ─────────────────
 async function initGitHub() {
@@ -2717,6 +2743,9 @@ async function initGitHub() {
 
   if (!_ghGistId) return;
   updateOdBtn();
+  // Always fetch from GitHub API on page load — never use cached raw URL here,
+  // as it points to a specific old commit and would miss the most recent save.
+  _ghRawUrl = '';
   const loaded = await _loadFromGist(true);
   if (loaded) {
     renderDashboard();
@@ -2772,10 +2801,13 @@ function _scheduleGhSave() {
   if (!_ghPat || !_ghGistId) return;
   clearTimeout(_ghSaveTimer);
   _ghSaveTimer = setTimeout(_doGhSave, 800);
+  _updateOdBtnSaving(true);
 }
 
 async function _doGhSave() {
+  _ghSaveTimer = null;
   if (!_ghPat || !_ghGistId) return;
+  _ghSaving = true;
   try {
     const payload = {
       _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
@@ -2794,7 +2826,6 @@ async function _doGhSave() {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const gist = await res.json();
-    // Update raw_url to the latest revision so next read gets this exact version
     const file = gist.files[GH_FILE];
     if (file && file.raw_url) {
       _ghRawUrl = file.raw_url.split('?')[0];
@@ -2804,7 +2835,17 @@ async function _doGhSave() {
   } catch(e) {
     showToast('⚠️ GitHub save failed: ' + e.message);
     _ghStatus('⚠️ Save failed: ' + e.message, 'var(--miss)');
+  } finally {
+    _ghSaving = false;
+    _updateOdBtnSaving(false);
   }
+}
+
+function _updateOdBtnSaving(saving) {
+  const btn = document.getElementById('od-btn');
+  if (!btn) return;
+  if (saving) { btn.textContent = '⏳ Saving…'; }
+  else         { updateOdBtn(); }
 }
 
 // ── Polling: pull remote changes every 30 s ──────────
@@ -2835,6 +2876,9 @@ function _renderGhState() {
     if (lbl) lbl.textContent = 'Gist ID: ' + _ghGistId;
     const tog = document.getElementById('gh-autosave-toggle');
     if (tog) tog.checked = _ghAutosave;
+    // Show PAT warning when write access is unavailable
+    const warn = document.getElementById('gh-no-pat-warning');
+    if (warn) warn.style.display = _ghPat ? 'none' : '';
     // Populate share URL
     const shareEl = document.getElementById('gh-share-url');
     if (shareEl) {
@@ -2848,6 +2892,27 @@ function _renderGhState() {
     const gistEl = document.getElementById('gh-gist-input');
     if (patEl && _ghPat)                       patEl.value  = _ghPat;
     if (gistEl && (_ghGistId || urlGist))      gistEl.value = _ghGistId || urlGist;
+  }
+}
+
+// Update PAT while staying connected (shown when no PAT is stored)
+async function updateGhPat() {
+  const pat = (document.getElementById('gh-pat-update').value || '').trim();
+  if (!pat) { _ghStatus('⚠️ Enter a PAT first.', 'var(--miss)'); return; }
+  _ghStatus('⏳ Validating…', 'var(--ms-muted)');
+  try {
+    const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
+      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — check PAT scope (needs gist)');
+    _ghPat = pat;
+    localStorage.setItem(GH_PAT_KEY, _ghPat);
+    _renderGhState();
+    _ghStatus('✅ PAT saved — auto-sync now enabled', 'var(--done)');
+    if (_ghAutosave) { _scheduleGhSave(); _startGhPoll(); }
+  } catch(e) {
+    _ghStatus('⚠️ ' + e.message, 'var(--miss)');
   }
 }
 
