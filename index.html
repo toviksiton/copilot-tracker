@@ -3202,8 +3202,14 @@ document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').for
 // ═══════════════════════════════════════════════════════
 //  AI CHAT ASSISTANT
 // ═══════════════════════════════════════════════════════
-// ↓ Paste your Anthropic API key from console.anthropic.com
-const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
+const AI_KEY_STORAGE = 'copilot-tracker-anthropic-key';
+function _getAiKey() { return localStorage.getItem(AI_KEY_STORAGE) || ''; }
+function _setAiKey(k) { if (k) localStorage.setItem(AI_KEY_STORAGE, k); else localStorage.removeItem(AI_KEY_STORAGE); }
+function promptSetAiKey() {
+  const cur = _getAiKey();
+  const k = window.prompt('Paste your Anthropic API key (from console.anthropic.com):', cur || '');
+  if (k !== null) { _setAiKey(k.trim()); if (k.trim()) showToast('✅ API key saved'); }
+}
 
 let _aiHistory  = [];   // [{role, content}]
 let _aiStreaming = false;
@@ -3281,8 +3287,10 @@ function _appendMsg(role, html, id) {
 
 async function sendAiMessage() {
   if (_aiStreaming) return;
-  if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY === 'YOUR_API_KEY_HERE') {
-    showToast('⚠️ Set ANTHROPIC_API_KEY in the source code first'); return;
+  const ANTHROPIC_API_KEY = _getAiKey();
+  if (!ANTHROPIC_API_KEY) {
+    promptSetAiKey();
+    if (!_getAiKey()) return;
   }
   const input = document.getElementById('ai-input');
   const text  = (input.value || '').trim();
@@ -3397,7 +3405,8 @@ document.addEventListener('keydown', e => {
     </div>
     <div class="ai-footer-note">
       All customer data is included as context ·
-      <button class="ai-clear-btn" onclick="clearAiChat()">Clear chat</button>
+      <button class="ai-clear-btn" onclick="clearAiChat()">Clear chat</button> ·
+      <button class="ai-clear-btn" onclick="promptSetAiKey()">API key</button>
     </div>
   </div>
 </div>
