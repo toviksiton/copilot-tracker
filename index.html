@@ -2877,7 +2877,19 @@ async function _doGhSave() {
       },
       body: JSON.stringify({ files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) {
+      let msg = 'HTTP ' + res.status;
+      if (res.status === 403) {
+        msg = 'HTTP 403 — PAT missing "gist" scope or expired. Go to github.com/settings/tokens and create a new token with the "gist" scope, then re-enter it here.';
+      } else if (res.status === 404) {
+        msg = 'HTTP 404 — Gist not found. Check the Gist ID or reconnect.';
+      } else if (res.status === 401) {
+        msg = 'HTTP 401 — Invalid PAT. Please update your GitHub token.';
+      } else {
+        try { const body = await res.json(); if (body.message) msg += ': ' + body.message; } catch(_) {}
+      }
+      throw new Error(msg);
+    }
     const gist = await res.json();
     const file = gist.files[GH_FILE];
     if (file && file.raw_url) {
