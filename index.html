@@ -2721,21 +2721,29 @@ async function initGitHub() {
     localStorage.setItem(GH_GIST_KEY, _ghGistId);
   }
 
-  // Layer 2: Auto-discover — search the owner's public gists (no PAT, no URL param needed)
-  if (!_ghGistId && GH_OWNER) {
+  // Layer 2: Auto-discover — ALWAYS run (not just when empty) so browsers with a
+  // stale/wrong Gist ID automatically correct to the most recently updated one.
+  // Uses PAT if available for higher rate limits.
+  if (GH_OWNER && !urlGist) {
     try {
+      const hdrs = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+      if (_ghPat) hdrs['Authorization'] = 'token ' + _ghPat;
       const res = await fetch(
         `https://api.github.com/users/${GH_OWNER}/gists?per_page=30`,
-        { cache: 'no-store' }
+        { headers: hdrs, cache: 'no-store' }
       );
       if (res.ok) {
         const list = await res.json();
-        const found = Array.isArray(list) && list.find(
-          g => g.description === 'Copilot Adoption Tracker data' && g.files && g.files[GH_FILE]
-        );
-        if (found) {
+        // Pick the most-recently-updated tracker Gist (handles the case where
+        // the user has multiple old Gists and only one has real data)
+        const found = Array.isArray(list) && list
+          .filter(g => g.description === 'Copilot Adoption Tracker data' && g.files && g.files[GH_FILE])
+          .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
+        if (found && found.id !== _ghGistId) {
           _ghGistId = found.id;
           localStorage.setItem(GH_GIST_KEY, _ghGistId);
+          _ghRawUrl = '';                      // raw URL belongs to the old Gist
+          localStorage.removeItem(GH_RAW_KEY);
         }
       }
     } catch(e) { /* no network or no gist yet — silent */ }
