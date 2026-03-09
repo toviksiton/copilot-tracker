@@ -1,0 +1,16 @@
+{
+  "name": "copilot-tracker-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Copilot Adoption Tracker — query your tracker data from Claude Desktop and other MCP-compatible tools",
+  "type": "module",
+  "main": "server.js",
+  "bin": {
+    "copilot-tracker-mcp": "./server.js"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  }
+}
