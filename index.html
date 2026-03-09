@@ -3204,10 +3204,11 @@ let _aiStreaming = false;
 
 function toggleAiChat() {
   const panel = document.getElementById('ai-panel');
+  const fab   = document.getElementById('ai-fab');
   panel.classList.toggle('open');
-  if (panel.classList.contains('open')) {
-    setTimeout(() => document.getElementById('ai-input')?.focus(), 320);
-  }
+  const isOpen = panel.classList.contains('open');
+  fab.style.display = isOpen ? 'none' : '';
+  if (isOpen) setTimeout(() => document.getElementById('ai-input')?.focus(), 320);
 }
 
 function clearAiChat() {
