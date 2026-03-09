@@ -499,21 +499,13 @@ async function handleAiProxy(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (request.method !== 'POST') return new Response(JSON.stringify({ error: 'Use POST' }), { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  // Auth: accept either a valid Clerk JWT or a matching X-App-Secret header
-  if (env.CLERK_PUBLISHABLE_KEY || env.AI_SECRET) {
-    const appSecret = request.headers.get('X-App-Secret');
-    const secretOk  = env.AI_SECRET && appSecret === env.AI_SECRET;
-
-    if (!secretOk) {
-      // Fall back to Clerk JWT check
-      const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
-      const payload = await verifyClerkToken(token, env);
-      if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      if (env.PERMISSIONS_KV) {
-        const record = await env.PERMISSIONS_KV.get(`user:${payload.sub}`, 'json');
-        if (!record?.aiChat) return new Response(JSON.stringify({ error: 'AI chat access not granted.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
+  // If Clerk is configured, verify the token and check aiChat permission
+  if (env.CLERK_PUBLISHABLE_KEY) {
+    const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
+    const payload = await verifyClerkToken(token, env);
+    if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const record = await env.PERMISSIONS_KV.get(`user:${payload.sub}`, 'json');
+    if (!record?.aiChat) return new Response(JSON.stringify({ error: 'AI chat access not granted.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   if (!env.ANTHROPIC_API_KEY) {
