@@ -29,7 +29,8 @@ jobs:
           git fetch origin master
           git checkout master
           git checkout claude/sync-json-github-cache-WnynD -- design-merged.html
-          git add design-merged.html
+          cp design-merged.html index.html
+          git add index.html design-merged.html
           git diff --cached --quiet && echo "No changes." && exit 0
-          git commit -m "Deploy: light/dark mode Copilot Tracker dashboard"
+          git commit -m "Deploy: Copilot Tracker dashboard as main index"
           git push origin master
