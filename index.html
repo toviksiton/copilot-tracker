@@ -766,6 +766,19 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   margin: 2px 0;
 }
 
+/* ── Customer card drag-and-drop ── */
+.card-drag-handle {
+  cursor: grab; color: var(--ms-muted); font-size: 15px;
+  flex-shrink: 0; line-height: 1; user-select: none; padding: 2px 4px;
+}
+.card-drag-handle:active { cursor: grabbing; }
+.cust-card.dragging { opacity: 0.4; transform: none !important; box-shadow: none !important; }
+.cust-card.card-drag-over {
+  outline: 2px dashed var(--ms-blue); outline-offset: -3px;
+  background: var(--ms-blue-light);
+}
+body.read-only .card-drag-handle { display: none !important; }
+
 /* ── Read-only mode ── */
 .ro-badge {
   display: none;
@@ -1595,7 +1608,38 @@ function buildCustomerCard(customer) {
   const s = custStats(customer);
   const card = document.createElement('div');
   card.className = 'cust-card';
+  card.draggable = true;
   card.onclick = () => openDetail(customer.id);
+
+  card.addEventListener('dragstart', e => {
+    if (document.body.classList.contains('read-only')) { e.preventDefault(); return; }
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', customer.id);
+    setTimeout(() => card.classList.add('dragging'), 0);
+  });
+  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  card.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    card.classList.add('card-drag-over');
+  });
+  card.addEventListener('dragleave', e => {
+    if (!card.contains(e.relatedTarget)) card.classList.remove('card-drag-over');
+  });
+  card.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation();
+    card.classList.remove('card-drag-over');
+    const fromId = e.dataTransfer.getData('text/plain');
+    const toId = customer.id;
+    if (fromId === toId) return;
+    const fromIdx = state.customers.findIndex(c => c.id === fromId);
+    const toIdx   = state.customers.findIndex(c => c.id === toId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = state.customers.splice(fromIdx, 1);
+    state.customers.splice(toIdx, 0, moved);
+    save();
+    renderDashboard();
+  });
 
   // Color the progress bar based on pct
   const barColor = s.pct >= 75 ? 'linear-gradient(90deg,var(--done),#92d36e)'
@@ -1649,6 +1693,7 @@ function buildCustomerCard(customer) {
         <div class="cust-name">${escHtml(customer.name)}</div>
         <div class="cust-date">${created ? 'Since ' + created : ''}</div>
       </div>
+      <span class="card-drag-handle" title="Drag to reorder" onclick="event.stopPropagation()">⠿</span>
       <div class="cust-pct-badge">${s.pct}%</div>
     </div>
 
