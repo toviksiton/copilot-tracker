@@ -1552,8 +1552,8 @@ function toggleLockVisibility(){ window.__toggleLockVisibility(); }
 //  Set CLERK_PUBLISHABLE_KEY + WORKER_URL to enable.
 //  Leave CLERK_PUBLISHABLE_KEY empty to use the old password screen.
 // ═══════════════════════════════════════════════════════
-const CLERK_PUBLISHABLE_KEY = '';  // e.g. 'pk_live_...'
-const WORKER_URL            = '';  // e.g. 'https://copilot-tracker-api.YOUR.workers.dev'
+const CLERK_PUBLISHABLE_KEY = 'pk_test_cG9zc2libGUtd3Jlbi04Mi5jbGVyay5hY2NvdW50cy5kZXYk';
+const WORKER_URL            = 'https://copilot-tracker-api.tovik.workers.dev';
 
 // Derive AI proxy URL from WORKER_URL (replaces old AI_WORKER_URL)
 const AI_WORKER_URL = WORKER_URL ? WORKER_URL + '/ai' : '';
