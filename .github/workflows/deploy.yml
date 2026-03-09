@@ -19,7 +19,7 @@ jobs:
 
       - name: Deploy index.html via GitHub Contents API
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
           # Encode file
