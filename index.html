@@ -1554,6 +1554,7 @@ function toggleLockVisibility(){ window.__toggleLockVisibility(); }
 // ═══════════════════════════════════════════════════════
 const CLERK_PUBLISHABLE_KEY = 'pk_test_cG9zc2libGUtd3Jlbi04Mi5jbGVyay5hY2NvdW50cy5kZXYk';
 const WORKER_URL            = 'https://copilot-tracker-api.tovik.workers.dev';
+const AI_SECRET             = '';  // set to match AI_SECRET env var in your Cloudflare Worker
 
 // Derive AI proxy URL from WORKER_URL (replaces old AI_WORKER_URL)
 const AI_WORKER_URL = WORKER_URL ? WORKER_URL + '/ai' : '';
@@ -3731,6 +3732,7 @@ async function sendAiMessage() {
       headers: {
         'Content-Type': 'application/json',
         ...(_aiToken ? { 'Authorization': `Bearer ${_aiToken}` } : {}),
+        ...((!_aiToken && AI_SECRET) ? { 'X-App-Secret': AI_SECRET } : {}),
       },
       body: JSON.stringify({
         model: 'claude-opus-4-6',
