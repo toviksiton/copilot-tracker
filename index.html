@@ -805,11 +805,17 @@ body.read-only .hbtn-sep             { display: none !important; }
 .ai-fab {
   position: fixed; bottom: 24px; right: 24px; z-index: 900;
   width: 54px; height: 54px; border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #db2777);
-  color: #fff; border: none; cursor: pointer;
+  background: none;
+  border: 3px solid #7c3aed; cursor: pointer;
   box-shadow: 0 4px 20px rgba(124,58,237,.45);
-  font-size: 24px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 0;
   transition: transform .2s, box-shadow .2s;
+}
+.ai-fab img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  display: block;
 }
 .ai-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(124,58,237,.55); }
 
@@ -3368,7 +3374,7 @@ document.addEventListener('keydown', e => {
 </script>
 
 <!-- ── AI Chat FAB ── -->
-<button class="ai-fab" id="ai-fab" onclick="toggleAiChat()" title="AI Assistant">🤖</button>
+<button class="ai-fab" id="ai-fab" onclick="toggleAiChat()" title="AI Assistant"><img src="me.jpeg" alt="AI Assistant"></button>
 
 <!-- ── AI Chat Panel ── -->
 <div class="ai-panel" id="ai-panel">
