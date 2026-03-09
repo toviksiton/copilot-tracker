@@ -1598,8 +1598,8 @@ async function initAuth() {
     _clerkInstance = clerk;
   } catch (e) {
     console.error('Clerk failed to load:', e);
-    // Clerk unavailable — unlock app with full access as graceful fallback
-    _unlockApp(false, true, false);
+    // Clerk unavailable — fall back to old password lock screen
+    document.getElementById('auth-loading-screen').style.display = 'none';
     return;
   }
 
