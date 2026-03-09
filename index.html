@@ -800,6 +800,63 @@ body.read-only #fs-btn               { display: none !important; }
 body.read-only #od-btn               { display: none !important; }
 body.read-only #import-btn           { display: none !important; }
 body.read-only .hbtn-sep             { display: none !important; }
+
+/* ── AI Chat Panel ── */
+.ai-fab {
+  position: fixed; bottom: 24px; right: 24px; z-index: 900;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: #fff; border: none; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(124,58,237,.45);
+  font-size: 24px; display: flex; align-items: center; justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+}
+.ai-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(124,58,237,.55); }
+
+.ai-panel {
+  position: fixed; right: 0; top: 0; bottom: 0; z-index: 800;
+  width: 380px; max-width: 100vw;
+  background: #fff; border-left: 1px solid var(--ms-border);
+  box-shadow: -4px 0 28px rgba(0,0,0,.14);
+  display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.ai-panel.open { transform: translateX(0); }
+
+.ai-panel-header {
+  display: flex; align-items: center; gap: 10px; padding: 13px 16px;
+  background: linear-gradient(135deg, #4c1d95, #7c3aed); color: #fff; flex-shrink: 0;
+}
+.ai-panel-title { flex: 1; font-weight: 700; font-size: 14px; }
+.ai-panel-close { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 2px 7px; border-radius: 4px; line-height: 1; }
+.ai-panel-close:hover { background: rgba(255,255,255,.18); }
+
+.ai-key-setup { padding: 12px 16px; border-bottom: 1px solid var(--ms-border); flex-shrink: 0; font-size: 12px; }
+.ai-key-setup p { color: var(--ms-muted); margin-bottom: 8px; }
+.ai-key-row { display: flex; gap: 7px; }
+.ai-key-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--ms-border); border-radius: var(--radius); font-size: 12px; font-family: inherit; }
+.ai-key-btn { padding: 6px 12px; background: var(--ms-blue); color: #fff; border: none; border-radius: var(--radius); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.ai-key-saved { display: flex; align-items: center; gap: 6px; color: var(--done); font-size: 12px; }
+.ai-key-change { background: none; border: none; color: var(--ms-blue); font-size: 11px; cursor: pointer; text-decoration: underline; margin-left: auto; }
+
+.ai-messages { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.ai-msg { max-width: 90%; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.55; word-break: break-word; }
+.ai-msg.user { align-self: flex-end; background: var(--ms-blue); color: #fff; border-bottom-right-radius: 3px; }
+.ai-msg.assistant { align-self: flex-start; background: var(--ms-light); color: var(--ms-text); border-bottom-left-radius: 3px; }
+.ai-msg code { background: rgba(0,0,0,.1); padding: 1px 5px; border-radius: 3px; font-size: 11px; font-family: 'Courier New', monospace; }
+.ai-msg strong { font-weight: 700; }
+.ai-msg ul { padding-left: 16px; margin-top: 4px; }
+.ai-msg li { margin-bottom: 2px; }
+
+.ai-input-area { border-top: 1px solid var(--ms-border); padding: 11px 14px; flex-shrink: 0; }
+.ai-input-row { display: flex; gap: 8px; align-items: flex-end; }
+.ai-input-row textarea { flex: 1; padding: 8px 10px; border: 1px solid var(--ms-border); border-radius: var(--radius); font-size: 13px; font-family: inherit; resize: none; line-height: 1.4; max-height: 120px; min-height: 36px; }
+.ai-input-row textarea:focus { outline: none; border-color: var(--ms-blue); }
+.ai-send-btn { padding: 0 14px; background: var(--ms-blue); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-size: 13px; flex-shrink: 0; height: 36px; }
+.ai-send-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ai-footer-note { font-size: 10px; color: var(--ms-muted); margin-top: 7px; text-align: center; }
+.ai-clear-btn { background: none; border: none; color: var(--ms-muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
+.ai-clear-btn:hover { color: var(--miss); }
 </style>
 </head>
 <body>
@@ -3143,6 +3200,197 @@ document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').for
   el.addEventListener('click', e => { if (e.target===el) el.classList.add('hidden'); })
 );
 
+// ═══════════════════════════════════════════════════════
+//  AI CHAT ASSISTANT
+// ═══════════════════════════════════════════════════════
+const AI_KEY_STORE = 'copilot-tracker-ai-key';
+let _aiKey       = localStorage.getItem(AI_KEY_STORE) || '';
+let _aiHistory   = [];   // [{role, content}]
+let _aiStreaming  = false;
+
+function toggleAiChat() {
+  const panel = document.getElementById('ai-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    _renderAiKeyState();
+    setTimeout(() => document.getElementById('ai-input')?.focus(), 320);
+  }
+}
+
+function _renderAiKeyState() {
+  const box = document.getElementById('ai-key-setup');
+  if (!box) return;
+  if (_aiKey) {
+    box.innerHTML = `<div class="ai-key-saved">✅ API key saved<button class="ai-key-change" onclick="_changeAiKey()">Change</button></div>`;
+  } else {
+    box.innerHTML = `
+      <p>Enter your Anthropic API key (stored in your browser only).</p>
+      <div class="ai-key-row">
+        <input type="password" id="ai-key-input" placeholder="sk-ant-…" />
+        <button class="ai-key-btn" onclick="saveAiKey()">Save</button>
+      </div>
+      <div style="font-size:10px;color:var(--ms-muted);margin-top:5px">Get a key at <strong>console.anthropic.com</strong></div>`;
+  }
+}
+
+function saveAiKey() {
+  const val = (document.getElementById('ai-key-input')?.value || '').trim();
+  if (!val) return;
+  _aiKey = val;
+  localStorage.setItem(AI_KEY_STORE, val);
+  _renderAiKeyState();
+  document.getElementById('ai-input')?.focus();
+}
+
+function _changeAiKey() {
+  _aiKey = '';
+  localStorage.removeItem(AI_KEY_STORE);
+  _renderAiKeyState();
+}
+
+function clearAiChat() {
+  _aiHistory = [];
+  document.getElementById('ai-messages').innerHTML = _aiWelcomeHtml();
+}
+
+function _aiWelcomeHtml() {
+  return `<div class="ai-msg assistant">👋 Hi! I have access to all your customer data. Ask me anything — adoption rates, blockers, team assignments, renewal dates, comparisons across customers, etc.</div>`;
+}
+
+function _buildAiSystemPrompt() {
+  const now = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+  const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : null;
+  const customers = state.customers.map(c => {
+    const s = custStats(c);
+    return {
+      name: c.name,
+      users: c.users ? Number(c.users) : null,
+      copilotUsers: c.copilotUsers ? Number(c.copilotUsers) : null,
+      renewalDate: fmtD(c.renewalDate),
+      aopDate: fmtD(c.aopDate),
+      aeName: c.aeName || null,
+      atsName: c.atsName || null,
+      csamName: c.csamName || null,
+      seName: c.seName || null,
+      coreUsage: c.coreUsage || null,
+      adoption: { pct: s.pct, done: s.done, missed: s.missed, blocked: s.blocked, unblocking: s.unblock, pending: s.pending, total: s.total },
+      categories: c.categories.map(cat => ({ name: cat.title, items: cat.items.map(i => ({ label: i.label, status: i.status })) }))
+    };
+  });
+  return `You are an AI assistant inside the "Copilot Adoption Tracker" app, used by a Microsoft partner to manage Microsoft 365 Copilot rollouts across customers.
+
+Today: ${now}
+Customers tracked: ${customers.length}
+
+Customer data (JSON):
+${JSON.stringify(customers, null, 2)}
+
+Item status legend: done=completed, missed=not done/failed, blocked=blocked, unblocking=resolving blocker, pending=not started.
+365 Core Usage: good=green, partial=orange, low=red, null=not set.
+
+Be concise and specific. Use customer names and real numbers. Format responses with **bold** and bullet points where helpful.`;
+}
+
+function _fmtAiText(raw) {
+  return escHtml(raw)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\n- /g, '\n• ')
+    .replace(/\n/g, '<br>');
+}
+
+function _appendMsg(role, html, id) {
+  const wrap = document.getElementById('ai-messages');
+  const div  = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  if (id) div.id = id;
+  div.innerHTML = html;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+async function sendAiMessage() {
+  if (_aiStreaming) return;
+  if (!_aiKey) { showToast('⚠️ Enter your Anthropic API key first'); _renderAiKeyState(); return; }
+  const input = document.getElementById('ai-input');
+  const text  = (input.value || '').trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('ai-send-btn').disabled = true;
+  _aiStreaming = true;
+
+  _aiHistory.push({ role: 'user', content: text });
+  _appendMsg('user', _fmtAiText(text));
+  const streamDiv = _appendMsg('assistant', '<span style="opacity:.5">▍</span>', 'ai-stream');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': _aiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 2048,
+        system: _buildAiSystemPrompt(),
+        messages: _aiHistory.map(m => ({ role: m.role, content: m.content })),
+        stream: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    let full = '';
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   buf     = '';
+    const msgWrap = document.getElementById('ai-messages');
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') break;
+        try {
+          const evt = JSON.parse(data);
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            full += evt.delta.text;
+            streamDiv.innerHTML = _fmtAiText(full) + '<span style="opacity:.4">▍</span>';
+            msgWrap.scrollTop = msgWrap.scrollHeight;
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    streamDiv.innerHTML = _fmtAiText(full);
+    streamDiv.removeAttribute('id');
+    _aiHistory.push({ role: 'assistant', content: full });
+
+  } catch (e) {
+    streamDiv.innerHTML = `⚠️ ${escHtml(e.message)}`;
+    streamDiv.style.cssText += ';background:var(--miss-bg);color:var(--miss)';
+    streamDiv.removeAttribute('id');
+    _aiHistory.pop();
+  } finally {
+    _aiStreaming = false;
+    document.getElementById('ai-send-btn').disabled = false;
+    document.getElementById('ai-input')?.focus();
+  }
+}
+
 // also close customer-modal on Enter in last field
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !document.getElementById('customer-modal').classList.contains('hidden')) {
@@ -3153,5 +3401,38 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
+
+<!-- ── AI Chat FAB ── -->
+<button class="ai-fab" id="ai-fab" onclick="toggleAiChat()" title="AI Assistant">🤖</button>
+
+<!-- ── AI Chat Panel ── -->
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-header">
+    <span style="font-size:19px">🤖</span>
+    <div class="ai-panel-title">AI Assistant</div>
+    <button class="ai-panel-close" onclick="toggleAiChat()">✕</button>
+  </div>
+
+  <div class="ai-key-setup" id="ai-key-setup">
+    <!-- populated by _renderAiKeyState() -->
+  </div>
+
+  <div class="ai-messages" id="ai-messages">
+    <div class="ai-msg assistant">👋 Hi! I have access to all your customer data. Ask me anything — adoption rates, blockers, team assignments, renewal dates, comparisons across customers, etc.</div>
+  </div>
+
+  <div class="ai-input-area">
+    <div class="ai-input-row">
+      <textarea id="ai-input" placeholder="Ask about your customers…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()">Send</button>
+    </div>
+    <div class="ai-footer-note">
+      All customer data is included as context ·
+      <button class="ai-clear-btn" onclick="clearAiChat()">Clear chat</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
