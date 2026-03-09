@@ -1591,9 +1591,17 @@ async function initAuth() {
   _showAuthScreen('auth-loading-screen');
 
   // Init Clerk
-  const clerk = new window.Clerk(CLERK_PUBLISHABLE_KEY);
-  await clerk.load();
-  _clerkInstance = clerk;
+  let clerk;
+  try {
+    clerk = new window.Clerk(CLERK_PUBLISHABLE_KEY);
+    await clerk.load();
+    _clerkInstance = clerk;
+  } catch (e) {
+    console.error('Clerk failed to load:', e);
+    // Clerk unavailable — unlock app with full access as graceful fallback
+    _unlockApp(false, true, false);
+    return;
+  }
 
   if (!clerk.user) {
     // Not signed in — show login
