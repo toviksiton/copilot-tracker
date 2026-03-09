@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,77 +7,181 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ══════════════════════════════
+   DARK THEME (default)
+══════════════════════════════ */
 :root {
-  --surface:  rgba(255,255,255,0.06);
-  --border:   rgba(255,255,255,0.10);
-  --border2:  rgba(255,255,255,0.06);
-  --text:     rgba(255,255,255,0.92);
-  --muted:    rgba(255,255,255,0.40);
-  --dim:      rgba(255,255,255,0.20);
+  --bg-a: #0f0c29;
+  --bg-b: #302b63;
+  --bg-c: #1a1035;
+  --surface:      rgba(255,255,255,0.06);
+  --surface-hover:rgba(255,255,255,0.10);
+  --glass:        rgba(255,255,255,0.04);
+  --border:       rgba(255,255,255,0.10);
+  --border2:      rgba(255,255,255,0.06);
+  --text:         rgba(255,255,255,0.92);
+  --muted:        rgba(255,255,255,0.42);
+  --dim:          rgba(255,255,255,0.22);
+  --orb1: rgba(168,85,247,0.18);
+  --orb2: rgba(59,130,246,0.15);
+  --orb3: rgba(236,72,153,0.12);
   --cyan:     #67e8f9;
   --mint:     #6ee7b7;
   --pink:     #f9a8d4;
   --lavender: #c4b5fd;
-  --blur:     blur(20px);
+  --blur: blur(20px);
+  /* KPI accent text colours */
+  --kpi-c: #67e8f9;
+  --kpi-m: #6ee7b7;
+  --kpi-l: #c4b5fd;
+  --kpi-p: #f9a8d4;
+  /* badge */
+  --badge-bg:     rgba(249,168,212,0.15);
+  --badge-border: rgba(249,168,212,0.2);
+  --badge-color:  #f9a8d4;
+  /* nav active */
+  --nav-active-bg: rgba(103,232,249,0.10);
+  /* btn ghost */
+  --btn-ghost-bg:    rgba(255,255,255,0.07);
+  --btn-ghost-color: rgba(255,255,255,0.55);
+  /* sidecar metric */
+  --sc-metric-bg: rgba(255,255,255,0.05);
+  /* info item */
+  --info-item-bg: rgba(255,255,255,0.04);
+  /* item row */
+  --item-row-bg:  rgba(255,255,255,0.04);
+  /* stat card */
+  --stat-card-bg: rgba(255,255,255,0.06);
+}
+
+/* ══════════════════════════════
+   LIGHT THEME
+══════════════════════════════ */
+[data-theme="light"] {
+  --bg-a: #f0edff;
+  --bg-b: #e4deff;
+  --bg-c: #ede8ff;
+  --surface:       rgba(255,255,255,0.75);
+  --surface-hover: rgba(255,255,255,0.95);
+  --glass:         rgba(255,255,255,0.60);
+  --border:        rgba(100,80,200,0.12);
+  --border2:       rgba(100,80,200,0.07);
+  --text:          #1a1235;
+  --muted:         #6b6b95;
+  --dim:           #9898b8;
+  --orb1: rgba(139,92,246,0.22);
+  --orb2: rgba(59,130,246,0.18);
+  --orb3: rgba(236,72,153,0.15);
+  --cyan:     #0891b2;
+  --mint:     #059669;
+  --pink:     #be185d;
+  --lavender: #6d28d9;
+  --kpi-c: #0891b2;
+  --kpi-m: #059669;
+  --kpi-l: #6d28d9;
+  --kpi-p: #be185d;
+  --badge-bg:     rgba(190,24,93,0.10);
+  --badge-border: rgba(190,24,93,0.20);
+  --badge-color:  #be185d;
+  --nav-active-bg: rgba(8,145,178,0.10);
+  --btn-ghost-bg:    rgba(0,0,0,0.05);
+  --btn-ghost-color: #5a5a7a;
+  --sc-metric-bg: rgba(0,0,0,0.04);
+  --info-item-bg: rgba(0,0,0,0.03);
+  --item-row-bg:  rgba(0,0,0,0.03);
+  --stat-card-bg: rgba(255,255,255,0.80);
 }
 
 html, body {
   height: 100%;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 55%, #1a1035 100%);
+  background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 55%, var(--bg-c) 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--text);
   overflow: hidden;
+  transition: background 0.3s, color 0.3s;
 }
 
-.orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
-.orb1 { width:600px;height:600px; background:radial-gradient(circle,rgba(168,85,247,.18) 0%,transparent 70%); top:-200px;left:-150px; }
-.orb2 { width:500px;height:500px; background:radial-gradient(circle,rgba(59,130,246,.15) 0%,transparent 70%); bottom:-150px;right:-100px; }
-.orb3 { width:350px;height:350px; background:radial-gradient(circle,rgba(236,72,153,.12) 0%,transparent 70%); top:30%;left:40%; }
+/* ─── ORBS ─── */
+.orb { position:fixed;border-radius:50%;pointer-events:none;z-index:0;transition:background .4s; }
+.orb1 { width:600px;height:600px;background:radial-gradient(circle,var(--orb1) 0%,transparent 70%);top:-200px;left:-150px; }
+.orb2 { width:500px;height:500px;background:radial-gradient(circle,var(--orb2) 0%,transparent 70%);bottom:-150px;right:-100px; }
+.orb3 { width:350px;height:350px;background:radial-gradient(circle,var(--orb3) 0%,transparent 70%);top:30%;left:40%; }
+
+/* ─── THEME TOGGLE ─── */
+.theme-toggle {
+  width:34px;height:34px;border-radius:8px;
+  background:var(--btn-ghost-bg);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;
+  flex-shrink:0;
+}
+.theme-toggle:hover { background:var(--surface);color:var(--text); }
 
 /* ─── SHELL ─── */
 .shell { position:relative;z-index:1;display:flex;height:100vh;overflow:hidden; }
 
 /* ─── SIDEBAR ─── */
 .sidebar {
-  width:220px; flex-shrink:0;
-  background:rgba(255,255,255,.04); backdrop-filter:var(--blur);
+  width:220px;flex-shrink:0;
+  background:var(--glass);backdrop-filter:var(--blur);
   border-right:1px solid var(--border);
-  display:flex; flex-direction:column; padding:24px 0 20px; overflow:hidden;
+  display:flex;flex-direction:column;padding:24px 0 20px;overflow:hidden;
+  transition:background .3s,border-color .3s;
 }
-.sidebar-brand { padding:0 20px 24px; border-bottom:1px solid var(--border2); }
+.sidebar-brand { padding:0 20px 24px;border-bottom:1px solid var(--border2); }
 .sidebar-brand-name { font-size:15px;font-weight:700;letter-spacing:-.3px;color:var(--text); }
 .sidebar-brand-tag  { font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.8px; }
 .sidebar-section { padding:20px 12px 8px; }
 .sidebar-section-label { font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;padding:0 8px;margin-bottom:6px; }
 .nav-item { display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px;font-size:13px;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;text-decoration:none; }
-.nav-item:hover { background:rgba(255,255,255,.06);color:var(--text); }
-.nav-item.active { background:rgba(103,232,249,.10);color:var(--cyan);font-weight:500; }
+.nav-item:hover { background:var(--surface);color:var(--text); }
+.nav-item.active { background:var(--nav-active-bg);color:var(--cyan);font-weight:500; }
 .nav-icon { width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0; }
-.nav-badge { margin-left:auto;background:rgba(249,168,212,.15);color:var(--pink);border:1px solid rgba(249,168,212,.2);font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px; }
+.nav-badge { margin-left:auto;background:var(--badge-bg);color:var(--badge-color);border:1px solid var(--badge-border);font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px; }
 .sidebar-footer { margin-top:auto;padding:16px 20px 0;border-top:1px solid var(--border2); }
 .user-row { display:flex;align-items:center;gap:10px; }
-.user-avatar { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--lavender));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0f0c29;flex-shrink:0; }
+.user-avatar { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#67e8f9,#c4b5fd);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0f0c29;flex-shrink:0; }
 .user-name { font-size:13px;font-weight:500;color:var(--text); }
 .user-role { font-size:11px;color:var(--muted);margin-top:1px; }
 
 /* ─── MAIN WRAPPER ─── */
-.main-wrapper { flex:1;display:flex;overflow:hidden;position:relative; }
+.main-wrapper { flex:1;display:flex;overflow:hidden; }
 
 /* ─── MAIN ─── */
 .main { flex:1;display:flex;flex-direction:column;overflow:hidden; }
 
 /* topbar */
-.topbar { height:60px;flex-shrink:0;background:rgba(255,255,255,.04);backdrop-filter:var(--blur);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between; }
+.topbar {
+  height:60px;flex-shrink:0;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  transition:background .3s,border-color .3s;
+}
 .topbar-left { display:flex;align-items:center;gap:14px; }
 .topbar-title { font-size:16px;font-weight:700;letter-spacing:-.4px;color:var(--text); }
 .topbar-subtitle { font-size:12px;color:var(--muted);margin-top:1px; }
 .topbar-actions { display:flex;align-items:center;gap:10px; }
-.topbar-btn { height:34px;padding:0 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:flex;align-items:center;gap:6px; }
-.topbar-btn-ghost   { background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border); }
+.topbar-btn {
+  height:34px;padding:0 16px;border-radius:8px;font-size:12px;font-weight:600;
+  cursor:pointer;border:none;display:flex;align-items:center;gap:6px;
+  transition:background .15s,color .15s;
+}
+.topbar-btn-ghost   { background:var(--btn-ghost-bg);color:var(--btn-ghost-color);border:1px solid var(--border); }
 .topbar-btn-primary { background:linear-gradient(135deg,rgba(103,232,249,.2),rgba(196,181,253,.2));color:var(--cyan);border:1px solid rgba(103,232,249,.25); }
+[data-theme="light"] .topbar-btn-primary { background:linear-gradient(135deg,rgba(8,145,178,.15),rgba(109,40,217,.12));color:var(--lavender);border:1px solid rgba(8,145,178,.3); }
 
 /* KPI row */
-.kpi-row { flex-shrink:0;background:rgba(255,255,255,.03);backdrop-filter:var(--blur);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center; }
+.kpi-row {
+  flex-shrink:0;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;height:62px;display:flex;align-items:center;
+  transition:background .3s,border-color .3s;
+}
 .kpi-item { display:flex;align-items:center;gap:10px;padding:0 28px; }
 .kpi-item:first-child { padding-left:0; }
 .kpi-num { font-size:22px;font-weight:700;letter-spacing:-1px;line-height:1; }
@@ -89,43 +193,48 @@ html, body {
 
 /* stat cards */
 .stats-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px; }
-.stat-card { background:var(--surface);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:14px;padding:16px 18px; }
+.stat-card {
+  background:var(--stat-card-bg);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:14px;padding:16px 18px;
+  transition:background .3s,border-color .3s;
+}
 .stat-num { font-size:30px;font-weight:700;letter-spacing:-1.5px;line-height:1; }
 .stat-lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:5px; }
 
 /* customer cards */
 .customer-list { display:flex;flex-direction:column;gap:10px; }
 .cust-card {
-  background:var(--surface); backdrop-filter:var(--blur);
-  border:1px solid var(--border); border-radius:16px;
-  padding:18px 22px; display:flex; align-items:center; gap:18px;
-  cursor:pointer;
-  transition:background .15s, border-color .15s, transform .2s;
+  background:var(--surface);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:16px;
+  padding:18px 22px;display:flex;align-items:center;gap:18px;
+  cursor:pointer;transition:background .15s,border-color .15s,transform .2s,box-shadow .2s;
 }
-.cust-card:hover, .cust-card.highlighted {
-  background:rgba(255,255,255,.09);
-  border-color:rgba(255,255,255,.20);
+.cust-card:hover {
+  background:var(--surface-hover);
+  border-color:var(--border);
   transform:translateX(-3px);
+  box-shadow:4px 0 20px rgba(103,232,249,.06);
 }
+[data-theme="light"] .cust-card:hover { box-shadow:4px 0 24px rgba(109,40,217,.08); }
 .cust-logo { width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#0f0c29;flex-shrink:0; }
 .cust-info { flex:1;min-width:0; }
 .cust-name { font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.2px; }
 .cust-meta { font-size:11px;color:var(--muted);margin-top:2px; }
 .cust-bar-col { flex:1;min-width:100px;max-width:200px; }
 .cust-bar-label-text { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px; }
-.cust-bar-track { height:3px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:5px; }
+.cust-bar-track { height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:5px; }
 .cust-bar-fill { height:100%;border-radius:99px; }
 .cust-pct { font-size:28px;font-weight:800;letter-spacing:-1.5px;line-height:1;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex-shrink:0;min-width:72px;text-align:right; }
 .cust-pill { padding:3px 11px;border-radius:99px;font-size:11px;font-weight:500;flex-shrink:0; }
 .cust-arrow { font-size:18px;color:var(--dim);flex-shrink:0;transition:color .15s,transform .15s; }
-.cust-card:hover .cust-arrow, .cust-card.highlighted .cust-arrow { color:var(--cyan);transform:translateX(4px); }
+.cust-card:hover .cust-arrow { color:var(--cyan);transform:translateX(4px); }
 
-/* ─── LIST / DETAIL VIEW ─── */
+/* views */
 .view { flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding:24px 28px; }
 .view[hidden] { display:none; }
 
-/* ─── DETAIL LAYOUT ─── */
-.detail-hero { padding:24px 28px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);flex-shrink:0; }
+/* detail */
+.detail-hero { padding:24px 28px 20px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
 .detail-hero-row { display:flex;align-items:flex-start;justify-content:space-between;gap:16px; }
 .detail-hero-left { display:flex;align-items:flex-start;gap:16px; }
 .detail-big-logo { width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#0f0c29;flex-shrink:0; }
@@ -134,46 +243,45 @@ html, body {
 .detail-hero-pill { display:inline-flex;padding:3px 12px;border-radius:99px;font-size:11px;font-weight:500;margin-top:8px; }
 .detail-hero-actions { display:flex;gap:8px; }
 
-.detail-kpi-row { height:64px;flex-shrink:0;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center; }
+.detail-kpi-row { height:64px;flex-shrink:0;background:var(--glass);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center; }
 .detail-kpi { padding:0 26px; }
 .detail-kpi:first-child { padding-left:0; }
 .detail-kpi-num { font-size:20px;font-weight:700;letter-spacing:-.8px;line-height:1; }
 .detail-kpi-lbl { font-size:11px;color:var(--muted);margin-top:2px; }
 
 .detail-body { flex:1;overflow-y:auto;padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-.detail-panel { background:var(--surface);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:20px; }
+.detail-panel { background:var(--surface);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:20px;transition:background .3s; }
 .detail-panel-label { font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px; }
 .detail-full { grid-column:1/-1; }
 
 .bar-row { display:flex;flex-direction:column;gap:10px; }
 .bar-item { display:flex;align-items:center;gap:12px; }
 .bar-item-label { font-size:12px;color:var(--muted);width:90px;flex-shrink:0; }
-.bar-item-track { flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden; }
+.bar-item-track { flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden; }
 .bar-item-fill { height:100%;border-radius:99px; }
 .bar-item-val { font-size:12px;font-weight:600;color:var(--text);width:36px;text-align:right;flex-shrink:0; }
 
 .info-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
-.info-item { background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:10px;padding:12px 14px; }
+.info-item { background:var(--info-item-bg);border:1px solid var(--border2);border-radius:10px;padding:12px 14px; }
 .info-item-lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
 .info-item-val { font-size:14px;font-weight:600;color:var(--text); }
 
 .items-list { display:flex;flex-direction:column;gap:8px; }
-.item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:10px; }
+.item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--item-row-bg);border:1px solid var(--border2);border-radius:10px; }
 .item-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
 .item-title { flex:1;font-size:12px;color:var(--text); }
 .item-pill { font-size:10px;padding:2px 9px;border-radius:99px;font-weight:500; }
 
 /* ─── RIGHT SIDECAR ─── */
 .right-sidecar {
-  flex-shrink:0; width:0; overflow:hidden;
-  background:rgba(255,255,255,.04); backdrop-filter:var(--blur);
+  flex-shrink:0;width:0;overflow:hidden;
+  background:var(--glass);backdrop-filter:var(--blur);
   border-left:1px solid transparent;
-  transition:width .25s cubic-bezier(.4,0,.2,1), border-color .25s;
-  display:flex; flex-direction:column;
+  transition:width .25s cubic-bezier(.4,0,.2,1),border-color .25s,background .3s;
+  display:flex;flex-direction:column;
 }
-.right-sidecar.open { width:280px; border-left-color:var(--border); }
+.right-sidecar.open { width:280px;border-left-color:var(--border); }
 .sc-inner { width:280px;height:100%;display:flex;flex-direction:column;overflow:hidden; }
-
 .sc-header { padding:18px 20px 16px;border-bottom:1px solid var(--border2); }
 .sc-eyebrow { font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px; }
 .sc-company { display:flex;align-items:center;gap:12px;margin-bottom:14px; }
@@ -181,25 +289,41 @@ html, body {
 .sc-name { font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px; }
 .sc-industry { font-size:11px;color:var(--muted);margin-top:2px; }
 .sc-pill { display:inline-flex;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:500;margin-top:2px; }
-
-.sc-adoption { text-align:center;padding:14px 0 10px; }
+.sc-adoption { text-align:center;padding:14px 20px 10px; }
 .sc-adoption-num { font-size:52px;font-weight:800;letter-spacing:-3px;line-height:1;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
 .sc-adoption-lbl { font-size:11px;color:var(--muted);margin-top:4px; }
-.sc-bar-track { height:4px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:10px; }
+.sc-bar-track { height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:10px; }
 .sc-bar-fill { height:100%;border-radius:99px; }
-
 .sc-body { flex:1;padding:14px 20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto; }
-.sc-metric { background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:11px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center; }
+.sc-metric { background:var(--sc-metric-bg);border:1px solid var(--border2);border-radius:11px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center; }
 .sc-metric-lbl { font-size:11px;color:var(--muted); }
 .sc-metric-val { font-size:13px;font-weight:600;color:var(--text); }
-
 .sc-footer { padding:14px 20px;border-top:1px solid var(--border2); }
-.sc-open-btn { width:100%;padding:10px 0;border-radius:10px;background:linear-gradient(135deg,rgba(103,232,249,.15),rgba(196,181,253,.15));color:var(--cyan);border:1px solid rgba(103,232,249,.25);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s; }
+.sc-open-btn {
+  width:100%;padding:10px 0;border-radius:10px;
+  background:linear-gradient(135deg,rgba(103,232,249,.15),rgba(196,181,253,.15));
+  color:var(--cyan);border:1px solid rgba(103,232,249,.25);
+  font-size:13px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:background .15s;
+}
 .sc-open-btn:hover { background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25)); }
+[data-theme="light"] .sc-open-btn {
+  background:linear-gradient(135deg,rgba(8,145,178,.10),rgba(109,40,217,.10));
+  color:var(--lavender);border-color:rgba(109,40,217,.2);
+}
+[data-theme="light"] .sc-open-btn:hover { background:linear-gradient(135deg,rgba(8,145,178,.18),rgba(109,40,217,.18)); }
 
 /* scrollbar */
 ::-webkit-scrollbar { width:4px; }
-::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1);border-radius:99px; }
+::-webkit-scrollbar-thumb { background:var(--border);border-radius:99px; }
+
+/* light-mode pill overrides for status (blocked/open/etc) */
+[data-theme="light"] .pill-blocked    { background:rgba(190,24,93,.10)!important;color:#be185d!important;border:1px solid rgba(190,24,93,.2)!important; }
+[data-theme="light"] .pill-open       { background:rgba(0,0,0,.06)!important;color:#5a5a7a!important;border:1px solid rgba(0,0,0,.1)!important; }
+[data-theme="light"] .pill-in-review  { background:rgba(109,40,217,.10)!important;color:#6d28d9!important;border:1px solid rgba(109,40,217,.2)!important; }
+[data-theme="light"] .pill-in-progress{ background:rgba(8,145,178,.10)!important;color:#0891b2!important;border:1px solid rgba(8,145,178,.2)!important; }
+[data-theme="light"] .pill-done       { background:rgba(5,150,105,.10)!important;color:#059669!important;border:1px solid rgba(5,150,105,.2)!important; }
 </style>
 </head>
 <body>
@@ -244,44 +368,45 @@ html, body {
   <!-- ══════ MAIN WRAPPER ══════ -->
   <div class="main-wrapper">
 
-    <!-- ── MAIN ── -->
-    <main class="main" id="main">
+    <main class="main">
 
-      <!-- TOPBAR — list state -->
+      <!-- TOPBAR — list -->
       <div class="topbar" id="tb-list">
         <div><div class="topbar-title">Dashboard</div><div class="topbar-subtitle">All customers · March 2026</div></div>
         <div class="topbar-actions">
+          <button class="theme-toggle" id="toggle-btn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
           <button class="topbar-btn topbar-btn-ghost">⊞ Filter</button>
           <button class="topbar-btn topbar-btn-primary">+ Add Customer</button>
         </div>
       </div>
 
-      <!-- TOPBAR — detail state -->
+      <!-- TOPBAR — detail -->
       <div class="topbar" id="tb-detail" hidden>
         <div class="topbar-left">
           <button class="topbar-btn topbar-btn-ghost" onclick="goBack()">← Back</button>
           <div><div class="topbar-title" id="tb-detail-title">Customer</div><div class="topbar-subtitle">Customer Detail</div></div>
         </div>
         <div class="topbar-actions">
+          <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">🌙</button>
           <button class="topbar-btn topbar-btn-ghost">⊞ Edit</button>
           <button class="topbar-btn topbar-btn-primary">Schedule Meeting</button>
         </div>
       </div>
 
-      <!-- KPI ROW (list only) -->
+      <!-- KPI ROW -->
       <div class="kpi-row" id="kpi-row">
-        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--cyan);">3</div><div class="kpi-label">Customers</div></div></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-c);">3</div><div class="kpi-label">Customers</div></div></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--mint);">37%</div><div class="kpi-label">Avg Adoption</div></div></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-m);">37%</div><div class="kpi-label">Avg Adoption</div></div></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--lavender);">136</div><div class="kpi-label">Total Items</div></div></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-l);">136</div><div class="kpi-label">Total Items</div></div></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--pink);">5</div><div class="kpi-label">Blocked</div></div></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-p);">5</div><div class="kpi-label">Blocked</div></div></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item"><div><div class="kpi-num" style="color:#fbbf24;">89%</div><div class="kpi-label">Satisfaction</div></div></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:#d97706;">89%</div><div class="kpi-label">Satisfaction</div></div></div>
       </div>
 
-      <!-- ── LIST VIEW ── -->
+      <!-- LIST VIEW -->
       <div class="view" id="view-list">
         <div class="section-label">At a Glance</div>
         <div class="stats-row">
@@ -290,12 +415,11 @@ html, body {
           <div class="stat-card"><div class="stat-num" style="color:var(--lavender);">136</div><div class="stat-lbl">Open Items</div></div>
           <div class="stat-card"><div class="stat-num" style="color:var(--pink);">5</div><div class="stat-lbl">Blockers</div></div>
         </div>
-
         <div class="section-label">Customers</div>
         <div class="customer-list" id="cust-list"></div>
       </div>
 
-      <!-- ── DETAIL VIEW ── -->
+      <!-- DETAIL VIEW -->
       <div id="view-detail" hidden style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
         <div class="detail-hero" id="d-hero"></div>
         <div class="detail-kpi-row" id="d-kpi"></div>
@@ -304,107 +428,117 @@ html, body {
 
     </main>
 
-    <!-- ── RIGHT SIDECAR ── -->
+    <!-- RIGHT SIDECAR -->
     <div class="right-sidecar" id="sidecar">
       <div class="sc-inner">
-        <div class="sc-header" id="sc-header"></div>
-        <div class="sc-adoption" id="sc-adoption" style="padding:14px 20px 10px;"></div>
-        <div class="sc-body" id="sc-body"></div>
+        <div class="sc-header"  id="sc-header"></div>
+        <div id="sc-adoption" style="padding:14px 20px 10px;text-align:center;"></div>
+        <div class="sc-body"   id="sc-body"></div>
         <div class="sc-footer">
           <button class="sc-open-btn" id="sc-open-btn">Open Details →</button>
         </div>
       </div>
     </div>
 
-  </div><!-- /main-wrapper -->
-</div><!-- /shell -->
+  </div>
+</div>
 
 <script>
-/* ── customer data ── */
+/* ─── theme toggle ─── */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const icon = isDark ? '☀️' : '🌙';
+  document.getElementById('toggle-btn').textContent  = icon;
+  document.getElementById('toggle-btn2').textContent = icon;
+}
+
+/* ─── customer data ─── */
 const CUSTOMERS = {
   amdocs: {
-    id: 'amdocs', name: 'AMDOCS', letter: 'A',
-    gradient: 'linear-gradient(135deg,#f9a8d4,#c084fc)',
-    barGradient: 'linear-gradient(90deg,#f9a8d4,#c084fc)',
-    adoption: 24, status: 'at-risk',
-    pillStyle: 'background:rgba(249,168,212,.12);color:#f9a8d4;border:1px solid rgba(249,168,212,.25)',
-    meta: 'Last sync 2h ago · 48 items', items: 48, sync: '2h ago',
-    seats: 320, activeUsers: 77, codeAcceptance: 31, completions: 12400,
-    csm: 'Sarah K.', contractEnd: 'Dec 2025', industry: 'Telecom',
-    satisfaction: 72,
-    recentItems: [
-      { title: 'Onboarding blocked – SSO config', status: 'blocked', color: '#f9a8d4' },
-      { title: 'Training session scheduled', status: 'open', color: '#c4b5fd' },
-      { title: 'License expansion request', status: 'in-review', color: '#67e8f9' },
-      { title: 'QBR deck preparation', status: 'open', color: '#6ee7b7' },
+    id:'amdocs', name:'AMDOCS', letter:'A',
+    gradient:'linear-gradient(135deg,#f9a8d4,#c084fc)',
+    barGradient:'linear-gradient(90deg,#f9a8d4,#c084fc)',
+    adoption:24, status:'at-risk',
+    pillStyle:'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.25)',
+    meta:'Last sync 2h ago · 48 items', items:48, sync:'2h ago',
+    seats:320, activeUsers:77, codeAcceptance:31, completions:12400,
+    csm:'Sarah K.', contractEnd:'Dec 2025', industry:'Telecom', satisfaction:72,
+    recentItems:[
+      {title:'Onboarding blocked – SSO config', status:'blocked', color:'#f9a8d4'},
+      {title:'Training session scheduled',      status:'open',    color:'#c4b5fd'},
+      {title:'License expansion request',       status:'in-review', color:'#67e8f9'},
+      {title:'QBR deck preparation',            status:'open',    color:'#6ee7b7'},
     ],
-    metrics: [
-      { label: 'Active Users', value: 77, max: 320, color: 'linear-gradient(90deg,#f9a8d4,#c084fc)' },
-      { label: 'Code Accepted', value: 31, max: 100, color: 'linear-gradient(90deg,#c4b5fd,#f9a8d4)' },
-      { label: 'Completions', value: 40, max: 100, color: 'linear-gradient(90deg,#67e8f9,#6ee7b7)' },
-      { label: 'Satisfaction', value: 72, max: 100, color: 'linear-gradient(90deg,#fbbf24,#f9a8d4)' },
+    metrics:[
+      {label:'Active Users',  value:77,  max:320, color:'linear-gradient(90deg,#f9a8d4,#c084fc)'},
+      {label:'Code Accepted', value:31,  max:100, color:'linear-gradient(90deg,#c4b5fd,#f9a8d4)'},
+      {label:'Completions',   value:40,  max:100, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
+      {label:'Satisfaction',  value:72,  max:100, color:'linear-gradient(90deg,#fbbf24,#f9a8d4)'},
     ]
   },
   nice: {
-    id: 'nice', name: 'NiCE', letter: 'N',
-    gradient: 'linear-gradient(135deg,#67e8f9,#6ee7b7)',
-    barGradient: 'linear-gradient(90deg,#67e8f9,#6ee7b7)',
-    adoption: 46, status: 'on-track',
-    pillStyle: 'background:rgba(103,232,249,.12);color:#67e8f9;border:1px solid rgba(103,232,249,.25)',
-    meta: 'Last sync 30m ago · 55 items', items: 55, sync: '30m ago',
-    seats: 540, activeUsers: 248, codeAcceptance: 58, completions: 38700,
-    csm: 'James T.', contractEnd: 'Mar 2026', industry: 'CX Software',
-    satisfaction: 88,
-    recentItems: [
-      { title: 'Developer enablement week', status: 'in-progress', color: '#6ee7b7' },
-      { title: 'Expand to 2nd engineering team', status: 'open', color: '#67e8f9' },
-      { title: 'Monthly adoption review', status: 'done', color: '#c4b5fd' },
-      { title: 'API integration milestone', status: 'open', color: '#fbbf24' },
+    id:'nice', name:'NiCE', letter:'N',
+    gradient:'linear-gradient(135deg,#67e8f9,#6ee7b7)',
+    barGradient:'linear-gradient(90deg,#67e8f9,#6ee7b7)',
+    adoption:46, status:'on-track',
+    pillStyle:'background:rgba(103,232,249,.12);color:#0891b2;border:1px solid rgba(103,232,249,.3)',
+    meta:'Last sync 30m ago · 55 items', items:55, sync:'30m ago',
+    seats:540, activeUsers:248, codeAcceptance:58, completions:38700,
+    csm:'James T.', contractEnd:'Mar 2026', industry:'CX Software', satisfaction:88,
+    recentItems:[
+      {title:'Developer enablement week',       status:'in-progress', color:'#6ee7b7'},
+      {title:'Expand to 2nd engineering team',  status:'open',        color:'#67e8f9'},
+      {title:'Monthly adoption review',         status:'done',        color:'#c4b5fd'},
+      {title:'API integration milestone',       status:'open',        color:'#fbbf24'},
     ],
-    metrics: [
-      { label: 'Active Users', value: 248, max: 540, color: 'linear-gradient(90deg,#67e8f9,#6ee7b7)' },
-      { label: 'Code Accepted', value: 58, max: 100, color: 'linear-gradient(90deg,#6ee7b7,#c4b5fd)' },
-      { label: 'Completions', value: 72, max: 100, color: 'linear-gradient(90deg,#67e8f9,#6ee7b7)' },
-      { label: 'Satisfaction', value: 88, max: 100, color: 'linear-gradient(90deg,#6ee7b7,#fbbf24)' },
+    metrics:[
+      {label:'Active Users',  value:248, max:540, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
+      {label:'Code Accepted', value:58,  max:100, color:'linear-gradient(90deg,#6ee7b7,#c4b5fd)'},
+      {label:'Completions',   value:72,  max:100, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
+      {label:'Satisfaction',  value:88,  max:100, color:'linear-gradient(90deg,#6ee7b7,#fbbf24)'},
     ]
   },
   strauss: {
-    id: 'strauss', name: 'Strauss Group', letter: 'S',
-    gradient: 'linear-gradient(135deg,#6ee7b7,#c4b5fd)',
-    barGradient: 'linear-gradient(90deg,#6ee7b7,#c4b5fd)',
-    adoption: 42, status: 'on-track',
-    pillStyle: 'background:rgba(110,231,183,.12);color:#6ee7b7;border:1px solid rgba(110,231,183,.25)',
-    meta: 'Last sync 1h ago · 33 items', items: 33, sync: '1h ago',
-    seats: 210, activeUsers: 88, codeAcceptance: 49, completions: 21300,
-    csm: 'Lior B.', contractEnd: 'Jun 2026', industry: 'Food & Beverage',
-    satisfaction: 91,
-    recentItems: [
-      { title: 'Pilot team expansion approved', status: 'done', color: '#6ee7b7' },
-      { title: 'Security review pending', status: 'blocked', color: '#f9a8d4' },
-      { title: 'Seat count renewal discussion', status: 'open', color: '#c4b5fd' },
-      { title: 'Custom IDE plugin request', status: 'in-review', color: '#67e8f9' },
+    id:'strauss', name:'Strauss Group', letter:'S',
+    gradient:'linear-gradient(135deg,#6ee7b7,#c4b5fd)',
+    barGradient:'linear-gradient(90deg,#6ee7b7,#c4b5fd)',
+    adoption:42, status:'on-track',
+    pillStyle:'background:rgba(110,231,183,.12);color:#059669;border:1px solid rgba(110,231,183,.3)',
+    meta:'Last sync 1h ago · 33 items', items:33, sync:'1h ago',
+    seats:210, activeUsers:88, codeAcceptance:49, completions:21300,
+    csm:'Lior B.', contractEnd:'Jun 2026', industry:'Food & Beverage', satisfaction:91,
+    recentItems:[
+      {title:'Pilot team expansion approved', status:'done',        color:'#6ee7b7'},
+      {title:'Security review pending',       status:'blocked',     color:'#f9a8d4'},
+      {title:'Seat count renewal discussion', status:'open',        color:'#c4b5fd'},
+      {title:'Custom IDE plugin request',     status:'in-review',   color:'#67e8f9'},
     ],
-    metrics: [
-      { label: 'Active Users', value: 88, max: 210, color: 'linear-gradient(90deg,#6ee7b7,#c4b5fd)' },
-      { label: 'Code Accepted', value: 49, max: 100, color: 'linear-gradient(90deg,#c4b5fd,#6ee7b7)' },
-      { label: 'Completions', value: 61, max: 100, color: 'linear-gradient(90deg,#6ee7b7,#67e8f9)' },
-      { label: 'Satisfaction', value: 91, max: 100, color: 'linear-gradient(90deg,#c4b5fd,#fbbf24)' },
+    metrics:[
+      {label:'Active Users',  value:88, max:210, color:'linear-gradient(90deg,#6ee7b7,#c4b5fd)'},
+      {label:'Code Accepted', value:49, max:100, color:'linear-gradient(90deg,#c4b5fd,#6ee7b7)'},
+      {label:'Completions',   value:61, max:100, color:'linear-gradient(90deg,#6ee7b7,#67e8f9)'},
+      {label:'Satisfaction',  value:91, max:100, color:'linear-gradient(90deg,#c4b5fd,#fbbf24)'},
     ]
   }
 };
 
-const STATUS_COLORS = {
-  'blocked':     'background:rgba(249,168,212,.12);color:#f9a8d4;border:1px solid rgba(249,168,212,.2)',
-  'open':        'background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)',
-  'in-review':   'background:rgba(196,181,253,.12);color:#c4b5fd;border:1px solid rgba(196,181,253,.2)',
-  'in-progress': 'background:rgba(103,232,249,.12);color:#67e8f9;border:1px solid rgba(103,232,249,.2)',
-  'done':        'background:rgba(110,231,183,.12);color:#6ee7b7;border:1px solid rgba(110,231,183,.2)',
+const STATUS_STYLES = {
+  'blocked':     'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.2)',
+  'open':        'background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.12)',
+  'in-review':   'background:rgba(196,181,253,.12);color:#a78bfa;border:1px solid rgba(196,181,253,.25)',
+  'in-progress': 'background:rgba(103,232,249,.12);color:#67e8f9;border:1px solid rgba(103,232,249,.25)',
+  'done':        'background:rgba(110,231,183,.12);color:#6ee7b7;border:1px solid rgba(110,231,183,.25)',
+};
+const STATUS_CLASS = {
+  'blocked':'pill-blocked','open':'pill-open','in-review':'pill-in-review',
+  'in-progress':'pill-in-progress','done':'pill-done'
 };
 
-/* ── build list ── */
+/* ─── build list ─── */
 function buildList() {
-  const list = document.getElementById('cust-list');
-  list.innerHTML = Object.values(CUSTOMERS).map(c => `
+  document.getElementById('cust-list').innerHTML = Object.values(CUSTOMERS).map(c => `
     <div class="cust-card" data-id="${c.id}"
          onmouseenter="openSidecar('${c.id}')"
          onmouseleave="closeSidecar()"
@@ -421,18 +555,15 @@ function buildList() {
       <div class="cust-pct" style="background:${c.gradient};">${c.adoption}%</div>
       <div class="cust-pill" style="${c.pillStyle};">${c.status}</div>
       <div class="cust-arrow">›</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-/* ── sidecar ── */
-let sidecarTimer = null;
-let currentSidecar = null;
+/* ─── sidecar ─── */
+let scTimer = null;
 
 function openSidecar(id) {
-  clearTimeout(sidecarTimer);
+  clearTimeout(scTimer);
   const c = CUSTOMERS[id];
-  currentSidecar = id;
 
   document.getElementById('sc-header').innerHTML = `
     <div class="sc-eyebrow">Customer Preview</div>
@@ -443,54 +574,43 @@ function openSidecar(id) {
         <div class="sc-industry">${c.industry}</div>
         <div class="sc-pill" style="${c.pillStyle};">${c.status}</div>
       </div>
-    </div>
-  `;
+    </div>`;
 
   document.getElementById('sc-adoption').innerHTML = `
     <div class="sc-adoption-num" style="background:${c.gradient};">${c.adoption}%</div>
     <div class="sc-adoption-lbl">Copilot Adoption Rate</div>
-    <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>
-  `;
+    <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>`;
 
   document.getElementById('sc-body').innerHTML = `
     <div class="sc-metric"><span class="sc-metric-lbl">Seats</span><span class="sc-metric-val">${c.seats.toLocaleString()}</span></div>
     <div class="sc-metric"><span class="sc-metric-lbl">Active Users</span><span class="sc-metric-val">${c.activeUsers}</span></div>
     <div class="sc-metric"><span class="sc-metric-lbl">Code Accepted</span><span class="sc-metric-val">${c.codeAcceptance}%</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">Items Open</span><span class="sc-metric-val">${c.items}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Open Items</span><span class="sc-metric-val">${c.items}</span></div>
     <div class="sc-metric"><span class="sc-metric-lbl">Last Sync</span><span class="sc-metric-val">${c.sync}</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">CSM</span><span class="sc-metric-val">${c.csm}</span></div>
-  `;
+    <div class="sc-metric"><span class="sc-metric-lbl">CSM</span><span class="sc-metric-val">${c.csm}</span></div>`;
 
   document.getElementById('sc-open-btn').onclick = () => goToDetail(id);
   document.getElementById('sidecar').classList.add('open');
 }
 
 function closeSidecar() {
-  sidecarTimer = setTimeout(() => {
-    document.getElementById('sidecar').classList.remove('open');
-    currentSidecar = null;
-  }, 180);
+  scTimer = setTimeout(() => document.getElementById('sidecar').classList.remove('open'), 180);
 }
 
-/* keep sidecar open when mouse moves into it */
-document.getElementById('sidecar').addEventListener('mouseenter', () => clearTimeout(sidecarTimer));
+document.getElementById('sidecar').addEventListener('mouseenter', () => clearTimeout(scTimer));
 document.getElementById('sidecar').addEventListener('mouseleave', closeSidecar);
 
-/* ── detail view ── */
+/* ─── detail view ─── */
 function goToDetail(id) {
   const c = CUSTOMERS[id];
-  clearTimeout(sidecarTimer);
+  clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
 
-  /* topbar */
-  document.getElementById('tb-list').hidden = true;
+  document.getElementById('tb-list').hidden   = true;
   document.getElementById('tb-detail').hidden = false;
   document.getElementById('tb-detail-title').textContent = c.name;
+  document.getElementById('kpi-row').hidden   = true;
 
-  /* kpi row */
-  document.getElementById('kpi-row').hidden = true;
-
-  /* hero */
   document.getElementById('d-hero').innerHTML = `
     <div class="detail-hero-row">
       <div class="detail-hero-left">
@@ -505,10 +625,8 @@ function goToDetail(id) {
         <button class="topbar-btn topbar-btn-ghost">Export</button>
         <button class="topbar-btn topbar-btn-primary">View in GitHub →</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  /* customer KPIs */
   document.getElementById('d-kpi').innerHTML = `
     <div class="detail-kpi"><div class="detail-kpi-num" style="background:${c.gradient};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${c.adoption}%</div><div class="detail-kpi-lbl">Adoption Rate</div></div>
     <div class="kpi-divider" style="margin:0 4px;"></div>
@@ -518,26 +636,23 @@ function goToDetail(id) {
     <div class="kpi-divider" style="margin:0 4px;"></div>
     <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--lavender);">${c.completions.toLocaleString()}</div><div class="detail-kpi-lbl">Completions</div></div>
     <div class="kpi-divider" style="margin:0 4px;"></div>
-    <div class="detail-kpi"><div class="detail-kpi-num" style="color:#fbbf24;">${c.satisfaction}%</div><div class="detail-kpi-lbl">Satisfaction</div></div>
-  `;
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:#d97706;">${c.satisfaction}%</div><div class="detail-kpi-lbl">Satisfaction</div></div>`;
 
-  /* body panels */
   const barsHtml = c.metrics.map(m => {
     const pct = Math.round((m.value / m.max) * 100);
-    const label = m.max === 100 ? `${m.value}%` : `${m.value} / ${m.max}`;
-    return `
-      <div class="bar-item">
-        <div class="bar-item-label">${m.label}</div>
-        <div class="bar-item-track"><div class="bar-item-fill" style="width:${pct}%;background:${m.color};"></div></div>
-        <div class="bar-item-val">${label}</div>
-      </div>`;
+    const label = m.max === 100 ? `${m.value}%` : `${m.value}/${m.max}`;
+    return `<div class="bar-item">
+      <div class="bar-item-label">${m.label}</div>
+      <div class="bar-item-track"><div class="bar-item-fill" style="width:${pct}%;background:${m.color};"></div></div>
+      <div class="bar-item-val">${label}</div>
+    </div>`;
   }).join('');
 
   const itemsHtml = c.recentItems.map(it => `
     <div class="item-row">
       <div class="item-dot" style="background:${it.color};"></div>
       <div class="item-title">${it.title}</div>
-      <div class="item-pill" style="${STATUS_COLORS[it.status]}">${it.status}</div>
+      <div class="item-pill ${STATUS_CLASS[it.status]}" style="${STATUS_STYLES[it.status]}">${it.status}</div>
     </div>`).join('');
 
   document.getElementById('d-body').innerHTML = `
@@ -559,23 +674,20 @@ function goToDetail(id) {
     <div class="detail-panel detail-full">
       <div class="detail-panel-label">Recent Items</div>
       <div class="items-list">${itemsHtml}</div>
-    </div>
-  `;
+    </div>`;
 
-  /* switch views */
-  document.getElementById('view-list').hidden = true;
+  document.getElementById('view-list').hidden   = true;
   document.getElementById('view-detail').hidden = false;
 }
 
 function goBack() {
-  document.getElementById('tb-list').hidden = false;
+  document.getElementById('tb-list').hidden   = false;
   document.getElementById('tb-detail').hidden = true;
-  document.getElementById('kpi-row').hidden = false;
-  document.getElementById('view-list').hidden = false;
+  document.getElementById('kpi-row').hidden   = false;
+  document.getElementById('view-list').hidden   = false;
   document.getElementById('view-detail').hidden = true;
 }
 
-/* ── init ── */
 buildList();
 </script>
 </body>
