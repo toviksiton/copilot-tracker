@@ -765,6 +765,28 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
   border: 2px dashed var(--ms-blue);
   margin: 2px 0;
 }
+
+/* ── Read-only mode ── */
+.ro-badge {
+  display: none;
+  background: rgba(245,158,11,.2); border: 1px solid rgba(245,158,11,.5);
+  color: #fcd34d; padding: 4px 10px; border-radius: var(--radius);
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+body.read-only .ro-badge { display: inline-flex; align-items: center; gap: 5px; }
+body.read-only .item-actions         { display: none !important; }
+body.read-only .cat-header-actions   { display: none !important; }
+body.read-only .add-item-row         { display: none !important; }
+body.read-only #add-section-wrap     { display: none !important; }
+body.read-only .drag-handle          { display: none !important; }
+body.read-only .detail-overall .btn  { display: none !important; }
+body.read-only .status-btn           { pointer-events: none; opacity: .75; cursor: default; }
+body.read-only #pillars-btn          { display: none !important; }
+body.read-only #add-customer-btn     { display: none !important; }
+body.read-only #fs-btn               { display: none !important; }
+body.read-only #od-btn               { display: none !important; }
+body.read-only #import-btn           { display: none !important; }
+body.read-only .hbtn-sep             { display: none !important; }
 </style>
 </head>
 <body>
@@ -806,17 +828,18 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <span class="sep">›</span>
     <span id="crumb-name"></span>
   </div>
+  <span class="ro-badge">👁 View Only</span>
   <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">☰</button>
   <nav id="main-nav">
-    <button class="hbtn" onclick="openPillars();closeNav()">⚙️ Pillars</button>
-    <button class="hbtn" onclick="openAddCustomer();closeNav()">+ Add Customer</button>
+    <button class="hbtn" id="pillars-btn" onclick="openPillars();closeNav()">⚙️ Pillars</button>
+    <button class="hbtn" id="add-customer-btn" onclick="openAddCustomer();closeNav()">+ Add Customer</button>
     <button class="hbtn primary" id="report-btn" onclick="openReport();closeNav()" disabled>📄 Report</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile();closeNav()">📁 Connect File</button>
     <button class="hbtn" id="od-btn" title="Save and load via OneDrive, GitHub Gist, or URL" onclick="openOneDriveModal();closeNav()">☁️ Cloud Sync</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" title="Export all data to a JSON file" onclick="exportData();closeNav()">💾 Export</button>
-    <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click();closeNav()">📥 Import</button>
+    <button class="hbtn" id="import-btn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click();closeNav()">📥 Import</button>
     <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(this)" />
   </nav>
 </header>
@@ -1193,21 +1216,31 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 // ═══════════════════════════════════════════════════════
 (function () {
   const SESSION_KEY = 'copilot-tracker-auth';
-  const PW = '1201';
+  const PW    = '1201';
+  const PW_RO = '1234';
 
-  function unlock() {
+  function unlock(readOnly) {
     document.getElementById('lock-screen').classList.add('hidden');
+    if (readOnly) {
+      window.__readOnly = true;
+      document.body.classList.add('read-only');
+    }
   }
 
   // If already authenticated this session, skip the lock screen
-  if (sessionStorage.getItem(SESSION_KEY) === '1') { unlock(); return; }
+  const sess = sessionStorage.getItem(SESSION_KEY);
+  if (sess === '1')  { unlock(false); return; }
+  if (sess === 'ro') { unlock(true);  return; }
 
   // Otherwise show it and wait
   window.__checkPassword = function () {
     const val = document.getElementById('lock-input').value;
     if (val === PW) {
       sessionStorage.setItem(SESSION_KEY, '1');
-      unlock();
+      unlock(false);
+    } else if (val === PW_RO) {
+      sessionStorage.setItem(SESSION_KEY, 'ro');
+      unlock(true);
     } else {
       const inp = document.getElementById('lock-input');
       const err = document.getElementById('lock-error');
@@ -1769,7 +1802,7 @@ function buildItemRow(customer, cat, item) {
   const row = document.createElement('div');
   row.className = 'item-row';
   row.id = `item-${item.id}`;
-  row.setAttribute('draggable', 'true');
+  row.setAttribute('draggable', window.__readOnly ? 'false' : 'true');
   row.dataset.itemId = item.id;
   row.dataset.catId  = cat.id;
   row.dataset.custId = customer.id;
@@ -1798,6 +1831,7 @@ function buildItemRow(customer, cat, item) {
 //  ITEM ACTIONS
 // ═══════════════════════════════════════════════════════
 function cycleStatus(custId, catId, itemId) {
+  if (window.__readOnly) return;
   const customer = state.customers.find(c=>c.id===custId);
   const cat  = customer.categories.find(c=>c.id===catId);
   const item = cat.items.find(i=>i.id===itemId);
@@ -1833,6 +1867,7 @@ function deleteItem(custId, catId, itemId) {
 }
 
 function startRename(labelEl, custId, catId, itemId) {
+  if (window.__readOnly) return;
   if (labelEl.getAttribute('contenteditable')==='true') return;
   labelEl.setAttribute('contenteditable','true');
   labelEl.focus();
@@ -2302,6 +2337,7 @@ function exportData() {
 }
 
 function importData(input) {
+  if (window.__readOnly) return;
   const file = input.files[0];
   if (!file) return;
   input.value = ''; // reset so same file can be re-selected
