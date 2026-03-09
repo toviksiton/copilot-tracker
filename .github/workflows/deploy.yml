@@ -22,44 +22,50 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          python3 - <<'EOF'
-          import base64, json, os, urllib.request, urllib.error
-
-          token = os.environ['GH_TOKEN']
-          repo  = os.environ['REPO']
-          api   = f'https://api.github.com/repos/{repo}/contents/index.html'
-          hdrs  = {
-              'Authorization': f'token {token}',
-              'Accept': 'application/vnd.github+json',
-              'Content-Type': 'application/json',
-          }
-
-          with open('design-merged.html', 'rb') as f:
-              content = base64.b64encode(f.read()).decode()
+          # Encode file
+          CONTENT=$(base64 -w 0 design-merged.html)
 
           # Get current SHA of index.html on master
-          try:
-              req = urllib.request.Request(f'{api}?ref=master', headers=hdrs)
-              with urllib.request.urlopen(req) as r:
-                  sha = json.loads(r.read()).get('sha', '')
-          except urllib.error.HTTPError:
-              sha = ''
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/contents/index.html?ref=master")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "GET index.html status: $HTTP_CODE"
 
-          payload = {
-              'message': 'Deploy: Copilot Tracker light/dark dashboard as main URL',
-              'content': content,
-              'branch':  'master',
-          }
-          if sha:
-              payload['sha'] = sha
+          if [ "$HTTP_CODE" = "200" ]; then
+            SHA=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
+            echo "Existing SHA: $SHA"
+            PAYLOAD=$(python3 -c "
+          import json, sys
+          print(json.dumps({
+            'message': 'Deploy: Copilot Tracker light/dark dashboard',
+            'content': sys.argv[1],
+            'branch':  'master',
+            'sha':     sys.argv[2],
+          }))" "$CONTENT" "$SHA")
+          else
+            echo "File not found, creating new."
+            PAYLOAD=$(python3 -c "
+          import json, sys
+          print(json.dumps({
+            'message': 'Deploy: Copilot Tracker light/dark dashboard',
+            'content': sys.argv[1],
+            'branch':  'master',
+          }))" "$CONTENT")
+          fi
 
-          req = urllib.request.Request(
-              api,
-              data=json.dumps(payload).encode(),
-              headers=hdrs,
-              method='PUT',
-          )
-          with urllib.request.urlopen(req) as r:
-              result = json.loads(r.read())
-              print('Deployed:', result['content']['html_url'])
-          EOF
+          # PUT the file
+          RESULT=$(curl -s -w "\n%{http_code}" -X PUT \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/$REPO/contents/index.html" \
+            -d "$PAYLOAD")
+          PUT_CODE=$(echo "$RESULT" | tail -1)
+          PUT_BODY=$(echo "$RESULT" | head -n -1)
+          echo "PUT status: $PUT_CODE"
+          echo "$PUT_BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print('Deployed:', d.get('content',{}).get('html_url','(see above)'))" 2>/dev/null || echo "$PUT_BODY"
+
+          [ "$PUT_CODE" = "200" ] || [ "$PUT_CODE" = "201" ] || exit 1
