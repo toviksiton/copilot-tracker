@@ -26,6 +26,7 @@ jobs:
 
       - name: Deploy design-merged.html to master
         run: |
+          git fetch origin master
           git checkout master
           git checkout claude/sync-json-github-cache-WnynD -- design-merged.html
           git add design-merged.html
