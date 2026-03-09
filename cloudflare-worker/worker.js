@@ -141,11 +141,201 @@ function err(status, message) {
   return json({ error: message }, status);
 }
 
+// ── MCP Tools definition ──────────────────────────────────────────────────────
+const MCP_TOOLS = [
+  {
+    name: 'get_summary',
+    description: 'Get the overall dashboard summary: total customers, average adoption %, blocked count, and last-saved timestamp.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'list_customers',
+    description: 'List all customers with their key metadata (name, AE, CSAM, users, renewal date) and adoption %.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'get_customer',
+    description: 'Get full details for a specific customer including all Copilot pillars and the status of every item.',
+    inputSchema: {
+      type: 'object',
+      properties: { name: { type: 'string', description: 'Customer name (partial match, case-insensitive)' } },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'get_blocked_items',
+    description: 'Return every item that is currently Blocked across all customers, grouped by customer and pillar.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'get_pending_items',
+    description: 'Return every item that is still Not Started across all customers, grouped by customer and pillar.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'search_customers',
+    description: 'Search customers by any field: name, AE name, CSAM, SE, ATS. Returns matching customers with adoption stats.',
+    inputSchema: {
+      type: 'object',
+      properties: { query: { type: 'string', description: 'Search term (partial match, case-insensitive)' } },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'get_customers_by_status',
+    description: 'Filter customers whose adoption percentage falls within a given range.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        min_pct: { type: 'number', description: 'Minimum adoption % (0-100)' },
+        max_pct: { type: 'number', description: 'Maximum adoption % (0-100)' },
+      },
+      required: ['min_pct', 'max_pct'],
+    },
+  },
+  {
+    name: 'get_pillar_summary',
+    description: 'Show adoption progress for a specific Copilot pillar (e.g. "Copilot 365", "Copilot Studio") across all customers.',
+    inputSchema: {
+      type: 'object',
+      properties: { pillar: { type: 'string', description: 'Pillar name (partial match)' } },
+      required: ['pillar'],
+    },
+  },
+];
+
+// ── MCP tool executor ─────────────────────────────────────────────────────────
+async function executeTool(name, args, env) {
+  const data      = await fetchData(env);
+  const customers = data.customers || [];
+
+  if (name === 'get_summary') {
+    let totalItems = 0, done = 0, blocked = 0, missed = 0, pending = 0;
+    for (const c of customers) {
+      const s = custStats(c);
+      totalItems += s.total; done += s.done; blocked += s.blocked; missed += s.missed; pending += s.pending;
+    }
+    const avgPct = customers.length
+      ? Math.round(customers.reduce((sum, c) => sum + custStats(c).pct, 0) / customers.length) : 0;
+    return { totalCustomers: customers.length, averageAdoptionPct: avgPct, totalItems, itemsDone: done, itemsBlocked: blocked, itemsMissed: missed, itemsPending: pending, lastSaved: data._saved || null };
+  }
+
+  if (name === 'list_customers') {
+    return customers.map(c => formatCustomer(c, false));
+  }
+
+  if (name === 'get_customer') {
+    const q = (args.name || '').toLowerCase();
+    const c = customers.find(c => c.name.toLowerCase().includes(q));
+    if (!c) throw new Error(`No customer matching "${args.name}".`);
+    return formatCustomer(c, true);
+  }
+
+  if (name === 'get_blocked_items') {
+    const result = [];
+    for (const c of customers)
+      for (const cat of c.categories || []) {
+        const blocked = (cat.items || []).filter(i => i.status === 'blocked');
+        if (blocked.length) result.push({ customer: c.name, pillar: cat.title, items: blocked.map(i => i.label) });
+      }
+    return result;
+  }
+
+  if (name === 'get_pending_items') {
+    const result = [];
+    for (const c of customers)
+      for (const cat of c.categories || []) {
+        const pending = (cat.items || []).filter(i => i.status === 'pending');
+        if (pending.length) result.push({ customer: c.name, pillar: cat.title, items: pending.map(i => i.label) });
+      }
+    return result;
+  }
+
+  if (name === 'search_customers') {
+    const q = (args.query || '').toLowerCase();
+    const fields = ['name', 'aeName', 'atsName', 'csamName', 'seName'];
+    return customers.filter(c => fields.some(f => (c[f] || '').toLowerCase().includes(q))).map(c => formatCustomer(c, false));
+  }
+
+  if (name === 'get_customers_by_status') {
+    const min = args.min_pct ?? 0, max = args.max_pct ?? 100;
+    return customers.map(c => formatCustomer(c, false)).filter(c => c.adoptionPct >= min && c.adoptionPct <= max);
+  }
+
+  if (name === 'get_pillar_summary') {
+    const q = (args.pillar || '').toLowerCase();
+    const result = [];
+    for (const c of customers)
+      for (const cat of c.categories || []) {
+        if (!cat.title.toLowerCase().includes(q)) continue;
+        const done    = (cat.items || []).filter(i => i.status === 'done').length;
+        const blocked = (cat.items || []).filter(i => i.status === 'blocked').length;
+        const total   = (cat.items || []).length;
+        result.push({ customer: c.name, pillar: cat.title, done, blocked, total, pct: total ? Math.round(done / total * 100) : 0, items: (cat.items || []).map(i => ({ label: i.label, status: STATUS_LABELS[i.status] || i.status })) });
+      }
+    if (!result.length) throw new Error(`No pillar matching "${args.pillar}".`);
+    return result;
+  }
+
+  throw new Error(`Unknown tool: ${name}`);
+}
+
+// ── MCP JSON-RPC handler ──────────────────────────────────────────────────────
+async function handleMcp(request, env) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id',
+    'Content-Type': 'application/json',
+  };
+
+  if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (request.method !== 'POST') return new Response(JSON.stringify({ error: 'Use POST' }), { status: 405, headers: corsHeaders });
+
+  let body;
+  try { body = await request.json(); } catch { return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' }, id: null }), { status: 400, headers: corsHeaders }); }
+
+  const { method, params, id } = body;
+  const ok  = (result) => new Response(JSON.stringify({ jsonrpc: '2.0', result, id }), { headers: corsHeaders });
+  const rpcErr = (code, message) => new Response(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id }), { headers: corsHeaders });
+
+  try {
+    if (method === 'initialize') {
+      return ok({
+        protocolVersion: '2024-11-05',
+        capabilities: { tools: {} },
+        serverInfo: { name: 'copilot-tracker', version: '1.0' },
+      });
+    }
+
+    if (method === 'notifications/initialized') {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    if (method === 'tools/list') {
+      return ok({ tools: MCP_TOOLS });
+    }
+
+    if (method === 'tools/call') {
+      const { name, arguments: args = {} } = params || {};
+      const result = await executeTool(name, args, env);
+      return ok({ content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] });
+    }
+
+    return rpcErr(-32601, `Method not found: ${method}`);
+  } catch (e) {
+    return rpcErr(-32000, e.message || 'Internal error');
+  }
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
     const url  = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '') || '/';
+
+    // MCP endpoint (POST JSON-RPC)
+    if (path === '/mcp') return handleMcp(request, env);
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
