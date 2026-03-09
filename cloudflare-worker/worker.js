@@ -373,6 +373,46 @@ async function handleMcp(request, env) {
   }
 }
 
+// ── Anthropic AI proxy ────────────────────────────────────────────────────────
+async function handleAiProxy(request, env) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (request.method !== 'POST') return new Response(JSON.stringify({ error: 'Use POST' }), { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+  if (!env.ANTHROPIC_API_KEY) {
+    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY secret is not configured on the Worker.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const body = await request.text();
+
+  const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body,
+  });
+
+  // Stream the response straight back to the browser
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': upstream.headers.get('Content-Type') || 'application/json',
+    },
+  });
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -381,6 +421,9 @@ export default {
 
     // MCP endpoint (POST JSON-RPC)
     if (path === '/mcp') return handleMcp(request, env);
+
+    // AI proxy endpoint
+    if (path === '/ai') return handleAiProxy(request, env);
 
     // CORS preflight
     if (request.method === 'OPTIONS') {

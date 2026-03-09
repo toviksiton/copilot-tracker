@@ -3202,8 +3202,9 @@ document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').for
 // ═══════════════════════════════════════════════════════
 //  AI CHAT ASSISTANT
 // ═══════════════════════════════════════════════════════
-let _aiApiKey = '';
-fetch('API.txt').then(r => r.text()).then(t => { _aiApiKey = t.trim(); }).catch(() => {});
+// Set this to your deployed Cloudflare Worker URL, e.g.:
+//   const AI_WORKER_URL = 'https://copilot-tracker-api.your-subdomain.workers.dev/ai';
+const AI_WORKER_URL = '';
 
 let _aiHistory  = [];   // [{role, content}]
 let _aiStreaming = false;
@@ -3281,8 +3282,7 @@ function _appendMsg(role, html, id) {
 
 async function sendAiMessage() {
   if (_aiStreaming) return;
-  const ANTHROPIC_API_KEY = _aiApiKey;
-  if (!ANTHROPIC_API_KEY) { showToast('⚠️ API key not loaded yet, try again'); return; }
+  if (!AI_WORKER_URL) { showToast('⚠️ AI_WORKER_URL is not set in index.html'); return; }
   const input = document.getElementById('ai-input');
   const text  = (input.value || '').trim();
   if (!text) return;
@@ -3296,13 +3296,10 @@ async function sendAiMessage() {
   const streamDiv = _appendMsg('assistant', '<span style="opacity:.5">▍</span>', 'ai-stream');
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(AI_WORKER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
         model: 'claude-opus-4-6',
