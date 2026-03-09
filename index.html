@@ -974,6 +974,18 @@ body.read-only .hbtn-sep             { display: none !important; }
         <input type="date" id="cf-aop" />
       </div>
 
+      <div class="form-section-label">Usage</div>
+
+      <div class="form-group full">
+        <label>365 Core Usage</label>
+        <select id="cf-core-usage" style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--ms-bg)">
+          <option value="">— Not set —</option>
+          <option value="good">Good</option>
+          <option value="partial">Partial</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+
       <div class="form-section-label">Team</div>
 
       <div class="form-group">
@@ -1171,8 +1183,9 @@ body.read-only .hbtn-sep             { display: none !important; }
                  style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
         </div>
         <div style="font-size:11px;color:var(--ms-muted);margin-bottom:10px">
-          Generate at <strong>github.com → Settings → Developer settings → Personal access tokens</strong><br>
-          Required scope: <code>gist</code> (for read/write) — leave blank for read-only from a public Gist.
+          Generate at <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong><br>
+          ⚠️ Must be a <strong>Classic PAT</strong> (starts with <code>ghp_</code>) — fine-grained tokens do not support the Gist API.<br>
+          Required scope: <code>gist</code> — leave blank for read-only from a public Gist.
         </div>
         <div class="form-group" style="margin-bottom:14px">
           <label>Gist ID <span style="font-weight:400;color:var(--ms-muted)">(leave blank to create a new Gist automatically)</span></label>
@@ -1715,6 +1728,15 @@ function buildCustomerCard(customer) {
       ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending} Pending</span>` : ''}
     </div>
 
+    ${customer.coreUsage ? (() => {
+      const cu = {
+        good:    { label: 'Good',    bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
+        partial: { label: 'Partial', bg: '#fff7ed', color: '#92400e', dot: '#f59e0b' },
+        low:     { label: 'Low',     bg: '#fee2e2', color: '#7f1d1d', dot: '#ef4444' },
+      }[customer.coreUsage];
+      return cu ? `<div style="margin:6px 0 2px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:${cu.bg};color:${cu.color};font-size:11px;font-weight:600;border:1px solid ${cu.dot}33"><span style="width:8px;height:8px;border-radius:50%;background:${cu.dot};display:inline-block"></span>365 Core Usage: ${cu.label}</span></div>` : '';
+    })() : ''}
+
     ${metaHtml ? `<div class="cust-meta">${metaHtml}</div>` : ''}
 
     <div class="cust-cats">${catBars}</div>
@@ -2021,6 +2043,7 @@ function _clearForm() {
   ['cf-name','cf-ae','cf-ats','cf-csam','cf-se'].forEach(id => document.getElementById(id).value = '');
   ['cf-users','cf-copilot-users'].forEach(id => document.getElementById(id).value = '');
   ['cf-renewal','cf-aop'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cf-core-usage').value = '';
   const urlField = document.getElementById('cf-logo-url');
   if (urlField) urlField.value = '';
   // Reset logo preview
@@ -2043,6 +2066,7 @@ function _readForm() {
     atsName:      document.getElementById('cf-ats').value.trim(),
     csamName:     document.getElementById('cf-csam').value.trim(),
     seName:       document.getElementById('cf-se').value.trim(),
+    coreUsage:    document.getElementById('cf-core-usage').value,
   };
 }
 
@@ -2079,6 +2103,7 @@ function openEditCustomer() {
   document.getElementById('cf-ats').value           = c.atsName || '';
   document.getElementById('cf-csam').value          = c.csamName || '';
   document.getElementById('cf-se').value            = c.seName || '';
+  document.getElementById('cf-core-usage').value   = c.coreUsage || '';
   document.getElementById('customer-modal-title').textContent = '✏️ Edit Customer';
   document.getElementById('customer-modal-btn').textContent   = 'Save Changes';
   document.getElementById('customer-modal').classList.remove('hidden');
@@ -2877,7 +2902,19 @@ async function _doGhSave() {
       },
       body: JSON.stringify({ files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) {
+      let msg = 'HTTP ' + res.status;
+      if (res.status === 403) {
+        msg = 'HTTP 403 — PAT missing "gist" scope or expired. Go to github.com/settings/tokens and create a new token with the "gist" scope, then re-enter it here.';
+      } else if (res.status === 404) {
+        msg = 'HTTP 404 — Gist not found. Check the Gist ID or reconnect.';
+      } else if (res.status === 401) {
+        msg = 'HTTP 401 — Invalid PAT. Please update your GitHub token.';
+      } else {
+        try { const body = await res.json(); if (body.message) msg += ': ' + body.message; } catch(_) {}
+      }
+      throw new Error(msg);
+    }
     const gist = await res.json();
     const file = gist.files[GH_FILE];
     if (file && file.raw_url) {
@@ -2948,25 +2985,38 @@ function _renderGhState() {
   }
 }
 
+// Returns an error string if the PAT is invalid or missing gist scope, null if OK
+async function _validateGhPatScopes(pat) {
+  if (pat.startsWith('github_pat_')) {
+    return 'Fine-grained PATs do not support the Gist API. Please create a Classic PAT (ghp_…) at github.com/settings/tokens with the "gist" scope.';
+  }
+  try {
+    const res = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    });
+    if (!res.ok) return 'Invalid PAT (HTTP ' + res.status + ') — check the token and try again.';
+    const scopes = (res.headers.get('X-OAuth-Scopes') || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!scopes.includes('gist')) {
+      return 'Token is missing the "gist" scope (current scopes: ' + (scopes.join(', ') || 'none') + '). Edit the token at github.com/settings/tokens and add the "gist" scope.';
+    }
+    return null; // all good
+  } catch(e) {
+    return 'Could not reach GitHub: ' + e.message;
+  }
+}
+
 // Update PAT while staying connected (shown when no PAT is stored)
 async function updateGhPat() {
   const pat = (document.getElementById('gh-pat-update').value || '').trim();
   if (!pat) { _ghStatus('⚠️ Enter a PAT first.', 'var(--miss)'); return; }
   _ghStatus('⏳ Validating…', 'var(--ms-muted)');
-  try {
-    const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
-      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json' },
-      cache: 'no-store'
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — check PAT scope (needs gist)');
-    _ghPat = pat;
-    localStorage.setItem(GH_PAT_KEY, _ghPat);
-    _renderGhState();
-    _ghStatus('✅ PAT saved — auto-sync now enabled', 'var(--done)');
-    if (_ghAutosave) { _scheduleGhSave(); _startGhPoll(); }
-  } catch(e) {
-    _ghStatus('⚠️ ' + e.message, 'var(--miss)');
-  }
+  const scopeErr = await _validateGhPatScopes(pat);
+  if (scopeErr) { _ghStatus('⚠️ ' + scopeErr, 'var(--miss)'); return; }
+  _ghPat = pat;
+  localStorage.setItem(GH_PAT_KEY, _ghPat);
+  _renderGhState();
+  _ghStatus('✅ PAT saved — auto-sync now enabled', 'var(--done)');
+  if (_ghAutosave) { _scheduleGhSave(); _startGhPoll(); }
 }
 
 function copyGhShareUrl() {
@@ -2987,7 +3037,9 @@ async function connectGitHub() {
   let resolvedGistId = gistId;
 
   if (pat) {
-    // Verify PAT
+    // Verify PAT and check gist scope
+    const scopeErr = await _validateGhPatScopes(pat);
+    if (scopeErr) { _ghStatus('⚠️ ' + scopeErr, 'var(--miss)'); return; }
     const userRes = await fetch('https://api.github.com/user', {
       headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
     });
