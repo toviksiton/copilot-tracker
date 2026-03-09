@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copilot Tracker — Merged Design</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #0f0c29;
+  --bg2:       #1a1640;
+  --surface:   rgba(255,255,255,0.06);
+  --border:    rgba(255,255,255,0.10);
+  --border2:   rgba(255,255,255,0.06);
+  --text:      rgba(255,255,255,0.92);
+  --muted:     rgba(255,255,255,0.40);
+  --dim:       rgba(255,255,255,0.20);
+  --cyan:      #67e8f9;
+  --mint:      #6ee7b7;
+  --pink:      #f9a8d4;
+  --lavender:  #c4b5fd;
+  --blur:      blur(20px);
+}
+
+html, body {
+  height: 100%;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 55%, #1a1035 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ── orbs ── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.orb1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%);
+  top: -200px; left: -150px;
+}
+.orb2 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+  bottom: -150px; right: -100px;
+}
+.orb3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%);
+  top: 30%; left: 40%;
+}
+
+/* ── layout ── */
+.shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─────────── SIDEBAR ─────────── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: var(--blur);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0 20px;
+  gap: 0;
+  overflow: hidden;
+}
+
+.sidebar-brand {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--border2);
+}
+.sidebar-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.sidebar-brand-tag {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.sidebar-section {
+  padding: 20px 12px 8px;
+}
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+.nav-item.active {
+  background: rgba(103,232,249,0.10);
+  color: var(--cyan);
+  font-weight: 500;
+}
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.nav-badge {
+  margin-left: auto;
+  background: rgba(249,168,212,0.15);
+  color: var(--pink);
+  border: 1px solid rgba(249,168,212,0.2);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 99px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px 0;
+  border-top: 1px solid var(--border2);
+}
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), var(--lavender));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f0c29;
+  flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.user-role { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ─────────── MAIN ─────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── topbar ── */
+.topbar {
+  height: 60px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+.topbar-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.topbar-btn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.topbar-btn-ghost {
+  background: rgba(255,255,255,0.07);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.topbar-btn-primary {
+  background: linear-gradient(135deg, rgba(103,232,249,0.2), rgba(196,181,253,0.2));
+  color: var(--cyan);
+  border: 1px solid rgba(103,232,249,0.25);
+}
+
+/* ── KPI row (D5 UX) ── */
+.kpi-row {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 28px;
+}
+.kpi-item:first-child { padding-left: 0; }
+.kpi-num {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.kpi-num-cyan   { color: var(--cyan);    }
+.kpi-num-mint   { color: var(--mint);    }
+.kpi-num-lavender { color: var(--lavender); }
+.kpi-num-pink   { color: var(--pink);    }
+.kpi-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.kpi-divider {
+  width: 1px;
+  height: 30px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ── content area ── */
+.content {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── section label ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: -6px;
+}
+
+/* ── customer cards (D5 UX + D3 glass) ── */
+.customer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cust-card {
+  background: var(--surface);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cust-card:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.16);
+}
+
+/* logo circle */
+.cust-logo {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f0c29;
+  flex-shrink: 0;
+}
+
+.cust-info { flex: 1; min-width: 0; }
+.cust-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.cust-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* inline bar */
+.cust-bar-col { flex: 1; min-width: 100px; max-width: 200px; }
+.cust-bar-track {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+.cust-bar-fill { height: 100%; border-radius: 99px; }
+
+/* gradient percent (D5 UX) */
+.cust-pct {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+  min-width: 72px;
+  text-align: right;
+}
+
+.cust-pill {
+  padding: 3px 11px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ── stats mini row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.stat-card {
+  background: var(--surface);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.stat-num {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+.stat-lbl {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 5px;
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="shell">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name">Copilot Tracker</div>
+      <div class="sidebar-brand-tag">GitHub Copilot Dashboard</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <a class="nav-item active" href="#">
+        <span class="nav-icon">◈</span> Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">◎</span> Customers
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">⬡</span> Adoption
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Manage</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">◷</span> Backlog
+        <span class="nav-badge">5</span>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">◈</span> Milestones
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">⊞</span> Reports
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">System</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">⚙</span> Settings
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">⊕</span> Integrations
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar">AM</div>
+        <div>
+          <div class="user-name">Admin</div>
+          <div class="user-role">CSM Lead</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
+
+    <!-- topbar -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-subtitle">All customers · March 2026</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn topbar-btn-ghost">⊞ Filter</button>
+        <button class="topbar-btn topbar-btn-primary">+ Add Customer</button>
+      </div>
+    </div>
+
+    <!-- KPI divider row (Design 5 UX) -->
+    <div class="kpi-row">
+      <div class="kpi-item">
+        <div>
+          <div class="kpi-num kpi-num-cyan">3</div>
+          <div class="kpi-label">Customers</div>
+        </div>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-item">
+        <div>
+          <div class="kpi-num kpi-num-mint">37%</div>
+          <div class="kpi-label">Avg Adoption</div>
+        </div>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-item">
+        <div>
+          <div class="kpi-num kpi-num-lavender">136</div>
+          <div class="kpi-label">Total Items</div>
+        </div>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-item">
+        <div>
+          <div class="kpi-num kpi-num-pink">5</div>
+          <div class="kpi-label">Blocked</div>
+        </div>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-item">
+        <div>
+          <div class="kpi-num" style="color:#fbbf24;">89%</div>
+          <div class="kpi-label">Satisfaction</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- scrollable content -->
+    <div class="content">
+
+      <!-- stat cards row -->
+      <div class="section-label">At a Glance</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--cyan);">3</div>
+          <div class="stat-lbl">Active Customers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--mint);">37%</div>
+          <div class="stat-lbl">Avg Adoption</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--lavender);">136</div>
+          <div class="stat-lbl">Open Items</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--pink);">5</div>
+          <div class="stat-lbl">Blockers</div>
+        </div>
+      </div>
+
+      <!-- customer list -->
+      <div class="section-label">Customers</div>
+      <div class="customer-list">
+
+        <!-- AMDOCS -->
+        <div class="cust-card">
+          <div class="cust-logo" style="background:linear-gradient(135deg,#f9a8d4,#c084fc);">A</div>
+          <div class="cust-info">
+            <div class="cust-name">AMDOCS</div>
+            <div class="cust-meta">Last sync 2h ago · 48 items</div>
+          </div>
+          <div class="cust-bar-col">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Adoption</div>
+            <div class="cust-bar-track">
+              <div class="cust-bar-fill" style="width:24%;background:linear-gradient(90deg,#f9a8d4,#c084fc);"></div>
+            </div>
+          </div>
+          <div class="cust-pct" style="background:linear-gradient(135deg,#f9a8d4,#c084fc);">24%</div>
+          <div class="cust-pill" style="background:rgba(249,168,212,0.10);color:var(--pink);border:1px solid rgba(249,168,212,0.22);">at-risk</div>
+        </div>
+
+        <!-- NiCE -->
+        <div class="cust-card">
+          <div class="cust-logo" style="background:linear-gradient(135deg,#67e8f9,#6ee7b7);">N</div>
+          <div class="cust-info">
+            <div class="cust-name">NiCE</div>
+            <div class="cust-meta">Last sync 30m ago · 55 items</div>
+          </div>
+          <div class="cust-bar-col">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Adoption</div>
+            <div class="cust-bar-track">
+              <div class="cust-bar-fill" style="width:46%;background:linear-gradient(90deg,#67e8f9,#6ee7b7);"></div>
+            </div>
+          </div>
+          <div class="cust-pct" style="background:linear-gradient(135deg,#67e8f9,#6ee7b7);">46%</div>
+          <div class="cust-pill" style="background:rgba(103,232,249,0.10);color:var(--cyan);border:1px solid rgba(103,232,249,0.22);">on-track</div>
+        </div>
+
+        <!-- Strauss Group -->
+        <div class="cust-card">
+          <div class="cust-logo" style="background:linear-gradient(135deg,#6ee7b7,#c4b5fd);">S</div>
+          <div class="cust-info">
+            <div class="cust-name">Strauss Group</div>
+            <div class="cust-meta">Last sync 1h ago · 33 items</div>
+          </div>
+          <div class="cust-bar-col">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Adoption</div>
+            <div class="cust-bar-track">
+              <div class="cust-bar-fill" style="width:42%;background:linear-gradient(90deg,#6ee7b7,#c4b5fd);"></div>
+            </div>
+          </div>
+          <div class="cust-pct" style="background:linear-gradient(135deg,#6ee7b7,#c4b5fd);">42%</div>
+          <div class="cust-pill" style="background:rgba(110,231,183,0.10);color:var(--mint);border:1px solid rgba(110,231,183,0.22);">on-track</div>
+        </div>
+
+      </div>
+    </div><!-- /content -->
+  </main>
+</div>
+
+</body>
+</html>
