@@ -1171,8 +1171,9 @@ body.read-only .hbtn-sep             { display: none !important; }
                  style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
         </div>
         <div style="font-size:11px;color:var(--ms-muted);margin-bottom:10px">
-          Generate at <strong>github.com → Settings → Developer settings → Personal access tokens</strong><br>
-          Required scope: <code>gist</code> (for read/write) — leave blank for read-only from a public Gist.
+          Generate at <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong><br>
+          ⚠️ Must be a <strong>Classic PAT</strong> (starts with <code>ghp_</code>) — fine-grained tokens do not support the Gist API.<br>
+          Required scope: <code>gist</code> — leave blank for read-only from a public Gist.
         </div>
         <div class="form-group" style="margin-bottom:14px">
           <label>Gist ID <span style="font-weight:400;color:var(--ms-muted)">(leave blank to create a new Gist automatically)</span></label>
@@ -2960,25 +2961,38 @@ function _renderGhState() {
   }
 }
 
+// Returns an error string if the PAT is invalid or missing gist scope, null if OK
+async function _validateGhPatScopes(pat) {
+  if (pat.startsWith('github_pat_')) {
+    return 'Fine-grained PATs do not support the Gist API. Please create a Classic PAT (ghp_…) at github.com/settings/tokens with the "gist" scope.';
+  }
+  try {
+    const res = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    });
+    if (!res.ok) return 'Invalid PAT (HTTP ' + res.status + ') — check the token and try again.';
+    const scopes = (res.headers.get('X-OAuth-Scopes') || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!scopes.includes('gist')) {
+      return 'Token is missing the "gist" scope (current scopes: ' + (scopes.join(', ') || 'none') + '). Edit the token at github.com/settings/tokens and add the "gist" scope.';
+    }
+    return null; // all good
+  } catch(e) {
+    return 'Could not reach GitHub: ' + e.message;
+  }
+}
+
 // Update PAT while staying connected (shown when no PAT is stored)
 async function updateGhPat() {
   const pat = (document.getElementById('gh-pat-update').value || '').trim();
   if (!pat) { _ghStatus('⚠️ Enter a PAT first.', 'var(--miss)'); return; }
   _ghStatus('⏳ Validating…', 'var(--ms-muted)');
-  try {
-    const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
-      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json' },
-      cache: 'no-store'
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — check PAT scope (needs gist)');
-    _ghPat = pat;
-    localStorage.setItem(GH_PAT_KEY, _ghPat);
-    _renderGhState();
-    _ghStatus('✅ PAT saved — auto-sync now enabled', 'var(--done)');
-    if (_ghAutosave) { _scheduleGhSave(); _startGhPoll(); }
-  } catch(e) {
-    _ghStatus('⚠️ ' + e.message, 'var(--miss)');
-  }
+  const scopeErr = await _validateGhPatScopes(pat);
+  if (scopeErr) { _ghStatus('⚠️ ' + scopeErr, 'var(--miss)'); return; }
+  _ghPat = pat;
+  localStorage.setItem(GH_PAT_KEY, _ghPat);
+  _renderGhState();
+  _ghStatus('✅ PAT saved — auto-sync now enabled', 'var(--done)');
+  if (_ghAutosave) { _scheduleGhSave(); _startGhPoll(); }
 }
 
 function copyGhShareUrl() {
@@ -2999,7 +3013,9 @@ async function connectGitHub() {
   let resolvedGistId = gistId;
 
   if (pat) {
-    // Verify PAT
+    // Verify PAT and check gist scope
+    const scopeErr = await _validateGhPatScopes(pat);
+    if (scopeErr) { _ghStatus('⚠️ ' + scopeErr, 'var(--miss)'); return; }
     const userRes = await fetch('https://api.github.com/user', {
       headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
     });
