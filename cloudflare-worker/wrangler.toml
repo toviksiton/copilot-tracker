@@ -1,0 +1,11 @@
+name            = "copilot-tracker-api"
+main            = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Optional: restrict to specific routes on your custom domain
+# routes = [{ pattern = "api.yourdomain.com/*", zone_name = "yourdomain.com" }]
+
+# Vars (non-secret). GIST_ID can go here since it's not sensitive.
+# GH_PAT must be set as a secret (see README).
+[vars]
+GIST_ID = ""   # ← paste your Gist ID here, OR set via: wrangler secret put GIST_ID
