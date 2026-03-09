@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick Your Design — Copilot Adoption Tracker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f0f;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 60px 40px 80px;
+    color: #fff;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .page-header h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .page-header p {
+    font-size: 16px;
+    color: #666;
+    letter-spacing: 0.2px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+
+  .design-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+  }
+
+  .design-label {
+    text-align: center;
+  }
+
+  .design-label .design-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e5e5e5;
+    letter-spacing: 0.1px;
+    margin-bottom: 3px;
+  }
+
+  .design-label .design-tag {
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+  }
+
+  .preview-wrapper {
+    width: 450px;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #222;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    position: relative;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .design-slot:hover .preview-wrapper {
+    border-color: #444;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.8), 0 0 0 1px #333;
+  }
+
+  .preview-scaler {
+    width: 900px;
+    height: 600px;
+    transform: scale(0.5);
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     DESIGN A — Minimal List (Linear/Notion style)
+  ───────────────────────────────────────────────────────── */
+  .design-a {
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    height: 600px;
+    overflow: hidden;
+  }
+
+  .da-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 52px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .da-logo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .da-logo-icon {
+    width: 22px;
+    height: 22px;
+    background: #111;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .da-logo-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .da-add-btn {
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    border: 1px solid #e5e5e5;
+    background: #fff;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 0;
+  }
+
+  .da-stats-bar {
+    padding: 14px 32px 10px;
+    font-size: 12px;
+    color: #999;
+    letter-spacing: 0.1px;
+    border-bottom: 1px solid #f8f8f8;
+  }
+
+  .da-stats-bar span {
+    color: #bbb;
+    margin: 0 6px;
+  }
+
+  .da-list {
+    padding: 8px 0;
+  }
+
+  .da-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 32px;
+    border-bottom: 1px solid #f8f8f8;
+    gap: 16px;
+    transition: background 0.1s;
+  }
+
+  .da-row:hover {
+    background: #fafafa;
+  }
+
+  .da-company-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 220px;
+    flex-shrink: 0;
+  }
+
+  .da-logo-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .da-company-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .da-company-since {
+    font-size: 11px;
+    color: #bbb;
+  }
+
+  .da-progress-cell {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .da-progress-track {
+    width: 100%;
+    height: 4px;
+    background: #f0f0f0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .da-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: #111;
+  }
+
+  .da-right-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    width: 180px;
+    justify-content: flex-end;
+  }
+
+  .da-pct {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+    width: 36px;
+    text-align: right;
+  }
+
+  .da-pills {
+    display: flex;
+    gap: 4px;
+  }
+
+  .da-pill {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+  }
+
+  .da-pill-done {
+    background: #f0fdf0;
+    color: #16a34a;
+  }
+
+  .da-pill-missed {
+    background: #fef9f0;
+    color: #d97706;
+  }
+
+  .da-pill-blocked {
+    background: #fff0f0;
+    color: #dc2626;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     DESIGN B — Sidebar Focus (CRM style)
+  ───────────────────────────────────────────────────────── */
+  .design-b {
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    height: 600px;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .db-sidebar {
+    width: 200px;
+    background: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding-top: 0;
+  }
+
+  .db-sidebar-logo {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .db-sidebar-logo-icon {
+    width: 26px;
+    height: 26px;
+    background: #2563eb;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .db-sidebar-logo-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .db-nav {
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .db-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    font-size: 12.5px;
+    color: #6b7280;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+
+  .db-nav-item.active {
+    background: #eff6ff;
+    color: #2563eb;
+    border-left-color: #2563eb;
+    font-weight: 500;
+  }
+
+  .db-nav-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  .db-sidebar-customers {
+    padding: 12px 0;
+    flex: 1;
+  }
+
+  .db-sidebar-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0 16px 8px;
+  }
+
+  .db-sidebar-customer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px;
+    cursor: pointer;
+  }
+
+  .db-sidebar-customer:hover {
+    background: #f0f4f8;
+  }
+
+  .db-sidebar-customer.active {
+    background: #eff6ff;
+  }
+
+  .db-sidebar-cust-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .db-sidebar-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .db-sidebar-cust-name {
+    font-size: 12px;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .db-sidebar-cust-pct {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .db-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .db-main-header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .db-main-title-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .db-main-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .db-main-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.3px;
+  }
+
+  .db-main-subtitle {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .db-big-pct {
+    font-size: 36px;
+    font-weight: 800;
+    color: #2563eb;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .db-pct-label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .db-two-col {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .db-col-left {
+    flex: 1;
+    padding: 20px 28px;
+    border-right: 1px solid #f0f0f0;
+    overflow: auto;
+  }
+
+  .db-col-right {
+    width: 200px;
+    padding: 20px 20px;
+    flex-shrink: 0;
+  }
+
+  .db-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 14px;
+  }
+
+  .db-pillar-row {
+    margin-bottom: 12px;
+  }
+
+  .db-pillar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .db-pillar-name {
+    font-size: 12.5px;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .db-pillar-pct {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .db-pillar-track {
+    height: 5px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .db-pillar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: #2563eb;
+  }
+
+  .db-info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .db-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .db-info-label {
+    font-size: 10px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .db-info-value {
+    font-size: 12.5px;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .db-tab-bar {
+    display: flex;
+    border-top: 1px solid #f0f0f0;
+    padding: 0 28px;
+    background: #fff;
+  }
+
+  .db-tab {
+    font-size: 12px;
+    padding: 12px 16px;
+    color: #9ca3af;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .db-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    font-weight: 500;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     DESIGN C — Data Table (Airtable style)
+  ───────────────────────────────────────────────────────── */
+  .design-c {
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    height: 600px;
+    overflow: hidden;
+    padding: 28px 32px;
+  }
+
+  .dc-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+
+  .dc-page-sub {
+    font-size: 12.5px;
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  .dc-stat-pills {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .dc-stat-pill {
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #f5f5f5;
+    color: #555;
+    border: 1px solid #ebebeb;
+  }
+
+  .dc-table-wrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .dc-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .dc-table thead tr {
+    background: #f9fafb;
+  }
+
+  .dc-table th {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+
+  .dc-table th:first-child {
+    width: 32px;
+    text-align: center;
+  }
+
+  .dc-table td {
+    padding: 11px 12px;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+  }
+
+  .dc-table tbody tr:nth-child(even) {
+    background: #fafafa;
+  }
+
+  .dc-table tbody tr:hover {
+    background: #f0f7ff;
+    cursor: pointer;
+  }
+
+  .dc-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .dc-row-num {
+    font-size: 11px;
+    color: #d1d5db;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .dc-company-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dc-company-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .dc-company-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .dc-adoption-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+  }
+
+  .dc-mini-bar {
+    width: 60px;
+    height: 5px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .dc-mini-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .dc-pct-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .dc-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  .dc-status-text {
+    font-size: 12px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+  }
+
+  .dc-num {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #374151;
+    text-align: center;
+  }
+
+  .dc-hint {
+    font-size: 11.5px;
+    color: #9ca3af;
+    margin-top: 14px;
+    text-align: right;
+    font-style: italic;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     DESIGN D — Breathing Cards (calm)
+  ───────────────────────────────────────────────────────── */
+  .design-d {
+    background: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    height: 600px;
+    overflow: hidden;
+  }
+
+  .dd-header {
+    background: #fff;
+    border-bottom: 1px solid #e8edf2;
+    padding: 0 28px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dd-logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .dd-logo-icon {
+    width: 24px;
+    height: 24px;
+    background: #2563eb;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .dd-logo-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: -0.2px;
+  }
+
+  .dd-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dd-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #555;
+    letter-spacing: 0;
+  }
+
+  .dd-btn-primary {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+    font-weight: 600;
+  }
+
+  .dd-btn-more {
+    width: 30px;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .dd-body {
+    padding: 24px 28px;
+    overflow: hidden;
+  }
+
+  .dd-stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .dd-stat-card {
+    background: #fff;
+    border: 1px solid #e8edf2;
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .dd-stat-number {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.3px;
+  }
+
+  .dd-stat-label {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .dd-cards-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+
+  .dd-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  .dd-customer-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8edf2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dd-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .dd-card-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dd-card-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .dd-card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .dd-card-since {
+    font-size: 10.5px;
+    color: #94a3b8;
+  }
+
+  .dd-card-pct {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .dd-card-progress {
+    height: 4px;
+    background: #f1f5f9;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .dd-card-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  .dd-card-pills {
+    display: flex;
+    gap: 5px;
+  }
+
+  .dd-card-pill {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .dd-pill-done {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #d1fae5;
+  }
+
+  .dd-pill-missed {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .dd-pill-blocked {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fee2e2;
+  }
+
+  .dd-view-link {
+    font-size: 11.5px;
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-top: 2px;
+    display: block;
+  }
+
+  .dd-view-link:hover {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Pick Your Design</h1>
+  <p>Click any design to see it full screen</p>
+</div>
+
+<div class="grid">
+
+  <!-- ═══════════════════════════════════════
+       DESIGN A — Minimal List
+  ═══════════════════════════════════════ -->
+  <div class="design-slot">
+    <div class="design-label">
+      <div class="design-name">Design A — "Minimal List"</div>
+      <div class="design-tag">Linear / Notion style · Clean and focused</div>
+    </div>
+    <div class="preview-wrapper">
+      <div class="preview-scaler">
+        <div class="design-a">
+
+          <div class="da-header">
+            <div class="da-logo">
+              <div class="da-logo-icon">
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="10" height="2" rx="1" fill="white"/>
+                  <rect x="1" y="5" width="7" height="2" rx="1" fill="white"/>
+                  <rect x="1" y="9" width="9" height="2" rx="1" fill="white"/>
+                </svg>
+              </div>
+              Copilot Tracker
+            </div>
+            <button class="da-add-btn">+ Add</button>
+          </div>
+
+          <div class="da-stats-bar">
+            3 customers <span>·</span> 37% avg adoption <span>·</span> 5 blocked items
+          </div>
+
+          <div class="da-list">
+
+            <!-- AMDOCS -->
+            <div class="da-row">
+              <div class="da-company-cell">
+                <div class="da-logo-circle" style="background: #1e293b;">A</div>
+                <div>
+                  <div class="da-company-name">AMDOCS</div>
+                  <div class="da-company-since">Since Mar 2026</div>
+                </div>
+              </div>
+              <div class="da-progress-cell">
+                <div class="da-progress-track">
+                  <div class="da-progress-fill" style="width: 24%;"></div>
+                </div>
+              </div>
+              <div class="da-right-cell">
+                <div class="da-pct">24%</div>
+                <div class="da-pills">
+                  <div class="da-pill da-pill-done">11</div>
+                  <div class="da-pill da-pill-missed">22</div>
+                  <div class="da-pill da-pill-blocked">3</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- NiCE -->
+            <div class="da-row">
+              <div class="da-company-cell">
+                <div class="da-logo-circle" style="background: #0f766e;">N</div>
+                <div>
+                  <div class="da-company-name">NiCE</div>
+                  <div class="da-company-since">Since Jan 2026</div>
+                </div>
+              </div>
+              <div class="da-progress-cell">
+                <div class="da-progress-track">
+                  <div class="da-progress-fill" style="width: 46%;"></div>
+                </div>
+              </div>
+              <div class="da-right-cell">
+                <div class="da-pct">46%</div>
+                <div class="da-pills">
+                  <div class="da-pill da-pill-done">23</div>
+                  <div class="da-pill da-pill-missed">15</div>
+                  <div class="da-pill da-pill-blocked">1</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Strauss Group -->
+            <div class="da-row">
+              <div class="da-company-cell">
+                <div class="da-logo-circle" style="background: #7c3aed;">S</div>
+                <div>
+                  <div class="da-company-name">Strauss Group</div>
+                  <div class="da-company-since">Since Feb 2026</div>
+                </div>
+              </div>
+              <div class="da-progress-cell">
+                <div class="da-progress-track">
+                  <div class="da-progress-fill" style="width: 42%;"></div>
+                </div>
+              </div>
+              <div class="da-right-cell">
+                <div class="da-pct">42%</div>
+                <div class="da-pills">
+                  <div class="da-pill da-pill-done">19</div>
+                  <div class="da-pill da-pill-missed">18</div>
+                  <div class="da-pill da-pill-blocked">1</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       DESIGN B — Sidebar Focus
+  ═══════════════════════════════════════ -->
+  <div class="design-slot">
+    <div class="design-label">
+      <div class="design-name">Design B — "Sidebar Focus"</div>
+      <div class="design-tag">CRM style · One customer at a time</div>
+    </div>
+    <div class="preview-wrapper">
+      <div class="preview-scaler">
+        <div class="design-b">
+
+          <!-- Sidebar -->
+          <div class="db-sidebar">
+            <div class="db-sidebar-logo">
+              <div class="db-sidebar-logo-icon">C</div>
+              <div class="db-sidebar-logo-text">Copilot Tracker</div>
+            </div>
+
+            <div class="db-nav">
+              <div class="db-nav-item">
+                <div class="db-nav-dot"></div>
+                Dashboard
+              </div>
+              <div class="db-nav-item active">
+                <div class="db-nav-dot"></div>
+                Customers
+              </div>
+              <div class="db-nav-item">
+                <div class="db-nav-dot"></div>
+                Reports
+              </div>
+              <div class="db-nav-item">
+                <div class="db-nav-dot"></div>
+                Settings
+              </div>
+            </div>
+
+            <div class="db-sidebar-customers">
+              <div class="db-sidebar-section-title">Customers</div>
+
+              <div class="db-sidebar-customer active">
+                <div class="db-sidebar-cust-left">
+                  <div class="db-sidebar-dot" style="background:#1e293b;">A</div>
+                  <div class="db-sidebar-cust-name">AMDOCS</div>
+                </div>
+                <div class="db-sidebar-cust-pct">24%</div>
+              </div>
+
+              <div class="db-sidebar-customer">
+                <div class="db-sidebar-cust-left">
+                  <div class="db-sidebar-dot" style="background:#0f766e;">N</div>
+                  <div class="db-sidebar-cust-name">NiCE</div>
+                </div>
+                <div class="db-sidebar-cust-pct">46%</div>
+              </div>
+
+              <div class="db-sidebar-customer">
+                <div class="db-sidebar-cust-left">
+                  <div class="db-sidebar-dot" style="background:#7c3aed;">S</div>
+                  <div class="db-sidebar-cust-name">Strauss Group</div>
+                </div>
+                <div class="db-sidebar-cust-pct">42%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main content -->
+          <div class="db-main">
+            <div class="db-main-header">
+              <div class="db-main-title-row">
+                <div class="db-main-logo">A</div>
+                <div>
+                  <div class="db-main-title">AMDOCS</div>
+                  <div class="db-main-subtitle">11 of 45 items complete</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="db-big-pct">24%</div>
+                <div class="db-pct-label">adoption rate</div>
+              </div>
+            </div>
+
+            <div class="db-two-col">
+              <div class="db-col-left">
+                <div class="db-section-title">Progress by Pillar</div>
+
+                <div class="db-pillar-row">
+                  <div class="db-pillar-label">
+                    <div class="db-pillar-name">User Adoption</div>
+                    <div class="db-pillar-pct">30%</div>
+                  </div>
+                  <div class="db-pillar-track"><div class="db-pillar-fill" style="width:30%;"></div></div>
+                </div>
+
+                <div class="db-pillar-row">
+                  <div class="db-pillar-label">
+                    <div class="db-pillar-name">IT Readiness</div>
+                    <div class="db-pillar-pct">55%</div>
+                  </div>
+                  <div class="db-pillar-track"><div class="db-pillar-fill" style="width:55%;"></div></div>
+                </div>
+
+                <div class="db-pillar-row">
+                  <div class="db-pillar-label">
+                    <div class="db-pillar-name">Training</div>
+                    <div class="db-pillar-pct">20%</div>
+                  </div>
+                  <div class="db-pillar-track"><div class="db-pillar-fill" style="width:20%;"></div></div>
+                </div>
+
+                <div class="db-pillar-row">
+                  <div class="db-pillar-label">
+                    <div class="db-pillar-name">Governance</div>
+                    <div class="db-pillar-pct">10%</div>
+                  </div>
+                  <div class="db-pillar-track"><div class="db-pillar-fill" style="width:10%;"></div></div>
+                </div>
+              </div>
+
+              <div class="db-col-right">
+                <div class="db-section-title">Customer Info</div>
+                <div class="db-info-row">
+                  <div class="db-info-item">
+                    <div class="db-info-label">Account Executive</div>
+                    <div class="db-info-value">Sarah Cohen</div>
+                  </div>
+                  <div class="db-info-item">
+                    <div class="db-info-label">CSAM</div>
+                    <div class="db-info-value">Oren Katz</div>
+                  </div>
+                  <div class="db-info-item">
+                    <div class="db-info-label">Renewal Date</div>
+                    <div class="db-info-value">Oct 2026</div>
+                  </div>
+                  <div class="db-info-item">
+                    <div class="db-info-label">Licenses</div>
+                    <div class="db-info-value">450 seats</div>
+                  </div>
+                  <div class="db-info-item">
+                    <div class="db-info-label">Health Score</div>
+                    <div class="db-info-value" style="color:#d97706;">At Risk</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="db-tab-bar">
+              <div class="db-tab active">Overview</div>
+              <div class="db-tab">Pillars</div>
+              <div class="db-tab">Timeline</div>
+              <div class="db-tab">Notes</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       DESIGN C — Data Table
+  ═══════════════════════════════════════ -->
+  <div class="design-slot">
+    <div class="design-label">
+      <div class="design-name">Design C — "Data Table"</div>
+      <div class="design-tag">Airtable style · Dense and scannable</div>
+    </div>
+    <div class="preview-wrapper">
+      <div class="preview-scaler">
+        <div class="design-c">
+
+          <div class="dc-page-title">Customer Dashboard</div>
+          <div class="dc-page-sub">Microsoft 365 Copilot adoption tracking across all accounts</div>
+
+          <div class="dc-stat-pills">
+            <div class="dc-stat-pill">3 Customers</div>
+            <div class="dc-stat-pill">37% Avg Adoption</div>
+            <div class="dc-stat-pill">136 Total Items</div>
+            <div class="dc-stat-pill" style="background:#fff5f5;color:#dc2626;border-color:#fecaca;">5 Blocked</div>
+          </div>
+
+          <div class="dc-table-wrap">
+            <table class="dc-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Customer</th>
+                  <th>Adoption</th>
+                  <th>Status</th>
+                  <th style="text-align:center;">Done</th>
+                  <th style="text-align:center;">Missed</th>
+                  <th style="text-align:center;">Blocked</th>
+                  <th>Renewal</th>
+                  <th>AE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dc-row-num">1</td>
+                  <td>
+                    <div class="dc-company-cell">
+                      <div class="dc-company-dot" style="background:#1e293b;">A</div>
+                      <div class="dc-company-name">AMDOCS</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dc-adoption-cell">
+                      <div class="dc-mini-bar"><div class="dc-mini-fill" style="width:24%;background:#f59e0b;"></div></div>
+                      <div class="dc-pct-text">24%</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dc-status-text">
+                      <span class="dc-status-dot" style="background:#f59e0b;"></span>
+                      At Risk
+                    </div>
+                  </td>
+                  <td class="dc-num" style="color:#16a34a;">11</td>
+                  <td class="dc-num" style="color:#d97706;">22</td>
+                  <td class="dc-num" style="color:#dc2626;">3</td>
+                  <td style="font-size:12px;color:#6b7280;">Oct 2026</td>
+                  <td style="font-size:12px;color:#374151;">S. Cohen</td>
+                </tr>
+                <tr>
+                  <td class="dc-row-num">2</td>
+                  <td>
+                    <div class="dc-company-cell">
+                      <div class="dc-company-dot" style="background:#0f766e;">N</div>
+                      <div class="dc-company-name">NiCE</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dc-adoption-cell">
+                      <div class="dc-mini-bar"><div class="dc-mini-fill" style="width:46%;background:#16a34a;"></div></div>
+                      <div class="dc-pct-text">46%</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dc-status-text">
+                      <span class="dc-status-dot" style="background:#16a34a;"></span>
+                      On Track
+                    </div>
+                  </td>
+                  <td class="dc-num" style="color:#16a34a;">23</td>
+                  <td class="dc-num" style="color:#d97706;">15</td>
+                  <td class="dc-num" style="color:#dc2626;">1</td>
+                  <td style="font-size:12px;color:#6b7280;">Mar 2027</td>
+                  <td style="font-size:12px;color:#374151;">D. Levi</td>
+                </tr>
+                <tr>
+                  <td class="dc-row-num">3</td>
+                  <td>
+                    <div class="dc-company-cell">
+                      <div class="dc-company-dot" style="background:#7c3aed;">S</div>
+                      <div class="dc-company-name">Strauss Group</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dc-adoption-cell">
+                      <div class="dc-mini-bar"><div class="dc-mini-fill" style="width:42%;background:#16a34a;"></div></div>
+                      <div class="dc-pct-text">42%</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dc-status-text">
+                      <span class="dc-status-dot" style="background:#16a34a;"></span>
+                      On Track
+                    </div>
+                  </td>
+                  <td class="dc-num" style="color:#16a34a;">19</td>
+                  <td class="dc-num" style="color:#d97706;">18</td>
+                  <td class="dc-num" style="color:#dc2626;">1</td>
+                  <td style="font-size:12px;color:#6b7280;">Jan 2027</td>
+                  <td style="font-size:12px;color:#374151;">M. Shapiro</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="dc-hint">Click any row to view full details →</div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       DESIGN D — Breathing Cards
+  ═══════════════════════════════════════ -->
+  <div class="design-slot">
+    <div class="design-label">
+      <div class="design-name">Design D — "Breathing Cards"</div>
+      <div class="design-tag">Calm card layout · Spacious and uncluttered</div>
+    </div>
+    <div class="preview-wrapper">
+      <div class="preview-scaler">
+        <div class="design-d">
+
+          <div class="dd-header">
+            <div class="dd-logo">
+              <div class="dd-logo-icon">C</div>
+              <div class="dd-logo-text">Copilot Tracker</div>
+            </div>
+            <div class="dd-header-actions">
+              <button class="dd-btn dd-btn-primary">+ Add Customer</button>
+              <button class="dd-btn">Report</button>
+              <button class="dd-btn dd-btn-more">⋯</button>
+            </div>
+          </div>
+
+          <div class="dd-body">
+
+            <div class="dd-stats-row">
+              <div class="dd-stat-card">
+                <div class="dd-stat-number">3</div>
+                <div class="dd-stat-label">Customers</div>
+              </div>
+              <div class="dd-stat-card">
+                <div class="dd-stat-number">37%</div>
+                <div class="dd-stat-label">Avg Adoption</div>
+              </div>
+              <div class="dd-stat-card">
+                <div class="dd-stat-number">136</div>
+                <div class="dd-stat-label">Total Items</div>
+              </div>
+              <div class="dd-stat-card">
+                <div class="dd-stat-number" style="color:#dc2626;">5</div>
+                <div class="dd-stat-label">Blocked</div>
+              </div>
+            </div>
+
+            <div class="dd-cards-title">All Customers</div>
+
+            <div class="dd-cards-grid">
+
+              <!-- AMDOCS -->
+              <div class="dd-customer-card">
+                <div class="dd-card-top">
+                  <div class="dd-card-left">
+                    <div class="dd-card-logo" style="background:#1e293b;">A</div>
+                    <div>
+                      <div class="dd-card-name">AMDOCS</div>
+                      <div class="dd-card-since">Since Mar 2026</div>
+                    </div>
+                  </div>
+                  <div class="dd-card-pct" style="color:#f59e0b;">24%</div>
+                </div>
+                <div class="dd-card-progress">
+                  <div class="dd-card-fill" style="width:24%;background:#f59e0b;"></div>
+                </div>
+                <div class="dd-card-pills">
+                  <div class="dd-card-pill dd-pill-done">11 Done</div>
+                  <div class="dd-card-pill dd-pill-missed">22 Missed</div>
+                  <div class="dd-card-pill dd-pill-blocked">3 Blocked</div>
+                </div>
+                <a class="dd-view-link">View Details →</a>
+              </div>
+
+              <!-- NiCE -->
+              <div class="dd-customer-card">
+                <div class="dd-card-top">
+                  <div class="dd-card-left">
+                    <div class="dd-card-logo" style="background:#0f766e;">N</div>
+                    <div>
+                      <div class="dd-card-name">NiCE</div>
+                      <div class="dd-card-since">Since Jan 2026</div>
+                    </div>
+                  </div>
+                  <div class="dd-card-pct" style="color:#16a34a;">46%</div>
+                </div>
+                <div class="dd-card-progress">
+                  <div class="dd-card-fill" style="width:46%;background:#16a34a;"></div>
+                </div>
+                <div class="dd-card-pills">
+                  <div class="dd-card-pill dd-pill-done">23 Done</div>
+                  <div class="dd-card-pill dd-pill-missed">15 Missed</div>
+                  <div class="dd-card-pill dd-pill-blocked">1 Blocked</div>
+                </div>
+                <a class="dd-view-link">View Details →</a>
+              </div>
+
+              <!-- Strauss Group -->
+              <div class="dd-customer-card">
+                <div class="dd-card-top">
+                  <div class="dd-card-left">
+                    <div class="dd-card-logo" style="background:#7c3aed;">S</div>
+                    <div>
+                      <div class="dd-card-name">Strauss Group</div>
+                      <div class="dd-card-since">Since Feb 2026</div>
+                    </div>
+                  </div>
+                  <div class="dd-card-pct" style="color:#16a34a;">42%</div>
+                </div>
+                <div class="dd-card-progress">
+                  <div class="dd-card-fill" style="width:42%;background:#16a34a;"></div>
+                </div>
+                <div class="dd-card-pills">
+                  <div class="dd-card-pill dd-pill-done">19 Done</div>
+                  <div class="dd-card-pill dd-pill-missed">18 Missed</div>
+                  <div class="dd-card-pill dd-pill-blocked">1 Blocked</div>
+                </div>
+                <a class="dd-view-link">View Details →</a>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
