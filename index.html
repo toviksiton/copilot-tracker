@@ -856,11 +856,204 @@ body.read-only .hbtn-sep             { display: none !important; }
 .ai-footer-note { font-size: 10px; color: var(--ms-muted); margin-top: 7px; text-align: center; }
 .ai-clear-btn { background: none; border: none; color: var(--ms-muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
 .ai-clear-btn:hover { color: var(--miss); }
+
+/* ── Clerk Auth Screens ──────────────────────────────────── */
+.auth-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 40px 36px;
+  width: 100%; max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.auth-logo {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; font-weight: 700; font-size: 16px; margin-bottom: 4px;
+}
+.auth-tagline { font-size: 11px; color: var(--ms-muted); margin-bottom: 28px; }
+.auth-box h2 { font-size: 20px; margin: 0 0 8px; }
+.auth-box p  { font-size: 13px; color: var(--ms-muted); margin: 0 0 24px; }
+#clerk-signin-mount { min-height: 80px; }
+.auth-user-info {
+  background: var(--hover-bg);
+  border-radius: 8px; padding: 12px 16px;
+  font-size: 13px; margin-bottom: 20px;
+  text-align: left;
+}
+.auth-user-info strong { display: block; font-size: 15px; margin-bottom: 2px; }
+.auth-user-info span   { color: var(--ms-muted); }
+.auth-sign-out {
+  background: none; border: 1px solid var(--border); color: var(--ms-muted);
+  padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.auth-sign-out:hover { background: var(--hover-bg); }
+.auth-pulse {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid var(--border); border-top-color: var(--ms-blue);
+  animation: spin .8s linear infinite; margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Admin Panel ─────────────────────────────────────────── */
+#admin-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  z-index: 1200; display: none;
+}
+#admin-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(480px, 100vw);
+  background: var(--card-bg);
+  border-left: 1px solid var(--border);
+  z-index: 1201; display: none;
+  flex-direction: column; overflow: hidden;
+}
+#admin-panel.open, #admin-overlay.open { display: flex; }
+.admin-header {
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.admin-header h2 { font-size: 16px; margin: 0; }
+.admin-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--ms-muted); line-height: 1; }
+.admin-body  { flex: 1; overflow-y: auto; padding: 16px; }
+.admin-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--ms-muted);
+  margin: 16px 0 8px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.admin-section-title:first-child { margin-top: 0; }
+.admin-user-row {
+  background: var(--hover-bg); border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 8px;
+}
+.admin-user-top {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.admin-user-name  { font-weight: 600; font-size: 14px; flex: 1; }
+.admin-user-email { font-size: 11px; color: var(--ms-muted); margin-bottom: 6px; }
+.prov-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.prov-github    { background:#24292e; color:#fff; }
+.prov-google    { background:#4285F4; color:#fff; }
+.prov-microsoft { background:#00a1f1; color:#fff; }
+.prov-apple     { background:#555; color:#fff; }
+.prov-email     { background:#888; color:#fff; }
+.status-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  text-transform: uppercase;
+}
+.status-pending  { background: var(--warn-bg,#fff3cd); color: #856404; }
+.status-approved { background: var(--done-bg);  color: var(--done); }
+.status-denied   { background: var(--miss-bg);  color: var(--miss); }
+.admin-perm-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px;
+}
+.admin-perm-row label { font-size: 12px; color: var(--ms-muted); }
+.admin-perm-row select, .admin-perm-row input[type=checkbox] { cursor: pointer; }
+.admin-perm-row select {
+  font-size: 12px; padding: 3px 6px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--card-bg); color: var(--text);
+}
+.admin-action-row { display: flex; gap: 6px; margin-top: 8px; }
+.btn-approve {
+  flex: 1; padding: 6px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  background: var(--done-bg); color: var(--done);
+}
+.btn-approve:hover { filter: brightness(.9); }
+.btn-deny {
+  flex: 1; padding: 6px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  background: var(--miss-bg); color: var(--miss);
+}
+.btn-deny:hover { filter: brightness(.9); }
+.btn-save-perm {
+  flex: 1; padding: 6px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  background: var(--ms-blue); color: #fff;
+}
+.btn-save-perm:hover { filter: brightness(.9); }
+.admin-empty { color: var(--ms-muted); font-size: 13px; text-align: center; padding: 20px 0; }
 </style>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════ AUTH SCREENS (Clerk) ═══════════════════════════ -->
+<div id="auth-loading-screen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0078d4"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      Copilot Adoption Tracker
+    </div>
+    <div class="auth-tagline">by Tovik</div>
+    <div class="auth-pulse"></div>
+    <p style="color:var(--ms-muted);font-size:13px;margin:0">Loading…</p>
+  </div>
+</div>
+
+<div id="auth-login-screen" class="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0078d4"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      Copilot Adoption Tracker
+    </div>
+    <div class="auth-tagline">by Tovik</div>
+    <h2>Sign in to continue</h2>
+    <p>Use your Google, Microsoft, Apple, or GitHub account.</p>
+    <div id="clerk-signin-mount"></div>
+  </div>
+</div>
+
+<div id="auth-pending-screen" class="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0078d4"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      Copilot Adoption Tracker
+    </div>
+    <div class="auth-tagline">by Tovik</div>
+    <div style="font-size:40px;margin:16px 0">⏳</div>
+    <h2>Access Requested</h2>
+    <div class="auth-user-info" id="pending-user-info"></div>
+    <p>Your request has been sent to the admin.<br>You'll be able to access the app once it's approved.</p>
+    <button class="auth-sign-out" onclick="authSignOut()">Sign out</button>
+  </div>
+</div>
+
+<div id="auth-denied-screen" class="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0078d4"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      Copilot Adoption Tracker
+    </div>
+    <div class="auth-tagline">by Tovik</div>
+    <div style="font-size:40px;margin:16px 0">🚫</div>
+    <h2>Access Denied</h2>
+    <p>Your access request was not approved.<br>Contact the admin if you think this is a mistake.</p>
+    <button class="auth-sign-out" onclick="authSignOut()">Sign out</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ADMIN PANEL ═══════════════════════════ -->
+<div id="admin-overlay" onclick="closeAdminPanel()"></div>
+<div id="admin-panel">
+  <div class="admin-header">
+    <h2>👥 User Management</h2>
+    <button class="admin-close" onclick="closeAdminPanel()">✕</button>
+  </div>
+  <div class="admin-body" id="admin-body">
+    <div class="admin-empty">Loading…</div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════ LOCK SCREEN ═══════════════════════════ -->
 <div id="lock-screen">
@@ -900,6 +1093,7 @@ body.read-only .hbtn-sep             { display: none !important; }
   <span class="ro-badge">👁 View Only</span>
   <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">☰</button>
   <nav id="main-nav">
+    <button class="hbtn" id="admin-btn" style="display:none" onclick="openAdminPanel();closeNav()">👥 Admin</button>
     <button class="hbtn" id="pillars-btn" onclick="openPillars();closeNav()">⚙️ Pillars</button>
     <button class="hbtn" id="add-customer-btn" onclick="openAddCustomer();closeNav()">+ Add Customer</button>
     <button class="hbtn primary" id="report-btn" onclick="openReport();closeNav()" disabled>📄 Report</button>
@@ -1300,6 +1494,7 @@ body.read-only .hbtn-sep             { display: none !important; }
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"></script>
 <script src="https://alcdn.msauth.net/browser/3.28.1/js/msal-browser.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
@@ -1351,6 +1546,234 @@ body.read-only .hbtn-sep             { display: none !important; }
 
 function checkPassword()       { window.__checkPassword(); }
 function toggleLockVisibility(){ window.__toggleLockVisibility(); }
+
+// ═══════════════════════════════════════════════════════
+//  CLERK AUTH
+//  Set CLERK_PUBLISHABLE_KEY + WORKER_URL to enable.
+//  Leave CLERK_PUBLISHABLE_KEY empty to use the old password screen.
+// ═══════════════════════════════════════════════════════
+const CLERK_PUBLISHABLE_KEY = '';  // e.g. 'pk_live_...'
+const WORKER_URL            = '';  // e.g. 'https://copilot-tracker-api.YOUR.workers.dev'
+
+// Derive AI proxy URL from WORKER_URL (replaces old AI_WORKER_URL)
+const AI_WORKER_URL = WORKER_URL ? WORKER_URL + '/ai' : '';
+
+let _clerkInstance = null;
+let _authRecord    = null;   // current user's permission record
+
+function _showAuthScreen(id) {
+  ['auth-loading-screen','auth-login-screen','auth-pending-screen','auth-denied-screen']
+    .forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = s === id ? 'flex' : 'none';
+    });
+}
+
+async function authGetToken() {
+  if (!_clerkInstance?.session) return null;
+  try { return await _clerkInstance.session.getToken(); } catch { return null; }
+}
+
+async function authSignOut() {
+  if (_clerkInstance) await _clerkInstance.signOut();
+  _authRecord = null;
+  _showAuthScreen('auth-login-screen');
+  _clerkInstance.mountSignIn(document.getElementById('clerk-signin-mount'));
+}
+
+async function initAuth() {
+  // If Clerk is not configured, fall through to old lock screen
+  if (!CLERK_PUBLISHABLE_KEY || !WORKER_URL) {
+    document.getElementById('auth-loading-screen').style.display = 'none';
+    return;
+  }
+
+  _showAuthScreen('auth-loading-screen');
+
+  // Init Clerk
+  const clerk = new window.Clerk(CLERK_PUBLISHABLE_KEY);
+  await clerk.load();
+  _clerkInstance = clerk;
+
+  if (!clerk.user) {
+    // Not signed in — show login
+    _showAuthScreen('auth-login-screen');
+    clerk.mountSignIn(document.getElementById('clerk-signin-mount'), {
+      afterSignInUrl:  window.location.href,
+      afterSignUpUrl:  window.location.href,
+    });
+    // Listen for sign-in completion
+    clerk.addListener(({ user }) => { if (user) location.reload(); });
+    return;
+  }
+
+  // Signed in — register/fetch permission record
+  const token = await authGetToken();
+  let record;
+  try {
+    const res = await fetch(WORKER_URL + '/auth/request', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    });
+    record = await res.json();
+  } catch {
+    // Worker unreachable — show app as-is (graceful degradation)
+    _unlockApp(false, true);
+    return;
+  }
+
+  _authRecord = record;
+
+  if (record.status === 'approved') {
+    const readOnly = record.access === 'readonly';
+    _unlockApp(readOnly, record.aiChat, record.isAdmin);
+  } else if (record.status === 'denied') {
+    _showAuthScreen('auth-denied-screen');
+  } else {
+    // pending or unknown
+    const info = document.getElementById('pending-user-info');
+    if (info) {
+      info.innerHTML = `<strong>${record.name || 'You'}</strong><span>${record.email || ''}</span>`;
+    }
+    _showAuthScreen('auth-pending-screen');
+  }
+}
+
+function _unlockApp(readOnly, aiChat, isAdmin) {
+  // Hide all auth screens
+  ['auth-loading-screen','auth-login-screen','auth-pending-screen','auth-denied-screen']
+    .forEach(s => { const el = document.getElementById(s); if (el) el.style.display = 'none'; });
+  // Also hide old lock screen if present
+  document.getElementById('lock-screen')?.classList.add('hidden');
+
+  if (readOnly) {
+    window.__readOnly = true;
+    document.body.classList.add('read-only');
+  }
+  if (!aiChat) {
+    document.getElementById('ai-fab')?.style.setProperty('display', 'none', 'important');
+  }
+  if (isAdmin) {
+    document.getElementById('admin-btn').style.display = '';
+  }
+}
+
+// ── Admin panel ────────────────────────────────────────────────────────────────
+function openAdminPanel() {
+  document.getElementById('admin-overlay').classList.add('open');
+  document.getElementById('admin-panel').classList.add('open');
+  loadAdminUsers();
+}
+function closeAdminPanel() {
+  document.getElementById('admin-overlay').classList.remove('open');
+  document.getElementById('admin-panel').classList.remove('open');
+}
+
+async function loadAdminUsers() {
+  const body = document.getElementById('admin-body');
+  body.innerHTML = '<div class="admin-empty">Loading…</div>';
+  const token = await authGetToken();
+  let users;
+  try {
+    const res = await fetch(WORKER_URL + '/admin/users', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    users = await res.json();
+  } catch {
+    body.innerHTML = '<div class="admin-empty">Could not load users.</div>';
+    return;
+  }
+  if (!Array.isArray(users) || users.length === 0) {
+    body.innerHTML = '<div class="admin-empty">No registered users yet.</div>';
+    return;
+  }
+  const pending  = users.filter(u => u.status === 'pending');
+  const approved = users.filter(u => u.status === 'approved' && !u.isAdmin);
+  const denied   = users.filter(u => u.status === 'denied');
+
+  function provBadge(p) {
+    const label = p === 'oauth_google' ? 'google'
+      : p === 'oauth_microsoft' ? 'microsoft'
+      : p === 'oauth_github'    ? 'github'
+      : p === 'oauth_apple'     ? 'apple'
+      : p || 'email';
+    return `<span class="prov-badge prov-${label}">${label}</span>`;
+  }
+
+  function renderUser(u) {
+    const isPending  = u.status === 'pending';
+    const isApproved = u.status === 'approved';
+    return `
+    <div class="admin-user-row" id="aur-${u.clerkId}">
+      <div class="admin-user-top">
+        <span class="admin-user-name">${escHtml(u.name || 'Unknown')}</span>
+        ${provBadge(u.provider)}
+        <span class="status-badge status-${u.status}">${u.status}</span>
+      </div>
+      <div class="admin-user-email">${escHtml(u.email || '')}</div>
+      ${isPending ? `
+        <div class="admin-perm-row">
+          <label>Access:</label>
+          <select id="acc-${u.clerkId}">
+            <option value="use">Full use</option>
+            <option value="readonly">Read only</option>
+          </select>
+          <label>AI Chat:</label>
+          <input type="checkbox" id="ai-${u.clerkId}">
+        </div>
+        <div class="admin-action-row">
+          <button class="btn-approve" onclick="adminApprove('${u.clerkId}')">Approve</button>
+          <button class="btn-deny"    onclick="adminDeny('${u.clerkId}')">Deny</button>
+        </div>
+      ` : isApproved ? `
+        <div class="admin-perm-row">
+          <label>Access:</label>
+          <select id="acc-${u.clerkId}" onchange="adminSave('${u.clerkId}')">
+            <option value="use"      ${u.access==='use'?'selected':''}>Full use</option>
+            <option value="readonly" ${u.access==='readonly'?'selected':''}>Read only</option>
+          </select>
+          <label>AI Chat:</label>
+          <input type="checkbox" id="ai-${u.clerkId}" ${u.aiChat?'checked':''} onchange="adminSave('${u.clerkId}')">
+        </div>
+      ` : `
+        <div class="admin-action-row">
+          <button class="btn-approve" onclick="adminApprove('${u.clerkId}')">Re-approve</button>
+        </div>
+      `}
+    </div>`;
+  }
+
+  let html = '';
+  if (pending.length)  html += `<div class="admin-section-title">Pending (${pending.length})</div>` + pending.map(renderUser).join('');
+  if (approved.length) html += `<div class="admin-section-title">Approved (${approved.length})</div>` + approved.map(renderUser).join('');
+  if (denied.length)   html += `<div class="admin-section-title">Denied (${denied.length})</div>` + denied.map(renderUser).join('');
+  if (!html) html = '<div class="admin-empty">No non-admin users yet.</div>';
+  body.innerHTML = html;
+}
+
+async function _adminUpdate(clerkId, data) {
+  const token = await authGetToken();
+  await fetch(`${WORKER_URL}/admin/users/${clerkId}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  loadAdminUsers();
+}
+
+function adminApprove(clerkId) {
+  const access = document.getElementById(`acc-${clerkId}`)?.value || 'readonly';
+  const aiChat = document.getElementById(`ai-${clerkId}`)?.checked || false;
+  _adminUpdate(clerkId, { status: 'approved', access, aiChat });
+}
+function adminDeny(clerkId) {
+  _adminUpdate(clerkId, { status: 'denied' });
+}
+function adminSave(clerkId) {
+  const access = document.getElementById(`acc-${clerkId}`)?.value || 'readonly';
+  const aiChat = document.getElementById(`ai-${clerkId}`)?.checked || false;
+  _adminUpdate(clerkId, { access, aiChat });
+}
 
 // ═══════════════════════════════════════════════════════
 //  CONSTANTS — seed template (used only to init state.template)
@@ -1557,6 +1980,7 @@ function uid()  { return Math.random().toString(36).slice(2,10); }
 
 // ── Bootstrap
 window.addEventListener('DOMContentLoaded', async () => {
+  await initAuth();   // Clerk auth gate (no-op if CLERK_PUBLISHABLE_KEY is empty)
   await initFileSystem();
   await initOneDrive();
   await initGitHub();   // fetches fresh JSON from GitHub on every page load
@@ -3202,9 +3626,6 @@ document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').for
 // ═══════════════════════════════════════════════════════
 //  AI CHAT ASSISTANT
 // ═══════════════════════════════════════════════════════
-// Set this to your deployed Cloudflare Worker URL, e.g.:
-//   const AI_WORKER_URL = 'https://copilot-tracker-api.your-subdomain.workers.dev/ai';
-const AI_WORKER_URL = '';
 
 let _aiHistory  = [];   // [{role, content}]
 let _aiStreaming = false;
@@ -3296,10 +3717,12 @@ async function sendAiMessage() {
   const streamDiv = _appendMsg('assistant', '<span style="opacity:.5">▍</span>', 'ai-stream');
 
   try {
+    const _aiToken = await authGetToken();
     const res = await fetch(AI_WORKER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(_aiToken ? { 'Authorization': `Bearer ${_aiToken}` } : {}),
       },
       body: JSON.stringify({
         model: 'claude-opus-4-6',

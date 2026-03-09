@@ -373,16 +373,140 @@ async function handleMcp(request, env) {
   }
 }
 
+// ── Clerk authentication helpers ─────────────────────────────────────────────
+
+const AUTH_CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Content-Type': 'application/json',
+};
+
+function clerkJwksUrl(publishableKey) {
+  const b64     = publishableKey.replace(/^pk_(test|live)_/, '');
+  const decoded = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+  const domain  = decoded.replace(/\$$/, '');
+  return `https://${domain}/.well-known/jwks.json`;
+}
+
+async function verifyClerkToken(token, env) {
+  if (!token || !env.CLERK_PUBLISHABLE_KEY) return null;
+  try {
+    const [hB64, pB64, sB64] = token.split('.');
+    if (!hB64 || !pB64 || !sB64) return null;
+    const header  = JSON.parse(atob(hB64.replace(/-/g,'+').replace(/_/g,'/')));
+    const payload = JSON.parse(atob(pB64.replace(/-/g,'+').replace(/_/g,'/')));
+    if (payload.exp < Date.now() / 1000) return null;
+    const jwksRes = await fetch(clerkJwksUrl(env.CLERK_PUBLISHABLE_KEY), { cf: { cacheTtl: 3600 } });
+    const { keys } = await jwksRes.json();
+    const jwk = keys.find(k => k.kid === header.kid);
+    if (!jwk) return null;
+    const key  = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    const data = new TextEncoder().encode(`${hB64}.${pB64}`);
+    const sig  = Uint8Array.from(atob(sB64.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+    const ok   = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, data);
+    return ok ? payload : null;
+  } catch { return null; }
+}
+
+async function getClerkUser(userId, env) {
+  if (!env.CLERK_SECRET_KEY) return null;
+  try {
+    const res = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+      headers: { 'Authorization': `Bearer ${env.CLERK_SECRET_KEY}` },
+    });
+    return res.ok ? res.json() : null;
+  } catch { return null; }
+}
+
+// POST /auth/request — register on first login, return existing record on repeat visits
+async function handleAuthRequest(request, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { headers: AUTH_CORS });
+  const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
+  const payload = await verifyClerkToken(token, env);
+  if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: AUTH_CORS });
+
+  const userId = payload.sub;
+  let record   = await env.PERMISSIONS_KV.get(`user:${userId}`, 'json');
+
+  if (!record) {
+    const clerkUser = await getClerkUser(userId, env);
+    const email     = clerkUser?.email_addresses?.[0]?.email_address || '';
+    const name      = [clerkUser?.first_name, clerkUser?.last_name].filter(Boolean).join(' ') || email;
+    const provider  = clerkUser?.external_accounts?.[0]?.provider || 'email';
+    const isAdmin   = !!(env.ADMIN_EMAIL && email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase());
+    record = {
+      clerkId: userId, email, name, provider,
+      isAdmin,
+      status:      isAdmin ? 'approved' : 'pending',
+      access:      isAdmin ? 'use'      : 'readonly',
+      aiChat:      isAdmin,
+      requestedAt: new Date().toISOString(),
+      reviewedAt:  isAdmin ? new Date().toISOString() : null,
+    };
+    await env.PERMISSIONS_KV.put(`user:${userId}`, JSON.stringify(record));
+  }
+  return new Response(JSON.stringify(record), { headers: AUTH_CORS });
+}
+
+// GET /auth/me — return current user's record (without registering)
+async function handleAuthMe(request, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { headers: AUTH_CORS });
+  const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
+  const payload = await verifyClerkToken(token, env);
+  if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: AUTH_CORS });
+  const record = await env.PERMISSIONS_KV.get(`user:${payload.sub}`, 'json');
+  return new Response(JSON.stringify(record || { status: 'unknown' }), { headers: AUTH_CORS });
+}
+
+// GET /admin/users — list all registered users (admin only)
+async function handleAdminUsers(request, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { headers: AUTH_CORS });
+  const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
+  const payload = await verifyClerkToken(token, env);
+  if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: AUTH_CORS });
+  const admin = await env.PERMISSIONS_KV.get(`user:${payload.sub}`, 'json');
+  if (!admin?.isAdmin) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: AUTH_CORS });
+  const list  = await env.PERMISSIONS_KV.list({ prefix: 'user:' });
+  const users = await Promise.all(list.keys.map(k => env.PERMISSIONS_KV.get(k.name, 'json')));
+  return new Response(JSON.stringify(users.filter(Boolean)), { headers: AUTH_CORS });
+}
+
+// POST /admin/users/:id — update a user's permissions (admin only)
+async function handleAdminUpdateUser(request, userId, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { headers: AUTH_CORS });
+  const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
+  const payload = await verifyClerkToken(token, env);
+  if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: AUTH_CORS });
+  const admin = await env.PERMISSIONS_KV.get(`user:${payload.sub}`, 'json');
+  if (!admin?.isAdmin) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: AUTH_CORS });
+  const update = await request.json().catch(() => ({}));
+  const record = await env.PERMISSIONS_KV.get(`user:${userId}`, 'json');
+  if (!record) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: AUTH_CORS });
+  const updated = { ...record, ...update, reviewedAt: new Date().toISOString() };
+  await env.PERMISSIONS_KV.put(`user:${userId}`, JSON.stringify(updated));
+  return new Response(JSON.stringify(updated), { headers: AUTH_CORS });
+}
+
 // ── Anthropic AI proxy ────────────────────────────────────────────────────────
 async function handleAiProxy(request, env) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
   if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (request.method !== 'POST') return new Response(JSON.stringify({ error: 'Use POST' }), { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+  // If Clerk is configured, verify the token and check aiChat permission
+  if (env.CLERK_PUBLISHABLE_KEY) {
+    const token   = (request.headers.get('Authorization') || '').replace('Bearer ', '');
+    const payload = await verifyClerkToken(token, env);
+    if (!payload) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const record = await env.PERMISSIONS_KV.get(`user:${payload.sub}`, 'json');
+    if (!record?.aiChat) return new Response(JSON.stringify({ error: 'AI chat access not granted.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
 
   if (!env.ANTHROPIC_API_KEY) {
     return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY secret is not configured on the Worker.' }), {
@@ -424,6 +548,13 @@ export default {
 
     // AI proxy endpoint
     if (path === '/ai') return handleAiProxy(request, env);
+
+    // Auth / permissions endpoints
+    if (path === '/auth/request') return handleAuthRequest(request, env);
+    if (path === '/auth/me')      return handleAuthMe(request, env);
+    if (path === '/admin/users')  return handleAdminUsers(request, env);
+    const adminUserMatch = path.match(/^\/admin\/users\/(.+)$/);
+    if (adminUserMatch) return handleAdminUpdateUser(request, adminUserMatch[1], env);
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
