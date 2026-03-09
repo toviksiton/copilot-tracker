@@ -164,13 +164,13 @@ const MCP_TOOLS = [
   },
   {
     name: 'get_blocked_items',
-    description: 'Return every item that is currently Blocked across all customers, grouped by customer and pillar.',
-    inputSchema: { type: 'object', properties: {}, required: [] },
+    description: 'Return blocked items. Pass an optional customer name to filter to one customer (e.g. "what is blocked for AMDOCS?"). Omit customer to get all blocked items across every customer.',
+    inputSchema: { type: 'object', properties: { customer: { type: 'string', description: 'Optional customer name filter (partial match, case-insensitive)' } }, required: [] },
   },
   {
     name: 'get_pending_items',
-    description: 'Return every item that is still Not Started across all customers, grouped by customer and pillar.',
-    inputSchema: { type: 'object', properties: {}, required: [] },
+    description: 'Return not-started items. Pass an optional customer name to filter to one customer. Omit customer to get all pending items across every customer.',
+    inputSchema: { type: 'object', properties: { customer: { type: 'string', description: 'Optional customer name filter (partial match, case-insensitive)' } }, required: [] },
   },
   {
     name: 'search_customers',
@@ -204,6 +204,41 @@ const MCP_TOOLS = [
   },
 ];
 
+// ── Fuzzy customer finder ─────────────────────────────────────────────────────
+// 1. exact substring  2. anagram (sorted chars equal)  3. best Levenshtein
+function findCustomer(customers, query) {
+  const q = query.toLowerCase().replace(/\s+/g, '');
+
+  // 1. substring
+  let match = customers.find(c => c.name.toLowerCase().includes(q));
+  if (match) return match;
+
+  // 2. anagram / sorted-char equality (catches AMDOCS ↔ AMODCS)
+  const sortedQ = q.split('').sort().join('');
+  match = customers.find(c => c.name.toLowerCase().replace(/\s+/g, '').split('').sort().join('') === sortedQ);
+  if (match) return match;
+
+  // 3. Levenshtein — pick best if distance ≤ 3
+  function lev(a, b) {
+    const dp = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let prev = i;
+      for (let j = 1; j <= b.length; j++) {
+        const val = a[i - 1] === b[j - 1] ? dp[j - 1] : 1 + Math.min(dp[j - 1], dp[j], prev);
+        dp[j - 1] = prev; prev = val;
+      }
+      dp[b.length] = prev;
+    }
+    return dp[b.length];
+  }
+  let best = null, bestDist = Infinity;
+  for (const c of customers) {
+    const d = lev(q, c.name.toLowerCase().replace(/\s+/g, ''));
+    if (d < bestDist) { bestDist = d; best = c; }
+  }
+  return bestDist <= 3 ? best : null;
+}
+
 // ── MCP tool executor ─────────────────────────────────────────────────────────
 async function executeTool(name, args, env) {
   const data      = await fetchData(env);
@@ -225,29 +260,34 @@ async function executeTool(name, args, env) {
   }
 
   if (name === 'get_customer') {
-    const q = (args.name || '').toLowerCase();
-    const c = customers.find(c => c.name.toLowerCase().includes(q));
-    if (!c) throw new Error(`No customer matching "${args.name}".`);
+    const c = findCustomer(customers, args.name || '');
+    if (!c) return { error: `No customer matching "${args.name}". Available: ${customers.map(c => c.name).join(', ')}` };
     return formatCustomer(c, true);
   }
 
   if (name === 'get_blocked_items') {
+    const filter = args.customer ? (args.customer + '').toLowerCase() : null;
     const result = [];
-    for (const c of customers)
+    for (const c of customers) {
+      if (filter && !findCustomer([c], filter)) continue;
       for (const cat of c.categories || []) {
         const blocked = (cat.items || []).filter(i => i.status === 'blocked');
         if (blocked.length) result.push({ customer: c.name, pillar: cat.title, items: blocked.map(i => i.label) });
       }
+    }
     return result;
   }
 
   if (name === 'get_pending_items') {
+    const filter = args.customer ? (args.customer + '').toLowerCase() : null;
     const result = [];
-    for (const c of customers)
+    for (const c of customers) {
+      if (filter && !findCustomer([c], filter)) continue;
       for (const cat of c.categories || []) {
         const pending = (cat.items || []).filter(i => i.status === 'pending');
         if (pending.length) result.push({ customer: c.name, pillar: cat.title, items: pending.map(i => i.label) });
       }
+    }
     return result;
   }
 
@@ -273,11 +313,11 @@ async function executeTool(name, args, env) {
         const total   = (cat.items || []).length;
         result.push({ customer: c.name, pillar: cat.title, done, blocked, total, pct: total ? Math.round(done / total * 100) : 0, items: (cat.items || []).map(i => ({ label: i.label, status: STATUS_LABELS[i.status] || i.status })) });
       }
-    if (!result.length) throw new Error(`No pillar matching "${args.pillar}".`);
+    if (!result.length) return { error: `No pillar matching "${args.pillar}".` };
     return result;
   }
 
-  throw new Error(`Unknown tool: ${name}`);
+  return { error: `Unknown tool: ${name}` };
 }
 
 // ── MCP JSON-RPC handler ──────────────────────────────────────────────────────
@@ -318,8 +358,13 @@ async function handleMcp(request, env) {
 
     if (method === 'tools/call') {
       const { name, arguments: args = {} } = params || {};
-      const result = await executeTool(name, args, env);
-      return ok({ content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] });
+      try {
+        const result = await executeTool(name, args, env);
+        return ok({ content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] });
+      } catch (e) {
+        // MCP spec: tool errors must be isError:true content, NOT a JSON-RPC error
+        return ok({ content: [{ type: 'text', text: e.message || 'Tool execution error' }], isError: true });
+      }
     }
 
     return rpcErr(-32601, `Method not found: ${method}`);
