@@ -762,11 +762,15 @@ html, body {
   box-shadow:0 16px 48px rgba(0,0,0,.4);flex-direction:column;overflow:hidden;">
   <div style="padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:14px;font-weight:700;color:var(--text);">✦ AI Assistant</div>
-    <button onclick="toggleAiChat()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;">✕</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="ai-voice-toggle" onclick="toggleAiVoice()" title="Toggle voice responses (British accent)" style="background:none;border:none;cursor:pointer;font-size:17px;line-height:1;opacity:.45;transition:opacity .2s;">🔇</button>
+      <button onclick="toggleAiChat()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;">✕</button>
+    </div>
   </div>
   <div id="ai-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:340px;"></div>
-  <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;">
-    <input id="ai-input" class="modal-input" placeholder="Ask about your customers…" style="flex:1;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}">
+  <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;">
+    <input id="ai-input" class="modal-input" placeholder="Ask in English or עברית…" style="flex:1;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}">
+    <button id="ai-mic-btn" onclick="startVoiceInput()" title="Speak — auto-detects Hebrew / English" style="height:36px;width:36px;border-radius:9px;font-size:16px;cursor:pointer;background:rgba(103,232,249,.1);border:1px solid rgba(103,232,249,.25);color:var(--cyan);flex-shrink:0;transition:all .2s;">🎤</button>
     <button onclick="sendAiMsg()" style="height:36px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25));color:var(--cyan);border:1px solid rgba(103,232,249,.3);">Send</button>
   </div>
 </div>
@@ -2046,7 +2050,7 @@ async function sendAiMsg() {
   // Build context from current data
   const custs = Object.values(CUSTOMERS);
   const context = custs.map(c => `${c.name}: ${c.adoption}% adoption, ${c.done} done, ${c.blocked} blocked, ${c.items} total items, status: ${c.status}`).join('\n');
-  const systemPrompt = `You are an AI assistant for a GitHub Copilot adoption tracking tool. Here is the current customer data:\n\n${context}\n\nHelp the CSM understand trends, flag risks, and suggest actions. Be concise.`;
+  const systemPrompt = `You are an AI assistant for a GitHub Copilot adoption tracking tool. Here is the current customer data:\n\n${context}\n\nHelp the CSM understand trends, flag risks, and suggest actions. Be concise.\nIMPORTANT: Always reply in the same language the user wrote in. If the user writes in Hebrew, reply fully in Hebrew. If in English, reply in English.`;
 
   // Show typing indicator
   const typingDiv = document.createElement('div');
@@ -2073,10 +2077,82 @@ async function sendAiMsg() {
     const reply = data.content?.[0]?.text || data.error?.message || 'Sorry, something went wrong.';
     appendAiMsg('assistant', reply);
     _aiHistory.push({ role: 'assistant', content: reply });
+    speakText(reply);
   } catch (err) {
     typingDiv.remove();
     appendAiMsg('assistant', '⚠ Network error: ' + err.message);
   }
+}
+
+/* ─── AI Voice ─── */
+let _voiceEnabled = false;
+let _recognition = null;
+
+function toggleAiVoice() {
+  _voiceEnabled = !_voiceEnabled;
+  const btn = document.getElementById('ai-voice-toggle');
+  if (btn) { btn.textContent = _voiceEnabled ? '🔊' : '🔇'; btn.style.opacity = _voiceEnabled ? '1' : '.45'; }
+}
+
+function _getBritishVoice() {
+  const voices = speechSynthesis.getVoices();
+  // Prefer named British male voices (Daniel = Apple British, George = Google British)
+  return voices.find(v => v.lang === 'en-GB' && /daniel|george|arthur|oliver/i.test(v.name))
+      || voices.find(v => v.lang === 'en-GB')
+      || voices.find(v => v.lang.startsWith('en-'));
+}
+
+function speakText(text) {
+  if (!_voiceEnabled || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  const hebrew = /[\u0590-\u05FF]/.test(text);
+  if (hebrew) {
+    const voices = speechSynthesis.getVoices();
+    const heVoice = voices.find(v => v.lang === 'he-IL' || v.lang === 'iw-IL');
+    if (heVoice) utter.voice = heVoice;
+    utter.lang = 'he-IL';
+    utter.rate = 1.1;
+    utter.pitch = 1.0;
+  } else {
+    const v = _getBritishVoice();
+    if (v) utter.voice = v;
+    utter.lang = 'en-GB';
+    utter.rate = 1.2;   // brisk — Bond doesn't dawdle
+    utter.pitch = 0.82; // deep, smooth, authoritative
+  }
+  speechSynthesis.speak(utter);
+}
+
+function startVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    appendAiMsg('assistant', '⚠ Speech recognition requires Chrome or Edge.');
+    return;
+  }
+  if (_recognition) { _recognition.abort(); _recognition = null; return; }
+
+  const btn = document.getElementById('ai-mic-btn');
+  _recognition = new SR();
+  _recognition.continuous = false;
+  _recognition.interimResults = false;
+  // he-IL: Chrome's backend auto-detects English spoken by Hebrew-locale users too
+  _recognition.lang = 'he-IL';
+
+  _recognition.onstart = () => {
+    if (btn) { btn.textContent = '🔴'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
+  };
+  _recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript.trim();
+    const input = document.getElementById('ai-input');
+    if (input) { input.value = transcript; input.focus(); }
+  };
+  _recognition.onerror = (e) => { console.warn('Voice error:', e.error); };
+  _recognition.onend = () => {
+    _recognition = null;
+    if (btn) { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
+  };
+  _recognition.start();
 }
 
 function saveWorkerUrl() {
