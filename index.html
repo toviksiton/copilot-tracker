@@ -454,75 +454,94 @@ function toggleTheme() {
   document.getElementById('toggle-btn2').textContent = icon;
 }
 
-/* ─── customer data ─── */
-const CUSTOMERS = {
-  amdocs: {
-    id:'amdocs', name:'AMDOCS', letter:'A',
-    gradient:'linear-gradient(135deg,#f9a8d4,#c084fc)',
-    barGradient:'linear-gradient(90deg,#f9a8d4,#c084fc)',
-    adoption:24, status:'at-risk',
-    pillStyle:'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.25)',
-    meta:'Last sync 2h ago · 48 items', items:48, sync:'2h ago',
-    seats:320, activeUsers:77, codeAcceptance:31, completions:12400,
-    csm:'Sarah K.', contractEnd:'Dec 2025', industry:'Telecom', satisfaction:72,
-    recentItems:[
-      {title:'Onboarding blocked – SSO config', status:'blocked', color:'#f9a8d4'},
-      {title:'Training session scheduled',      status:'open',    color:'#c4b5fd'},
-      {title:'License expansion request',       status:'in-review', color:'#67e8f9'},
-      {title:'QBR deck preparation',            status:'open',    color:'#6ee7b7'},
-    ],
-    metrics:[
-      {label:'Active Users',  value:77,  max:320, color:'linear-gradient(90deg,#f9a8d4,#c084fc)'},
-      {label:'Code Accepted', value:31,  max:100, color:'linear-gradient(90deg,#c4b5fd,#f9a8d4)'},
-      {label:'Completions',   value:40,  max:100, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
-      {label:'Satisfaction',  value:72,  max:100, color:'linear-gradient(90deg,#fbbf24,#f9a8d4)'},
-    ]
-  },
-  nice: {
-    id:'nice', name:'NiCE', letter:'N',
-    gradient:'linear-gradient(135deg,#67e8f9,#6ee7b7)',
-    barGradient:'linear-gradient(90deg,#67e8f9,#6ee7b7)',
-    adoption:46, status:'on-track',
-    pillStyle:'background:rgba(103,232,249,.12);color:#0891b2;border:1px solid rgba(103,232,249,.3)',
-    meta:'Last sync 30m ago · 55 items', items:55, sync:'30m ago',
-    seats:540, activeUsers:248, codeAcceptance:58, completions:38700,
-    csm:'James T.', contractEnd:'Mar 2026', industry:'CX Software', satisfaction:88,
-    recentItems:[
-      {title:'Developer enablement week',       status:'in-progress', color:'#6ee7b7'},
-      {title:'Expand to 2nd engineering team',  status:'open',        color:'#67e8f9'},
-      {title:'Monthly adoption review',         status:'done',        color:'#c4b5fd'},
-      {title:'API integration milestone',       status:'open',        color:'#fbbf24'},
-    ],
-    metrics:[
-      {label:'Active Users',  value:248, max:540, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
-      {label:'Code Accepted', value:58,  max:100, color:'linear-gradient(90deg,#6ee7b7,#c4b5fd)'},
-      {label:'Completions',   value:72,  max:100, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
-      {label:'Satisfaction',  value:88,  max:100, color:'linear-gradient(90deg,#6ee7b7,#fbbf24)'},
-    ]
-  },
-  strauss: {
-    id:'strauss', name:'Strauss Group', letter:'S',
-    gradient:'linear-gradient(135deg,#6ee7b7,#c4b5fd)',
-    barGradient:'linear-gradient(90deg,#6ee7b7,#c4b5fd)',
-    adoption:42, status:'on-track',
-    pillStyle:'background:rgba(110,231,183,.12);color:#059669;border:1px solid rgba(110,231,183,.3)',
-    meta:'Last sync 1h ago · 33 items', items:33, sync:'1h ago',
-    seats:210, activeUsers:88, codeAcceptance:49, completions:21300,
-    csm:'Lior B.', contractEnd:'Jun 2026', industry:'Food & Beverage', satisfaction:91,
-    recentItems:[
-      {title:'Pilot team expansion approved', status:'done',        color:'#6ee7b7'},
-      {title:'Security review pending',       status:'blocked',     color:'#f9a8d4'},
-      {title:'Seat count renewal discussion', status:'open',        color:'#c4b5fd'},
-      {title:'Custom IDE plugin request',     status:'in-review',   color:'#67e8f9'},
-    ],
-    metrics:[
-      {label:'Active Users',  value:88, max:210, color:'linear-gradient(90deg,#6ee7b7,#c4b5fd)'},
-      {label:'Code Accepted', value:49, max:100, color:'linear-gradient(90deg,#c4b5fd,#6ee7b7)'},
-      {label:'Completions',   value:61, max:100, color:'linear-gradient(90deg,#6ee7b7,#67e8f9)'},
-      {label:'Satisfaction',  value:91, max:100, color:'linear-gradient(90deg,#c4b5fd,#fbbf24)'},
-    ]
-  }
-};
+/* ─── real data from localStorage ─── */
+const STORE_KEY = 'copilot-tracker-v3';
+const GRAD_PALETTE = [
+  ['linear-gradient(135deg,#f9a8d4,#c084fc)','linear-gradient(90deg,#f9a8d4,#c084fc)','background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.25)'],
+  ['linear-gradient(135deg,#67e8f9,#6ee7b7)','linear-gradient(90deg,#67e8f9,#6ee7b7)','background:rgba(103,232,249,.12);color:#0891b2;border:1px solid rgba(103,232,249,.3)'],
+  ['linear-gradient(135deg,#6ee7b7,#c4b5fd)','linear-gradient(90deg,#6ee7b7,#c4b5fd)','background:rgba(110,231,183,.12);color:#059669;border:1px solid rgba(110,231,183,.3)'],
+  ['linear-gradient(135deg,#fbbf24,#f9a8d4)','linear-gradient(90deg,#fbbf24,#f9a8d4)','background:rgba(251,191,36,.12);color:#d97706;border:1px solid rgba(251,191,36,.3)'],
+  ['linear-gradient(135deg,#c4b5fd,#67e8f9)','linear-gradient(90deg,#c4b5fd,#67e8f9)','background:rgba(196,181,253,.12);color:#7c3aed;border:1px solid rgba(196,181,253,.3)'],
+];
+const BAR_COLORS = [
+  'linear-gradient(90deg,#f9a8d4,#c084fc)',
+  'linear-gradient(90deg,#67e8f9,#6ee7b7)',
+  'linear-gradient(90deg,#6ee7b7,#c4b5fd)',
+  'linear-gradient(90deg,#fbbf24,#f9a8d4)',
+  'linear-gradient(90deg,#c4b5fd,#67e8f9)',
+  'linear-gradient(90deg,#67e8f9,#fbbf24)',
+  'linear-gradient(90deg,#f9a8d4,#67e8f9)',
+  'linear-gradient(90deg,#c4b5fd,#fbbf24)',
+];
+const ITEM_COLORS = ['#f9a8d4','#c4b5fd','#67e8f9','#6ee7b7','#fbbf24'];
+
+function fmtDateShort(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return d;
+  return dt.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+}
+
+function mapCustomer(raw, idx) {
+  const allItems = raw.categories.flatMap(c => c.items);
+  const total = allItems.length;
+  const doneCount    = allItems.filter(i => i.status === 'done').length;
+  const missedCount  = allItems.filter(i => i.status === 'missed').length;
+  const blockedCount = allItems.filter(i => i.status === 'blocked').length;
+  const unblockCount = allItems.filter(i => i.status === 'unblock').length;
+  const pendingCount = allItems.filter(i => i.status === 'pending').length;
+  const adoption = total ? Math.round(doneCount / total * 100) : 0;
+  const [gradient, barGradient, pillStyle] = GRAD_PALETTE[idx % GRAD_PALETTE.length];
+  const initials = raw.name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const status = adoption >= 35 ? 'on-track' : adoption >= 15 ? 'at-risk' : 'needs-attention';
+  const metrics = raw.categories.map((cat, ci) => ({
+    label: cat.title || cat.name || `Pillar ${ci+1}`,
+    value: cat.items.filter(i=>i.status==='done').length,
+    max: cat.items.length || 1,
+    color: BAR_COLORS[ci % BAR_COLORS.length]
+  }));
+  const statusMap = {done:'done', missed:'blocked', blocked:'blocked', unblock:'in-progress', pending:'open'};
+  const recentItems = [
+    ...allItems.filter(i=>i.status==='blocked'),
+    ...allItems.filter(i=>i.status==='missed'),
+    ...allItems.filter(i=>i.status==='unblock'),
+    ...allItems.filter(i=>i.status==='done'),
+    ...allItems.filter(i=>i.status==='pending'),
+  ].slice(0,5).map((item, ii) => ({
+    title: item.label,
+    status: statusMap[item.status] || 'open',
+    color: ITEM_COLORS[ii % ITEM_COLORS.length]
+  }));
+  return {
+    id: raw.id, name: raw.name, letter: initials, logo: raw.logo || null,
+    gradient, barGradient, pillStyle, adoption, status,
+    meta: `${total} items · ${doneCount} done${blockedCount ? ' · '+blockedCount+' blocked' : ''}`,
+    items: total, seats: raw.users || 0, activeUsers: raw.copilotUsers || 0,
+    csm: raw.csamName || '', ae: raw.aeName || '',
+    contractEnd: fmtDateShort(raw.renewalDate) || 'N/A',
+    aopDate: fmtDateShort(raw.aopDate) || 'N/A',
+    done: doneCount, missed: missedCount, blocked: blockedCount,
+    unblock: unblockCount, pending: pendingCount,
+    recentItems, metrics, rawCategories: raw.categories,
+  };
+}
+
+let CUSTOMERS = {};
+
+function loadRealData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (saved && saved.customers && saved.customers.length > 0) {
+      saved.customers.forEach((raw, idx) => {
+        const mapped = mapCustomer(raw, idx);
+        CUSTOMERS[mapped.id] = mapped;
+      });
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+loadRealData();
 
 const STATUS_STYLES = {
   'blocked':     'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.2)',
@@ -536,14 +555,47 @@ const STATUS_CLASS = {
   'in-progress':'pill-in-progress','done':'pill-done'
 };
 
+/* ─── KPI / stats update ─── */
+function updateKPIs() {
+  const custs = Object.values(CUSTOMERS);
+  const n = custs.length;
+  const avgAdoption = n ? Math.round(custs.reduce((s,c)=>s+c.adoption,0)/n) : 0;
+  const totalItems = custs.reduce((s,c)=>s+c.items,0);
+  const totalBlocked = custs.reduce((s,c)=>s+(c.blocked||0),0);
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-c);">${n}</div><div class="kpi-label">Customers</div></div></div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-m);">${avgAdoption}%</div><div class="kpi-label">Avg Adoption</div></div></div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-l);">${totalItems}</div><div class="kpi-label">Total Items</div></div></div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-p);">${totalBlocked}</div><div class="kpi-label">Blocked</div></div></div>`;
+  document.querySelector('.stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-num" style="color:var(--cyan);">${n}</div><div class="stat-lbl">Active Customers</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--mint);">${avgAdoption}%</div><div class="stat-lbl">Avg Adoption</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--lavender);">${totalItems}</div><div class="stat-lbl">Open Items</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--pink);">${totalBlocked}</div><div class="stat-lbl">Blockers</div></div>`;
+}
+
 /* ─── build list ─── */
+function custLogoHtml(c) {
+  if (c.logo) return `<div class="cust-logo" style="background:none;padding:0;overflow:hidden;"><img src="${c.logo}" style="width:100%;height:100%;object-fit:cover;" /></div>`;
+  return `<div class="cust-logo" style="background:${c.gradient};">${c.letter}</div>`;
+}
+
 function buildList() {
-  document.getElementById('cust-list').innerHTML = Object.values(CUSTOMERS).map(c => `
+  updateKPIs();
+  const custs = Object.values(CUSTOMERS);
+  if (custs.length === 0) {
+    document.getElementById('cust-list').innerHTML = `<div style="padding:40px;text-align:center;opacity:.5;">No customers yet. Add customers in the main app.</div>`;
+    return;
+  }
+  document.getElementById('cust-list').innerHTML = custs.map(c => `
     <div class="cust-card" data-id="${c.id}"
          onmouseenter="openSidecar('${c.id}')"
          onmouseleave="closeSidecar()"
          onclick="goToDetail('${c.id}')">
-      <div class="cust-logo" style="background:${c.gradient};">${c.letter}</div>
+      ${custLogoHtml(c)}
       <div class="cust-info">
         <div class="cust-name">${c.name}</div>
         <div class="cust-meta">${c.meta}</div>
@@ -565,13 +617,16 @@ function openSidecar(id) {
   clearTimeout(scTimer);
   const c = CUSTOMERS[id];
 
+  const scLogoHtml = c.logo
+    ? `<div class="sc-logo" style="background:none;padding:0;overflow:hidden;"><img src="${c.logo}" style="width:100%;height:100%;object-fit:cover;" /></div>`
+    : `<div class="sc-logo" style="background:${c.gradient};">${c.letter}</div>`;
   document.getElementById('sc-header').innerHTML = `
     <div class="sc-eyebrow">Customer Preview</div>
     <div class="sc-company">
-      <div class="sc-logo" style="background:${c.gradient};">${c.letter}</div>
+      ${scLogoHtml}
       <div>
         <div class="sc-name">${c.name}</div>
-        <div class="sc-industry">${c.industry}</div>
+        ${c.csm ? `<div class="sc-industry">CSAM: ${c.csm}</div>` : ''}
         <div class="sc-pill" style="${c.pillStyle};">${c.status}</div>
       </div>
     </div>`;
@@ -582,12 +637,14 @@ function openSidecar(id) {
     <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>`;
 
   document.getElementById('sc-body').innerHTML = `
-    <div class="sc-metric"><span class="sc-metric-lbl">Seats</span><span class="sc-metric-val">${c.seats.toLocaleString()}</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">Active Users</span><span class="sc-metric-val">${c.activeUsers}</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">Code Accepted</span><span class="sc-metric-val">${c.codeAcceptance}%</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">Open Items</span><span class="sc-metric-val">${c.items}</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">Last Sync</span><span class="sc-metric-val">${c.sync}</span></div>
-    <div class="sc-metric"><span class="sc-metric-lbl">CSM</span><span class="sc-metric-val">${c.csm}</span></div>`;
+    ${c.seats ? `<div class="sc-metric"><span class="sc-metric-lbl">Total Users</span><span class="sc-metric-val">${c.seats.toLocaleString()}</span></div>` : ''}
+    ${c.activeUsers ? `<div class="sc-metric"><span class="sc-metric-lbl">Copilot Users</span><span class="sc-metric-val">${c.activeUsers.toLocaleString()}</span></div>` : ''}
+    <div class="sc-metric"><span class="sc-metric-lbl">Done</span><span class="sc-metric-val">${c.done}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Missed</span><span class="sc-metric-val">${c.missed}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Blocked</span><span class="sc-metric-val">${c.blocked}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Total Items</span><span class="sc-metric-val">${c.items}</span></div>
+    ${c.ae ? `<div class="sc-metric"><span class="sc-metric-lbl">AE</span><span class="sc-metric-val">${c.ae}</span></div>` : ''}
+    ${c.csm ? `<div class="sc-metric"><span class="sc-metric-lbl">CSAM</span><span class="sc-metric-val">${c.csm}</span></div>` : ''}`;
 
   document.getElementById('sc-open-btn').onclick = () => goToDetail(id);
   document.getElementById('sidecar').classList.add('open');
@@ -611,32 +668,35 @@ function goToDetail(id) {
   document.getElementById('tb-detail-title').textContent = c.name;
   document.getElementById('kpi-row').hidden   = true;
 
+  const detailLogoHtml = c.logo
+    ? `<div class="detail-big-logo" style="background:none;padding:0;overflow:hidden;"><img src="${c.logo}" style="width:100%;height:100%;object-fit:cover;" /></div>`
+    : `<div class="detail-big-logo" style="background:${c.gradient};">${c.letter}</div>`;
+  const subParts = [c.seats ? c.seats.toLocaleString()+' users' : null, c.csm ? 'CSAM: '+c.csm : null, c.ae ? 'AE: '+c.ae : null].filter(Boolean);
   document.getElementById('d-hero').innerHTML = `
     <div class="detail-hero-row">
       <div class="detail-hero-left">
-        <div class="detail-big-logo" style="background:${c.gradient};">${c.letter}</div>
+        ${detailLogoHtml}
         <div>
           <div class="detail-name">${c.name}</div>
-          <div class="detail-sub">${c.industry} · ${c.seats.toLocaleString()} seats · CSM: ${c.csm}</div>
+          <div class="detail-sub">${subParts.join(' · ')}</div>
           <div class="detail-hero-pill" style="${c.pillStyle};">${c.status}</div>
         </div>
       </div>
       <div class="detail-hero-actions">
         <button class="topbar-btn topbar-btn-ghost">Export</button>
-        <button class="topbar-btn topbar-btn-primary">View in GitHub →</button>
       </div>
     </div>`;
 
   document.getElementById('d-kpi').innerHTML = `
     <div class="detail-kpi"><div class="detail-kpi-num" style="background:${c.gradient};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${c.adoption}%</div><div class="detail-kpi-lbl">Adoption Rate</div></div>
     <div class="kpi-divider" style="margin:0 4px;"></div>
-    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--cyan);">${c.activeUsers}</div><div class="detail-kpi-lbl">Active Users</div></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--mint);">${c.done}</div><div class="detail-kpi-lbl">Done</div></div>
     <div class="kpi-divider" style="margin:0 4px;"></div>
-    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--mint);">${c.codeAcceptance}%</div><div class="detail-kpi-lbl">Code Accepted</div></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--pink);">${c.missed}</div><div class="detail-kpi-lbl">Missed</div></div>
     <div class="kpi-divider" style="margin:0 4px;"></div>
-    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--lavender);">${c.completions.toLocaleString()}</div><div class="detail-kpi-lbl">Completions</div></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:#f97316;">${c.blocked}</div><div class="detail-kpi-lbl">Blocked</div></div>
     <div class="kpi-divider" style="margin:0 4px;"></div>
-    <div class="detail-kpi"><div class="detail-kpi-num" style="color:#d97706;">${c.satisfaction}%</div><div class="detail-kpi-lbl">Satisfaction</div></div>`;
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--lavender);">${c.items}</div><div class="detail-kpi-lbl">Total Items</div></div>`;
 
   const barsHtml = c.metrics.map(m => {
     const pct = Math.round((m.value / m.max) * 100);
@@ -663,12 +723,14 @@ function goToDetail(id) {
     <div class="detail-panel">
       <div class="detail-panel-label">Account Info</div>
       <div class="info-grid">
-        <div class="info-item"><div class="info-item-lbl">Contract End</div><div class="info-item-val">${c.contractEnd}</div></div>
-        <div class="info-item"><div class="info-item-lbl">CSM Owner</div><div class="info-item-val">${c.csm}</div></div>
-        <div class="info-item"><div class="info-item-lbl">Industry</div><div class="info-item-val">${c.industry}</div></div>
-        <div class="info-item"><div class="info-item-lbl">Total Seats</div><div class="info-item-val">${c.seats.toLocaleString()}</div></div>
-        <div class="info-item"><div class="info-item-lbl">Active Users</div><div class="info-item-val">${c.activeUsers}</div></div>
-        <div class="info-item"><div class="info-item-lbl">Last Sync</div><div class="info-item-val">${c.sync}</div></div>
+        ${c.contractEnd !== 'N/A' ? `<div class="info-item"><div class="info-item-lbl">Renewal Date</div><div class="info-item-val">${c.contractEnd}</div></div>` : ''}
+        ${c.aopDate !== 'N/A' ? `<div class="info-item"><div class="info-item-lbl">AOP Date</div><div class="info-item-val">${c.aopDate}</div></div>` : ''}
+        ${c.csm ? `<div class="info-item"><div class="info-item-lbl">CSAM</div><div class="info-item-val">${c.csm}</div></div>` : ''}
+        ${c.ae ? `<div class="info-item"><div class="info-item-lbl">AE</div><div class="info-item-val">${c.ae}</div></div>` : ''}
+        ${c.seats ? `<div class="info-item"><div class="info-item-lbl">Total Users</div><div class="info-item-val">${c.seats.toLocaleString()}</div></div>` : ''}
+        ${c.activeUsers ? `<div class="info-item"><div class="info-item-lbl">Copilot Users</div><div class="info-item-val">${c.activeUsers.toLocaleString()}</div></div>` : ''}
+        <div class="info-item"><div class="info-item-lbl">Pending</div><div class="info-item-val">${c.pending}</div></div>
+        <div class="info-item"><div class="info-item-lbl">Unblocking</div><div class="info-item-val">${c.unblock}</div></div>
       </div>
     </div>
     <div class="detail-panel detail-full">
