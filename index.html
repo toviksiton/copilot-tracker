@@ -92,6 +92,9 @@
   --stat-card-bg: rgba(255,255,255,0.80);
 }
 
+/* fix: [hidden] attribute must override inline display styles */
+[hidden] { display: none !important; }
+
 html, body {
   height: 100%;
   background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 55%, var(--bg-c) 100%);
@@ -346,8 +349,10 @@ html, body {
 .status-picker-opt:hover { background:var(--surface-hover); }
 
 /* ─── kanban board ─── */
-.kanban-board { display:flex;gap:14px;height:100%;overflow-x:auto;padding:0 0 16px;align-items:flex-start; }
-.kanban-col { flex:0 0 260px;display:flex;flex-direction:column;min-height:100px; }
+#view-kanban { overflow:hidden;padding-bottom:0; }
+#view-kanban .section-label { flex-shrink:0; }
+.kanban-board { display:flex;gap:14px;flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;padding:0 0 16px;align-items:stretch; }
+.kanban-col { flex:0 0 260px;display:flex;flex-direction:column;min-height:0; }
 .kanban-col-header {
   display:flex;align-items:center;justify-content:space-between;
   padding:9px 14px;border-radius:10px 10px 0 0;
@@ -358,7 +363,16 @@ html, body {
 .kanban-cards {
   flex:1;background:var(--glass);border:1px solid var(--border);border-top:none;
   border-radius:0 0 10px 10px;padding:8px;display:flex;flex-direction:column;
-  gap:6px;min-height:120px;
+  gap:6px;min-height:120px;overflow-y:auto;
+}
+.kanban-cards.drag-over-col {
+  background:rgba(103,232,249,.07);
+  border-color:var(--cyan);
+}
+.kanban-card.dragging { opacity:0.35;pointer-events:none; }
+.kanban-drop-indicator {
+  height:3px;background:var(--cyan);border-radius:99px;margin:2px 0;
+  pointer-events:none;
 }
 .kanban-card {
   background:var(--surface);border:1px solid var(--border);border-radius:8px;
@@ -455,6 +469,36 @@ html, body {
 }
 .item-del-btn:hover { color:#f87171; }
 .detail-cats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:0; }
+
+/* ─── drag and drop ─── */
+.cust-card[draggable="true"] { cursor:grab; }
+.cust-card[draggable="true"]:active { cursor:grabbing; }
+.cust-card.drag-over {
+  border-color:var(--cyan) !important;
+  box-shadow:0 0 0 2px rgba(103,232,249,.25);
+}
+.cust-card.dragging { opacity:0.4; }
+
+/* ─── collapsible panels ─── */
+.panel-toggle-btn {
+  background:none;border:none;cursor:pointer;
+  color:var(--muted);font-size:12px;padding:2px 6px;border-radius:6px;
+  transition:color .12s,background .12s;line-height:1;
+}
+.panel-toggle-btn:hover { color:var(--text);background:var(--surface-hover); }
+.detail-panel.collapsed .detail-panel-body { display:none; }
+.detail-panel.collapsed .panel-toggle-btn { transform:rotate(-90deg); }
+
+/* ─── logo preview in modal ─── */
+.logo-preview-circle {
+  width:44px;height:44px;border-radius:50%;
+  background:var(--surface);border:1px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--muted);overflow:hidden;flex-shrink:0;cursor:pointer;
+  transition:border-color .15s;
+}
+.logo-preview-circle:hover { border-color:var(--cyan); }
+.logo-preview-circle img { width:100%;height:100%;object-fit:cover; }
 </style>
 </head>
 <body>
@@ -486,7 +530,7 @@ html, body {
     <div class="sidebar-section">
       <div class="sidebar-section-label">System</div>
       <a class="nav-item" id="nav-settings" href="#" onclick="showView('settings');return false;"><span class="nav-icon">⚙</span> Settings</a>
-      <a class="nav-item" id="nav-integrations" href="#" onclick="showView('settings');return false;"><span class="nav-icon">⊕</span> Integrations</a>
+      <a class="nav-item" id="nav-integrations" href="#" onclick="showView('integrations');return false;"><span class="nav-icon">⊕</span> Integrations</a>
     </div>
     <div class="sidebar-footer">
       <div class="user-row">
@@ -633,6 +677,17 @@ html, body {
         <div class="modal-title" id="customer-modal-title">Add Customer</div>
         <div class="modal-grid">
           <div class="modal-grid-full">
+            <div class="modal-label">Company Logo</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+              <div class="logo-preview-circle" id="cm-logo-preview" onclick="document.getElementById('cm-logo-file').click()" title="Click to upload logo">No logo</div>
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                <input type="file" id="cm-logo-file" accept="image/*" style="display:none" onchange="previewLogoFile(this)">
+                <button type="button" class="modal-btn" style="height:30px;padding:0 14px;font-size:11px;background:var(--btn-ghost-bg);color:var(--muted);border:1px solid var(--border);" onclick="document.getElementById('cm-logo-file').click()">📷 Upload Image</button>
+                <button type="button" class="modal-btn" style="height:30px;padding:0 14px;font-size:11px;background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);" onclick="clearLogo()">Remove Logo</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-grid-full">
             <div class="modal-label">Company Name *</div>
             <input class="modal-input" id="cm-name" placeholder="e.g. AMDOCS">
           </div>
@@ -705,11 +760,12 @@ function toggleTheme() {
 /* ─── view routing ─── */
 let currentView = 'list';
 const NAV_MAP = {
-  'list':     ['nav-dashboard','nav-customers','nav-adoption'],
-  'kanban':   ['nav-kanban'],
-  'backlog':  ['nav-backlog'],
-  'settings': ['nav-settings','nav-integrations'],
-  'reports':  ['nav-reports'],
+  'list':         ['nav-dashboard','nav-customers','nav-adoption'],
+  'kanban':       ['nav-kanban'],
+  'backlog':      ['nav-backlog'],
+  'settings':     ['nav-settings'],
+  'integrations': ['nav-integrations'],
+  'reports':      ['nav-reports'],
 };
 
 function showView(name) {
@@ -741,7 +797,7 @@ function showView(name) {
   } else if (name === 'backlog') {
     document.getElementById('view-backlog').hidden = false;
     buildBacklog();
-  } else if (name === 'settings') {
+  } else if (name === 'settings' || name === 'integrations') {
     document.getElementById('view-settings').hidden = false;
     ghUpdateUI();
   } else if (name === 'reports') {
@@ -953,9 +1009,16 @@ function buildList() {
   }
   document.getElementById('cust-list').innerHTML = custs.map(c => `
     <div class="cust-card" data-id="${c.id}"
+         draggable="true"
          onmouseenter="openSidecar('${c.id}')"
          onmouseleave="closeSidecar()"
-         onclick="goToDetail('${c.id}')">
+         onclick="goToDetail('${c.id}')"
+         ondragstart="custDragStart(event,'${c.id}')"
+         ondragover="custDragOver(event)"
+         ondrop="custDrop(event,'${c.id}')"
+         ondragleave="custDragLeave(event)"
+         ondragend="custDragEnd(event)">
+      <span style="color:var(--dim);cursor:grab;font-size:16px;flex-shrink:0;margin-right:-6px;" title="Drag to reorder">⠿</span>
       ${custLogoHtml(c)}
       <div class="cust-info">
         <div class="cust-name">${c.name}</div>
@@ -969,6 +1032,43 @@ function buildList() {
       <div class="cust-pill" style="${c.pillStyle};">${c.status}</div>
       <div class="cust-arrow">›</div>
     </div>`).join('');
+}
+
+/* ─── customer list drag & drop ─── */
+let _custDragSrcId = null;
+function custDragStart(e, id) {
+  _custDragSrcId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function custDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function custDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function custDragEnd(e) {
+  e.currentTarget.classList.remove('dragging','drag-over');
+  document.querySelectorAll('.cust-card').forEach(c => c.classList.remove('drag-over','dragging'));
+}
+function custDrop(e, targetId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!_custDragSrcId || _custDragSrcId === targetId || !RAW_DATA) return;
+  const arr = RAW_DATA.customers;
+  const srcIdx = arr.findIndex(c => c.id === _custDragSrcId);
+  const tgtIdx = arr.findIndex(c => c.id === targetId);
+  if (srcIdx < 0 || tgtIdx < 0) return;
+  const [moved] = arr.splice(srcIdx, 1);
+  arr.splice(tgtIdx, 0, moved);
+  // remap all since indices changed
+  CUSTOMERS = {};
+  arr.forEach((raw, idx) => { CUSTOMERS[raw.id] = mapCustomer(raw, idx); });
+  saveData();
+  buildList();
+  _custDragSrcId = null;
 }
 
 /* ─── sidecar ─── */
@@ -1109,13 +1209,19 @@ function goToDetail(id) {
 
   document.getElementById('d-body').innerHTML = `
     <div class="detail-body-top">
-      <div class="detail-panel">
-        <div class="detail-panel-label">Adoption Metrics</div>
-        <div class="bar-row">${barsHtml}</div>
+      <div class="detail-panel" id="panel-adoption">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="detail-panel-label" style="margin-bottom:0;">Adoption Metrics</div>
+          <button class="panel-toggle-btn" onclick="togglePanel('panel-adoption')" title="Collapse">▼</button>
+        </div>
+        <div class="detail-panel-body"><div class="bar-row">${barsHtml}</div></div>
       </div>
-      <div class="detail-panel">
-        <div class="detail-panel-label">Account Info</div>
-        <div class="info-grid">
+      <div class="detail-panel" id="panel-info">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="detail-panel-label" style="margin-bottom:0;">Account Info</div>
+          <button class="panel-toggle-btn" onclick="togglePanel('panel-info')" title="Collapse">▼</button>
+        </div>
+        <div class="detail-panel-body"><div class="info-grid">
           ${c.contractEnd !== 'N/A' ? `<div class="info-item"><div class="info-item-lbl">Renewal Date</div><div class="info-item-val">${c.contractEnd}</div></div>` : ''}
           ${c.aopDate !== 'N/A' ? `<div class="info-item"><div class="info-item-lbl">AOP Date</div><div class="info-item-val">${c.aopDate}</div></div>` : ''}
           ${c.csm ? `<div class="info-item"><div class="info-item-lbl">CSAM</div><div class="info-item-val">${c.csm}</div></div>` : ''}
@@ -1126,7 +1232,7 @@ function goToDetail(id) {
           ${c.activeUsers ? `<div class="info-item"><div class="info-item-lbl">Copilot Users</div><div class="info-item-val">${c.activeUsers.toLocaleString()}</div></div>` : ''}
           <div class="info-item"><div class="info-item-lbl">Pending</div><div class="info-item-val">${c.pending}</div></div>
           <div class="info-item"><div class="info-item-lbl">Unblocking</div><div class="info-item-val">${c.unblock}</div></div>
-        </div>
+        </div></div>
       </div>
     </div>
     ${categoriesPanels}`;
@@ -1251,17 +1357,21 @@ function kanbanMatchesCol(status, colKey) {
   return status === colKey;
 }
 
+/* kanban drag state */
+let _kDragCustId = null, _kDragCatIdx = null, _kDragItemIdx = null;
+
 function buildKanban() {
   if (!RAW_DATA) {
     document.getElementById('kanban-board').innerHTML = `<div style="padding:40px;opacity:.5;">No data yet. Add customers first.</div>`;
     return;
   }
-  // Collect all items with customer/category context
   const allItems = [];
   RAW_DATA.customers.forEach(raw => {
     raw.categories.forEach((cat, catIdx) => {
       cat.items.forEach((item, itemIdx) => {
-        allItems.push({ custId: raw.id, custName: raw.name, catLabel: cat.title || cat.name || `Pillar ${catIdx+1}`, title: item.label, status: item.status, catIdx, itemIdx });
+        allItems.push({ custId: raw.id, custName: raw.name,
+          catLabel: cat.title || cat.name || `Pillar ${catIdx+1}`,
+          title: item.label, status: item.status, catIdx, itemIdx });
       });
     });
   });
@@ -1269,20 +1379,102 @@ function buildKanban() {
   document.getElementById('kanban-board').innerHTML = KANBAN_COLS.map(col => {
     const cards = allItems.filter(it => kanbanMatchesCol(it.status, col.key));
     const cardsHtml = cards.length === 0
-      ? `<div class="kanban-empty">No items</div>`
-      : cards.map(it => `<div class="kanban-card" onclick="goToDetail('${it.custId}')">
+      ? `<div class="kanban-empty">Drop items here</div>`
+      : cards.map(it => `<div class="kanban-card"
+          draggable="true"
+          data-cust="${it.custId}" data-cat="${it.catIdx}" data-item="${it.itemIdx}"
+          ondragstart="kDragStart(event,'${it.custId}',${it.catIdx},${it.itemIdx})"
+          ondragend="kDragEnd(event)"
+          onclick="goToDetail('${it.custId}')">
           <div class="kanban-card-customer">${it.custName}</div>
           <div class="kanban-card-title">${it.title}</div>
           <div class="kanban-card-cat">${it.catLabel}</div>
         </div>`).join('');
+    // drop target key: first raw status in column
+    const dropKey = col.key === 'blocked|missed' ? 'blocked' : col.key;
     return `<div class="kanban-col">
       <div class="kanban-col-header ${col.accent}">
         <span class="kanban-col-title">${col.label}</span>
         <span class="kanban-col-count">${cards.length}</span>
       </div>
-      <div class="kanban-cards">${cardsHtml}</div>
+      <div class="kanban-cards" data-col-key="${dropKey}"
+           ondragover="kColDragOver(event)"
+           ondragleave="kColDragLeave(event)"
+           ondrop="kColDrop(event,'${dropKey}')">${cardsHtml}</div>
     </div>`;
   }).join('');
+}
+
+function kDragStart(e, custId, catIdx, itemIdx) {
+  _kDragCustId = custId; _kDragCatIdx = catIdx; _kDragItemIdx = itemIdx;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => e.currentTarget && e.currentTarget.classList.add('dragging'), 0);
+}
+function kDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.kanban-cards').forEach(el => el.classList.remove('drag-over-col'));
+}
+function kColDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over-col');
+}
+function kColDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget))
+    e.currentTarget.classList.remove('drag-over-col');
+}
+function kColDrop(e, newStatus) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over-col');
+  if (_kDragCustId === null) return;
+  const raw = RAW_DATA.customers.find(c => c.id === _kDragCustId);
+  if (!raw) return;
+  const item = raw.categories[_kDragCatIdx]?.items[_kDragItemIdx];
+  if (!item || item.status === newStatus) return;
+  item.status = newStatus;
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[_kDragCustId] = mapCustomer(raw, idx >= 0 ? idx : 0);
+  saveData();
+  buildKanban();
+  _kDragCustId = null;
+}
+
+/* ─── collapsible panels ─── */
+function togglePanel(panelId) {
+  const panel = document.getElementById(panelId);
+  if (panel) panel.classList.toggle('collapsed');
+}
+
+/* ─── logo upload helpers ─── */
+let _logoDataUrl = null;
+
+function previewLogoFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _logoDataUrl = e.target.result;
+    const preview = document.getElementById('cm-logo-preview');
+    if (preview) preview.innerHTML = `<img src="${_logoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearLogo() {
+  _logoDataUrl = null;
+  const preview = document.getElementById('cm-logo-preview');
+  if (preview) preview.innerHTML = 'No logo';
+  const fi = document.getElementById('cm-logo-file');
+  if (fi) fi.value = '';
+}
+
+function _setLogoPreview(logoUrl) {
+  _logoDataUrl = logoUrl || null;
+  const preview = document.getElementById('cm-logo-preview');
+  if (!preview) return;
+  preview.innerHTML = logoUrl
+    ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:cover;">`
+    : 'No logo';
 }
 
 /* ─── customer modal CRUD ─── */
@@ -1291,6 +1483,7 @@ let editingCustomerId = null;
 function closeCustomerModal() {
   document.getElementById('customer-modal').hidden = true;
   editingCustomerId = null;
+  _logoDataUrl = null;
 }
 
 function openAddCustomer() {
@@ -1299,6 +1492,7 @@ function openAddCustomer() {
   ['cm-name','cm-csam','cm-ae','cm-ats','cm-se'].forEach(id => document.getElementById(id).value = '');
   ['cm-users','cm-copilot'].forEach(id => document.getElementById(id).value = '');
   ['cm-renewal','cm-aop'].forEach(id => document.getElementById(id).value = '');
+  _setLogoPreview(null);
   document.getElementById('customer-modal').hidden = false;
 }
 
@@ -1317,6 +1511,7 @@ function openEditCustomer() {
   document.getElementById('cm-copilot').value = raw.copilotUsers || '';
   document.getElementById('cm-renewal').value = raw.renewalDate || '';
   document.getElementById('cm-aop').value     = raw.aopDate || '';
+  _setLogoPreview(raw.logo || null);
   document.getElementById('customer-modal').hidden = false;
 }
 
@@ -1338,6 +1533,7 @@ function saveCustomer() {
     raw.copilotUsers= parseInt(document.getElementById('cm-copilot').value) || 0;
     raw.renewalDate = document.getElementById('cm-renewal').value;
     raw.aopDate     = document.getElementById('cm-aop').value;
+    if (_logoDataUrl !== undefined) raw.logo = _logoDataUrl || '';
     const idx = RAW_DATA.customers.indexOf(raw);
     CUSTOMERS[raw.id] = mapCustomer(raw, idx);
   } else {
@@ -1353,6 +1549,7 @@ function saveCustomer() {
       copilotUsers:parseInt(document.getElementById('cm-copilot').value) || 0,
       renewalDate: document.getElementById('cm-renewal').value,
       aopDate:     document.getElementById('cm-aop').value,
+      logo:        _logoDataUrl || '',
       categories:  [],
     };
     RAW_DATA.customers.push(newRaw);
