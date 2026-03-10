@@ -344,6 +344,35 @@ html, body {
 }
 .status-picker-opt:hover { background:var(--surface-hover); }
 
+/* ─── kanban board ─── */
+.kanban-board { display:flex;gap:14px;height:100%;overflow-x:auto;padding:0 0 16px;align-items:flex-start; }
+.kanban-col { flex:0 0 260px;display:flex;flex-direction:column;min-height:100px; }
+.kanban-col-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 14px;border-radius:10px 10px 0 0;
+  background:var(--surface);border:1px solid var(--border);border-bottom:none;
+}
+.kanban-col-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted); }
+.kanban-col-count { font-size:10px;color:var(--dim);background:rgba(255,255,255,.08);border-radius:20px;padding:1px 8px;font-weight:600; }
+.kanban-cards {
+  flex:1;background:var(--glass);border:1px solid var(--border);border-top:none;
+  border-radius:0 0 10px 10px;padding:8px;display:flex;flex-direction:column;
+  gap:6px;min-height:120px;
+}
+.kanban-card {
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;cursor:pointer;transition:background .12s,box-shadow .12s;
+}
+.kanban-card:hover { background:var(--surface-hover);box-shadow:0 4px 16px rgba(0,0,0,.25); }
+.kanban-card-customer { font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px; }
+.kanban-card-title { font-size:12px;color:var(--text);font-weight:500;line-height:1.4; }
+.kanban-card-cat { font-size:10px;color:var(--dim);margin-top:5px; }
+.kanban-empty { padding:24px 10px;text-align:center;font-size:11px;color:var(--dim);font-style:italic; }
+.kanban-col-accent-open       { border-top:2px solid rgba(255,255,255,.2); }
+.kanban-col-accent-progress   { border-top:2px solid rgba(103,232,249,.5); }
+.kanban-col-accent-blocked    { border-top:2px solid rgba(249,168,212,.5); }
+.kanban-col-accent-done       { border-top:2px solid rgba(110,231,183,.5); }
+
 /* settings view */
 .settings-section { display:flex;flex-direction:column;gap:8px; }
 .settings-section-title { font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px; }
@@ -449,7 +478,7 @@ html, body {
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
       <a class="nav-item" id="nav-backlog" href="#" onclick="showView('backlog');return false;"><span class="nav-icon">◷</span> Backlog<span class="nav-badge" id="backlog-badge">5</span></a>
-      <a class="nav-item" id="nav-milestones" href="#" onclick="showView('list');return false;"><span class="nav-icon">◈</span> Milestones</a>
+      <a class="nav-item" id="nav-kanban" href="#" onclick="showView('kanban');return false;"><span class="nav-icon">⊞</span> Kanban</a>
       <a class="nav-item" id="nav-reports" href="#" onclick="showView('list');return false;"><span class="nav-icon">⊞</span> Reports</a>
     </div>
     <div class="sidebar-section">
@@ -517,6 +546,12 @@ html, body {
         </div>
         <div class="section-label">Customers</div>
         <div class="customer-list" id="cust-list"></div>
+      </div>
+
+      <!-- KANBAN VIEW -->
+      <div class="view" id="view-kanban" hidden>
+        <div class="section-label">Kanban Board</div>
+        <div class="kanban-board" id="kanban-board"></div>
       </div>
 
       <!-- BACKLOG VIEW -->
@@ -629,14 +664,15 @@ function toggleTheme() {
 /* ─── view routing ─── */
 let currentView = 'list';
 const NAV_MAP = {
-  'list':     ['nav-dashboard','nav-customers','nav-adoption','nav-milestones','nav-reports'],
+  'list':     ['nav-dashboard','nav-customers','nav-adoption','nav-reports'],
+  'kanban':   ['nav-kanban'],
   'backlog':  ['nav-backlog'],
   'settings': ['nav-settings','nav-integrations'],
 };
 
 function showView(name) {
   // hide all except detail which is managed separately
-  ['view-list','view-backlog','view-settings'].forEach(id => {
+  ['view-list','view-kanban','view-backlog','view-settings'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = true;
   });
@@ -657,6 +693,9 @@ function showView(name) {
 
   if (name === 'list') {
     document.getElementById('view-list').hidden = false;
+  } else if (name === 'kanban') {
+    document.getElementById('view-kanban').hidden = false;
+    buildKanban();
   } else if (name === 'backlog') {
     document.getElementById('view-backlog').hidden = false;
     buildBacklog();
@@ -938,7 +977,7 @@ function goToDetail(id) {
   currentDetailId = id;
   clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
-  ['view-list','view-backlog','view-settings'].forEach(v => {
+  ['view-list','view-kanban','view-backlog','view-settings'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.hidden = true;
   });
@@ -1142,6 +1181,164 @@ function buildBacklog() {
 }
 
 buildList();
+
+/* ─── kanban board ─── */
+const KANBAN_COLS = [
+  { key: 'pending',            label: 'Open',        accent: 'kanban-col-accent-open',     dispKey: 'open' },
+  { key: 'unblock',            label: 'In Progress', accent: 'kanban-col-accent-progress', dispKey: 'in-progress' },
+  { key: 'blocked|missed',     label: 'Blocked',     accent: 'kanban-col-accent-blocked',  dispKey: 'blocked' },
+  { key: 'done',               label: 'Done',        accent: 'kanban-col-accent-done',     dispKey: 'done' },
+];
+
+function kanbanMatchesCol(status, colKey) {
+  if (colKey === 'blocked|missed') return status === 'blocked' || status === 'missed';
+  return status === colKey;
+}
+
+function buildKanban() {
+  if (!RAW_DATA) {
+    document.getElementById('kanban-board').innerHTML = `<div style="padding:40px;opacity:.5;">No data yet. Add customers first.</div>`;
+    return;
+  }
+  // Collect all items with customer/category context
+  const allItems = [];
+  RAW_DATA.customers.forEach(raw => {
+    raw.categories.forEach((cat, catIdx) => {
+      cat.items.forEach((item, itemIdx) => {
+        allItems.push({ custId: raw.id, custName: raw.name, catLabel: cat.title || cat.name || `Pillar ${catIdx+1}`, title: item.label, status: item.status, catIdx, itemIdx });
+      });
+    });
+  });
+
+  document.getElementById('kanban-board').innerHTML = KANBAN_COLS.map(col => {
+    const cards = allItems.filter(it => kanbanMatchesCol(it.status, col.key));
+    const cardsHtml = cards.length === 0
+      ? `<div class="kanban-empty">No items</div>`
+      : cards.map(it => `<div class="kanban-card" onclick="goToDetail('${it.custId}')">
+          <div class="kanban-card-customer">${it.custName}</div>
+          <div class="kanban-card-title">${it.title}</div>
+          <div class="kanban-card-cat">${it.catLabel}</div>
+        </div>`).join('');
+    return `<div class="kanban-col">
+      <div class="kanban-col-header ${col.accent}">
+        <span class="kanban-col-title">${col.label}</span>
+        <span class="kanban-col-count">${cards.length}</span>
+      </div>
+      <div class="kanban-cards">${cardsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── customer modal CRUD ─── */
+let editingCustomerId = null;
+
+function closeCustomerModal() {
+  document.getElementById('customer-modal').hidden = true;
+  editingCustomerId = null;
+}
+
+function openAddCustomer() {
+  editingCustomerId = null;
+  document.getElementById('customer-modal-title').textContent = 'Add Customer';
+  ['cm-name','cm-csam','cm-ae'].forEach(id => document.getElementById(id).value = '');
+  ['cm-users','cm-copilot'].forEach(id => document.getElementById(id).value = '');
+  ['cm-renewal','cm-aop'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('customer-modal').hidden = false;
+}
+
+function openEditCustomer() {
+  if (!currentDetailId) return;
+  editingCustomerId = currentDetailId;
+  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(c => c.id === currentDetailId) : null;
+  if (!raw) return;
+  document.getElementById('customer-modal-title').textContent = 'Edit Customer';
+  document.getElementById('cm-name').value    = raw.name || '';
+  document.getElementById('cm-csam').value    = raw.csamName || '';
+  document.getElementById('cm-ae').value      = raw.aeName || '';
+  document.getElementById('cm-users').value   = raw.users || '';
+  document.getElementById('cm-copilot').value = raw.copilotUsers || '';
+  document.getElementById('cm-renewal').value = raw.renewalDate || '';
+  document.getElementById('cm-aop').value     = raw.aopDate || '';
+  document.getElementById('customer-modal').hidden = false;
+}
+
+function saveCustomer() {
+  const name = document.getElementById('cm-name').value.trim();
+  if (!name) { alert('Company name is required.'); return; }
+  if (!RAW_DATA) RAW_DATA = { customers: [] };
+
+  if (editingCustomerId) {
+    // Update existing
+    const raw = RAW_DATA.customers.find(c => c.id === editingCustomerId);
+    if (!raw) return;
+    raw.name        = name;
+    raw.csamName    = document.getElementById('cm-csam').value.trim();
+    raw.aeName      = document.getElementById('cm-ae').value.trim();
+    raw.users       = parseInt(document.getElementById('cm-users').value) || 0;
+    raw.copilotUsers= parseInt(document.getElementById('cm-copilot').value) || 0;
+    raw.renewalDate = document.getElementById('cm-renewal').value;
+    raw.aopDate     = document.getElementById('cm-aop').value;
+    const idx = RAW_DATA.customers.indexOf(raw);
+    CUSTOMERS[raw.id] = mapCustomer(raw, idx);
+  } else {
+    // Add new
+    const id = 'cust-' + Date.now();
+    const newRaw = {
+      id, name,
+      csamName:    document.getElementById('cm-csam').value.trim(),
+      aeName:      document.getElementById('cm-ae').value.trim(),
+      users:       parseInt(document.getElementById('cm-users').value) || 0,
+      copilotUsers:parseInt(document.getElementById('cm-copilot').value) || 0,
+      renewalDate: document.getElementById('cm-renewal').value,
+      aopDate:     document.getElementById('cm-aop').value,
+      categories:  [],
+    };
+    RAW_DATA.customers.push(newRaw);
+    CUSTOMERS[id] = mapCustomer(newRaw, RAW_DATA.customers.length - 1);
+  }
+  saveData();
+  closeCustomerModal();
+  updateKPIs();
+  buildList();
+  if (editingCustomerId) goToDetail(editingCustomerId);
+}
+
+function deleteCurrentCustomer() {
+  if (!currentDetailId) return;
+  const c = CUSTOMERS[currentDetailId];
+  if (!confirm(`Delete "${c ? c.name : currentDetailId}"? This cannot be undone.`)) return;
+  if (RAW_DATA) RAW_DATA.customers = RAW_DATA.customers.filter(r => r.id !== currentDetailId);
+  delete CUSTOMERS[currentDetailId];
+  saveData();
+  goBack();
+  updateKPIs();
+  buildList();
+}
+
+/* ─── inline item add / delete ─── */
+function commitAddItem(custId, catIdx) {
+  const input = document.getElementById('add-input-' + catIdx);
+  const label = input ? input.value.trim() : '';
+  if (!label) return;
+  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(c => c.id === custId) : null;
+  if (!raw) return;
+  raw.categories[catIdx].items.push({ label, status: 'pending' });
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+  saveData();
+  goToDetail(custId);
+}
+
+function deleteItem(event, custId, catIdx, itemIdx) {
+  event.stopPropagation();
+  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(c => c.id === custId) : null;
+  if (!raw) return;
+  raw.categories[catIdx].items.splice(itemIdx, 1);
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+  saveData();
+  goToDetail(custId);
+}
 </script>
 </body>
 </html>
