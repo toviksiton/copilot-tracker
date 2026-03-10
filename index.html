@@ -1,3404 +1,694 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Copilot Adoption Tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copilot Tracker</title>
 <style>
-/* ── Reset & Root ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ══════════════════════════════
+   DARK THEME (default)
+══════════════════════════════ */
 :root {
-  --ms-blue: #7c3aed;
-  --ms-blue-dark: #6d28d9;
-  --ms-blue-light: #f5f3ff;
-  --ms-light: #f3f2f1;
-  --ms-border: #e5e7eb;
-  --ms-text: #201f1e;
-  --ms-muted: #605e5c;
-  --done: #107c10;    --done-bg: #dff6dd;
-  --miss: #a4262c;    --miss-bg: #fde7e9;
-  --block: #ca5010;   --block-bg: #fed9cc;
-  --unblock: #797673; --unblock-bg: #edebe9;
-  --pending: #797673; --pending-bg: #f3f2f1;
-  --radius: 8px;
-  --shadow: 0 2px 8px rgba(0,0,0,.1);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.14);
+  --bg-a: #0f0c29;
+  --bg-b: #302b63;
+  --bg-c: #1a1035;
+  --surface:      rgba(255,255,255,0.06);
+  --surface-hover:rgba(255,255,255,0.10);
+  --glass:        rgba(255,255,255,0.04);
+  --border:       rgba(255,255,255,0.10);
+  --border2:      rgba(255,255,255,0.06);
+  --text:         rgba(255,255,255,0.92);
+  --muted:        rgba(255,255,255,0.42);
+  --dim:          rgba(255,255,255,0.22);
+  --orb1: rgba(168,85,247,0.18);
+  --orb2: rgba(59,130,246,0.15);
+  --orb3: rgba(236,72,153,0.12);
+  --cyan:     #67e8f9;
+  --mint:     #6ee7b7;
+  --pink:     #f9a8d4;
+  --lavender: #c4b5fd;
+  --blur: blur(20px);
+  /* KPI accent text colours */
+  --kpi-c: #67e8f9;
+  --kpi-m: #6ee7b7;
+  --kpi-l: #c4b5fd;
+  --kpi-p: #f9a8d4;
+  /* badge */
+  --badge-bg:     rgba(249,168,212,0.15);
+  --badge-border: rgba(249,168,212,0.2);
+  --badge-color:  #f9a8d4;
+  /* nav active */
+  --nav-active-bg: rgba(103,232,249,0.10);
+  /* btn ghost */
+  --btn-ghost-bg:    rgba(255,255,255,0.07);
+  --btn-ghost-color: rgba(255,255,255,0.55);
+  /* sidecar metric */
+  --sc-metric-bg: rgba(255,255,255,0.05);
+  /* info item */
+  --info-item-bg: rgba(255,255,255,0.04);
+  /* item row */
+  --item-row-bg:  rgba(255,255,255,0.04);
+  /* stat card */
+  --stat-card-bg: rgba(255,255,255,0.06);
 }
 
-body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #f9fafb;
-  color: var(--ms-text);
-  min-height: 100vh;
+/* ══════════════════════════════
+   LIGHT THEME
+══════════════════════════════ */
+[data-theme="light"] {
+  --bg-a: #f0edff;
+  --bg-b: #e4deff;
+  --bg-c: #ede8ff;
+  --surface:       rgba(255,255,255,0.75);
+  --surface-hover: rgba(255,255,255,0.95);
+  --glass:         rgba(255,255,255,0.60);
+  --border:        rgba(100,80,200,0.12);
+  --border2:       rgba(100,80,200,0.07);
+  --text:          #1a1235;
+  --muted:         #6b6b95;
+  --dim:           #9898b8;
+  --orb1: rgba(139,92,246,0.22);
+  --orb2: rgba(59,130,246,0.18);
+  --orb3: rgba(236,72,153,0.15);
+  --cyan:     #0891b2;
+  --mint:     #059669;
+  --pink:     #be185d;
+  --lavender: #6d28d9;
+  --kpi-c: #0891b2;
+  --kpi-m: #059669;
+  --kpi-l: #6d28d9;
+  --kpi-p: #be185d;
+  --badge-bg:     rgba(190,24,93,0.10);
+  --badge-border: rgba(190,24,93,0.20);
+  --badge-color:  #be185d;
+  --nav-active-bg: rgba(8,145,178,0.10);
+  --btn-ghost-bg:    rgba(0,0,0,0.05);
+  --btn-ghost-color: #5a5a7a;
+  --sc-metric-bg: rgba(0,0,0,0.04);
+  --info-item-bg: rgba(0,0,0,0.03);
+  --item-row-bg:  rgba(0,0,0,0.03);
+  --stat-card-bg: rgba(255,255,255,0.80);
 }
 
-/* ── Lock Screen ── */
-#lock-screen {
-  position: fixed; inset: 0; z-index: 9999;
-  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 60%, #db2777 100%);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-}
-#lock-screen.hidden { display: none; }
-.lock-box {
-  background: #fff; border-radius: 14px;
-  padding: 44px 40px 36px;
-  width: 100%; max-width: 380px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
-  text-align: center;
-}
-.lock-logo {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-bottom: 6px;
-  font-size: 18px; font-weight: 700; color: var(--ms-blue);
-}
-.lock-logo svg { flex-shrink: 0; }
-.lock-tagline { font-size: 12px; color: var(--ms-muted); margin-bottom: 32px; }
-.lock-icon { font-size: 40px; margin-bottom: 10px; }
-.lock-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: var(--ms-text); }
-.lock-box p { font-size: 13px; color: var(--ms-muted); margin-bottom: 24px; }
-.lock-input-wrap { position: relative; margin-bottom: 8px; }
-.lock-input-wrap input {
-  width: 100%; padding: 12px 44px 12px 16px;
-  border: 2px solid var(--ms-border); border-radius: var(--radius);
-  font-size: 20px; font-family: inherit; letter-spacing: 6px;
-  text-align: center; outline: none; transition: border-color .2s;
-}
-.lock-input-wrap input:focus { border-color: var(--ms-blue); }
-.lock-input-wrap input.shake {
-  border-color: var(--miss); animation: shake .35s ease;
-}
-.lock-toggle {
-  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; font-size: 18px;
-  color: var(--ms-muted); padding: 4px;
-}
-.lock-error {
-  color: var(--miss); font-size: 12px; min-height: 18px; margin-bottom: 16px;
-  transition: opacity .2s;
-}
-.lock-btn {
-  width: 100%; padding: 12px;
-  background: var(--ms-blue); color: #fff;
-  border: none; border-radius: var(--radius);
-  font-size: 15px; font-weight: 600; font-family: inherit;
-  cursor: pointer; transition: background .15s;
-}
-.lock-btn:hover { background: var(--ms-blue-dark); }
-.lock-footer { font-size: 11px; color: #bbb; margin-top: 20px; }
-
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  20%      { transform: translateX(-8px); }
-  40%      { transform: translateX(8px); }
-  60%      { transform: translateX(-5px); }
-  80%      { transform: translateX(5px); }
-}
-
-/* ── Header ── */
-header {
-  background: #111827;
-  color: #fff;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  height: 52px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.2);
-  position: sticky; top: 0; z-index: 100;
-}
-.logo {
-  font-size: 18px; font-weight: 700; letter-spacing: -.3px;
-  display: flex; align-items: center; gap: 8px; cursor: pointer;
-}
-.logo sub { opacity: .65; font-weight: 400; font-size: 12px; vertical-align: middle; }
-.breadcrumb {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 13px; opacity: .85;
-}
-.breadcrumb .sep { opacity: .5; }
-.breadcrumb .crumb-link {
-  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
-}
-.breadcrumb .crumb-link:hover { opacity: 1; }
-header nav { margin-left: auto; display: flex; gap: 8px; }
-.hbtn {
-  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
-  color: #fff; padding: 6px 14px; border-radius: var(--radius);
-  cursor: pointer; font-size: 13px; font-family: inherit; transition: background .15s;
-}
-.hbtn:hover { background: rgba(255,255,255,.28); }
-.hbtn.primary { background: linear-gradient(135deg,#7c3aed,#db2777); color: #fff; font-weight: 600; border-color: transparent; }
-.hbtn.primary:hover { background: linear-gradient(135deg,#6d28d9,#be185d); }
-.hbtn:disabled { opacity: .45; cursor: not-allowed; }
-.hbtn-sep { width: 1px; background: rgba(255,255,255,.25); align-self: stretch; margin: 8px 2px; }
-
-/* ── Import result toast ── */
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: #323130; color: #fff; padding: 12px 22px; border-radius: var(--radius);
-  font-size: 13px; box-shadow: var(--shadow-md); z-index: 9000;
-  opacity: 0; transition: opacity .25s; pointer-events: none;
-}
-.toast.show { opacity: 1; }
-
-/* ── App wrapper ── */
-.app { max-width: 1360px; margin: 0 auto; padding: 28px 20px; }
-
-/* ═══════════════════════════════════════
-   DASHBOARD
-═══════════════════════════════════════ */
-.dash-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
-}
-.dash-header h1 { font-size: 22px; font-weight: 700; }
-.dash-header p { font-size: 14px; color: var(--ms-muted); margin-top: 2px; }
-
-/* Summary strip */
-.dash-summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 28px;
-}
-.ds-card {
-  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
-  display: flex; flex-direction: column; gap: 4px;
-  position: relative; overflow: hidden;
-}
-.ds-card::after { content:''; position:absolute; right:-14px; top:-14px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.12); pointer-events:none; }
-.ds-card .ds-num { font-size: 28px; font-weight: 700; color: #fff; }
-.ds-card .ds-lbl { font-size: 12px; color: rgba(255,255,255,.8); }
-.ds-card.accent { background: linear-gradient(135deg,#2563eb,#3b82f6); }
-.ds-card.green   { background: linear-gradient(135deg,#059669,#10b981); }
-.ds-card.red     { background: linear-gradient(135deg,#d97706,#f59e0b); }
-.ds-card.orange  { background: linear-gradient(135deg,#dc2626,#ef4444); }
-
-/* Customer cards grid */
-.customers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 18px;
-}
-
-.cust-card {
-  background: #fff; border: 1px solid var(--ms-border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  cursor: pointer; transition: box-shadow .18s, transform .15s, border-color .15s;
+html, body {
+  height: 100%;
+  background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 55%, var(--bg-c) 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
   overflow: hidden;
-  display: flex; flex-direction: column;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ─── ORBS ─── */
+.orb { position:fixed;border-radius:50%;pointer-events:none;z-index:0;transition:background .4s; }
+.orb1 { width:600px;height:600px;background:radial-gradient(circle,var(--orb1) 0%,transparent 70%);top:-200px;left:-150px; }
+.orb2 { width:500px;height:500px;background:radial-gradient(circle,var(--orb2) 0%,transparent 70%);bottom:-150px;right:-100px; }
+.orb3 { width:350px;height:350px;background:radial-gradient(circle,var(--orb3) 0%,transparent 70%);top:30%;left:40%; }
+
+/* ─── THEME TOGGLE ─── */
+.theme-toggle {
+  width:34px;height:34px;border-radius:8px;
+  background:var(--btn-ghost-bg);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;
+  flex-shrink:0;
+}
+.theme-toggle:hover { background:var(--surface);color:var(--text); }
+
+/* ─── SHELL ─── */
+.shell { position:relative;z-index:1;display:flex;height:100vh;overflow:hidden; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width:220px;flex-shrink:0;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:24px 0 20px;overflow:hidden;
+  transition:background .3s,border-color .3s;
+}
+.sidebar-brand { padding:0 20px 24px;border-bottom:1px solid var(--border2); }
+.sidebar-brand-name { font-size:15px;font-weight:700;letter-spacing:-.3px;color:var(--text); }
+.sidebar-brand-tag  { font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.8px; }
+.sidebar-section { padding:20px 12px 8px; }
+.sidebar-section-label { font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;padding:0 8px;margin-bottom:6px; }
+.nav-item { display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px;font-size:13px;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;text-decoration:none; }
+.nav-item:hover { background:var(--surface);color:var(--text); }
+.nav-item.active { background:var(--nav-active-bg);color:var(--cyan);font-weight:500; }
+.nav-icon { width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0; }
+.nav-badge { margin-left:auto;background:var(--badge-bg);color:var(--badge-color);border:1px solid var(--badge-border);font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px; }
+.sidebar-footer { margin-top:auto;padding:16px 20px 0;border-top:1px solid var(--border2); }
+.user-row { display:flex;align-items:center;gap:10px; }
+.user-avatar { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#67e8f9,#c4b5fd);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0f0c29;flex-shrink:0; }
+.user-name { font-size:13px;font-weight:500;color:var(--text); }
+.user-role { font-size:11px;color:var(--muted);margin-top:1px; }
+
+/* ─── MAIN WRAPPER ─── */
+.main-wrapper { flex:1;display:flex;overflow:hidden; }
+
+/* ─── MAIN ─── */
+.main { flex:1;display:flex;flex-direction:column;overflow:hidden; }
+
+/* topbar */
+.topbar {
+  height:60px;flex-shrink:0;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  transition:background .3s,border-color .3s;
+}
+.topbar-left { display:flex;align-items:center;gap:14px; }
+.topbar-title { font-size:16px;font-weight:700;letter-spacing:-.4px;color:var(--text); }
+.topbar-subtitle { font-size:12px;color:var(--muted);margin-top:1px; }
+.topbar-actions { display:flex;align-items:center;gap:10px; }
+.topbar-btn {
+  height:34px;padding:0 16px;border-radius:8px;font-size:12px;font-weight:600;
+  cursor:pointer;border:none;display:flex;align-items:center;gap:6px;
+  transition:background .15s,color .15s;
+}
+.topbar-btn-ghost   { background:var(--btn-ghost-bg);color:var(--btn-ghost-color);border:1px solid var(--border); }
+.topbar-btn-primary { background:linear-gradient(135deg,rgba(103,232,249,.2),rgba(196,181,253,.2));color:var(--cyan);border:1px solid rgba(103,232,249,.25); }
+[data-theme="light"] .topbar-btn-primary { background:linear-gradient(135deg,rgba(8,145,178,.15),rgba(109,40,217,.12));color:var(--lavender);border:1px solid rgba(8,145,178,.3); }
+
+/* KPI row */
+.kpi-row {
+  flex-shrink:0;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;height:62px;display:flex;align-items:center;
+  transition:background .3s,border-color .3s;
+}
+.kpi-item { display:flex;align-items:center;gap:10px;padding:0 28px; }
+.kpi-item:first-child { padding-left:0; }
+.kpi-num { font-size:22px;font-weight:700;letter-spacing:-1px;line-height:1; }
+.kpi-label { font-size:11px;color:var(--muted);margin-top:2px; }
+.kpi-divider { width:1px;height:30px;background:var(--border);flex-shrink:0; }
+
+/* section label */
+.section-label { font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px; }
+
+/* stat cards */
+.stats-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px; }
+.stat-card {
+  background:var(--stat-card-bg);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:14px;padding:16px 18px;
+  transition:background .3s,border-color .3s;
+}
+.stat-num { font-size:30px;font-weight:700;letter-spacing:-1.5px;line-height:1; }
+.stat-lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:5px; }
+
+/* customer cards */
+.customer-list { display:flex;flex-direction:column;gap:10px; }
+.cust-card {
+  background:var(--surface);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:16px;
+  padding:18px 22px;display:flex;align-items:center;gap:18px;
+  cursor:pointer;transition:background .15s,border-color .15s,transform .2s,box-shadow .2s;
 }
 .cust-card:hover {
-  box-shadow: var(--shadow-md); transform: translateY(-2px);
-  border-color: var(--ms-blue);
+  background:var(--surface-hover);
+  border-color:var(--border);
+  transform:translateX(-3px);
+  box-shadow:4px 0 20px rgba(103,232,249,.06);
 }
+[data-theme="light"] .cust-card:hover { box-shadow:4px 0 24px rgba(109,40,217,.08); }
+.cust-logo { width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#0f0c29;flex-shrink:0; }
+.cust-info { flex:1;min-width:0; }
+.cust-name { font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.2px; }
+.cust-meta { font-size:11px;color:var(--muted);margin-top:2px; }
+.cust-bar-col { flex:1;min-width:100px;max-width:200px; }
+.cust-bar-label-text { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px; }
+.cust-bar-track { height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:5px; }
+.cust-bar-fill { height:100%;border-radius:99px; }
+.cust-pct { font-size:28px;font-weight:800;letter-spacing:-1.5px;line-height:1;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex-shrink:0;min-width:72px;text-align:right; }
+.cust-pill { padding:3px 11px;border-radius:99px;font-size:11px;font-weight:500;flex-shrink:0; }
+.cust-arrow { font-size:18px;color:var(--dim);flex-shrink:0;transition:color .15s,transform .15s; }
+.cust-card:hover .cust-arrow { color:var(--cyan);transform:translateX(4px); }
 
-.cust-card-top {
-  padding: 18px 18px 12px;
-  display: flex; align-items: flex-start; gap: 12px;
-}
-.cust-avatar {
-  width: 44px; height: 44px; border-radius: 10px;
-  background: var(--ms-blue); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: 700; flex-shrink: 0;
-  text-transform: uppercase; overflow: hidden;
-}
-.cust-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* views */
+.view { flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding:24px 28px; }
+.view[hidden] { display:none; }
 
-/* Logo uploader in modal */
-.logo-uploader {
-  position: relative; width: 84px; height: 84px; border-radius: 14px;
-  background: var(--ms-blue); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; font-weight: 700; text-transform: uppercase;
-  cursor: pointer; overflow: hidden; flex-shrink: 0;
-  border: 3px solid var(--ms-border); transition: border-color .15s;
-}
-.logo-uploader:hover { border-color: var(--ms-blue); }
-.logo-uploader img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.logo-uploader-overlay {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,.5);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity .15s; gap: 2px; z-index: 1;
-}
-.logo-uploader:hover .logo-uploader-overlay { opacity: 1; }
-.logo-uploader-overlay .lo-icon { font-size: 20px; }
-.logo-uploader-overlay .lo-lbl { font-size: 10px; color: #fff; font-weight: 700; letter-spacing: .3px; }
-.cust-info { flex: 1; min-width: 0; }
-.cust-name {
-  font-size: 16px; font-weight: 700;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.cust-date { font-size: 11px; color: var(--ms-muted); margin-top: 2px; }
-.cust-pct-badge {
-  font-size: 22px; font-weight: 800;
-  color: var(--ms-blue); align-self: center; flex-shrink: 0;
-}
+/* detail */
+.detail-hero { padding:24px 28px 20px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
+.detail-hero-row { display:flex;align-items:flex-start;justify-content:space-between;gap:16px; }
+.detail-hero-left { display:flex;align-items:flex-start;gap:16px; }
+.detail-big-logo { width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#0f0c29;flex-shrink:0; }
+.detail-name { font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--text); }
+.detail-sub  { font-size:13px;color:var(--muted);margin-top:3px; }
+.detail-hero-pill { display:inline-flex;padding:3px 12px;border-radius:99px;font-size:11px;font-weight:500;margin-top:8px; }
+.detail-hero-actions { display:flex;gap:8px; }
 
-/* Progress section */
-.cust-progress { padding: 0 18px 12px; }
-.cp-bar-bg { height: 8px; background: #e8e8e8; border-radius: 4px; overflow: hidden; }
-.cp-bar-fill {
-  height: 100%; border-radius: 4px;
-  background: linear-gradient(90deg, #7c3aed, #db2777);
-  transition: width .5s ease;
-}
-.cp-labels {
-  display: flex; justify-content: space-between;
-  font-size: 11px; color: var(--ms-muted); margin-top: 5px;
-}
+.detail-kpi-row { height:64px;flex-shrink:0;background:var(--glass);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center; }
+.detail-kpi { padding:0 26px; }
+.detail-kpi:first-child { padding-left:0; }
+.detail-kpi-num { font-size:20px;font-weight:700;letter-spacing:-.8px;line-height:1; }
+.detail-kpi-lbl { font-size:11px;color:var(--muted);margin-top:2px; }
 
-/* Status mini-pills */
-.cust-status-row {
-  display: flex; gap: 6px; padding: 0 18px 14px; flex-wrap: wrap;
-}
-.status-pill {
-  display: flex; align-items: center; gap: 4px;
-  border-radius: 12px; padding: 3px 9px;
-  font-size: 11px; font-weight: 600;
-}
+.detail-body { flex:1;overflow-y:auto;padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+.detail-panel { background:var(--surface);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:20px;transition:background .3s; }
+.detail-panel-label { font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px; }
+.detail-full { grid-column:1/-1; }
 
-/* Category mini-bars */
-.cust-cats { padding: 0 18px 6px; }
-.cat-mini-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 4px 0;
-  border-top: 1px solid #f3f2f1;
-}
-.cat-mini-row:first-child { border-top: none; }
-.cat-mini-icon { font-size: 13px; width: 18px; text-align: center; flex-shrink: 0; }
-.cat-mini-label { font-size: 11px; color: var(--ms-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cat-mini-bar { width: 60px; height: 5px; background: #e0e0e0; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
-.cat-mini-fill { height: 100%; background: var(--ms-blue); border-radius: 3px; }
-.cat-mini-pct { font-size: 10px; color: var(--ms-muted); width: 26px; text-align: right; flex-shrink: 0; }
+.bar-row { display:flex;flex-direction:column;gap:10px; }
+.bar-item { display:flex;align-items:center;gap:12px; }
+.bar-item-label { font-size:12px;color:var(--muted);width:90px;flex-shrink:0; }
+.bar-item-track { flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden; }
+.bar-item-fill { height:100%;border-radius:99px; }
+.bar-item-val { font-size:12px;font-weight:600;color:var(--text);width:36px;text-align:right;flex-shrink:0; }
 
-/* Card footer */
-.cust-card-footer {
-  margin-top: auto;
-  padding: 10px 18px;
-  background: #faf9f8;
-  border-top: 1px solid var(--ms-border);
-  display: flex; gap: 8px; justify-content: flex-end;
-}
+.info-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.info-item { background:var(--info-item-bg);border:1px solid var(--border2);border-radius:10px;padding:12px 14px; }
+.info-item-lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
+.info-item-val { font-size:14px;font-weight:600;color:var(--text); }
 
-/* Empty dashboard */
-.dash-empty {
-  grid-column: 1/-1;
-  text-align: center; padding: 80px 20px;
-  color: var(--ms-muted); background: #fff;
-  border-radius: var(--radius); border: 2px dashed var(--ms-border);
-}
-.dash-empty .de-icon { font-size: 56px; margin-bottom: 14px; }
-.dash-empty h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: var(--ms-text); }
-.dash-empty p { font-size: 14px; margin-bottom: 20px; }
+.items-list { display:flex;flex-direction:column;gap:8px; }
+.item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--item-row-bg);border:1px solid var(--border2);border-radius:10px; }
+.item-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+.item-title { flex:1;font-size:12px;color:var(--text); }
+.item-pill { font-size:10px;padding:2px 9px;border-radius:99px;font-weight:500; }
 
-/* ═══════════════════════════════════════
-   DETAIL VIEW
-═══════════════════════════════════════ */
-.detail-header {
-  display: flex; align-items: center; gap: 16px;
-  margin-bottom: 20px; flex-wrap: wrap;
+/* ─── RIGHT SIDECAR ─── */
+.right-sidecar {
+  flex-shrink:0;width:0;overflow:hidden;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border-left:1px solid transparent;
+  transition:width .25s cubic-bezier(.4,0,.2,1),border-color .25s,background .3s;
+  display:flex;flex-direction:column;
 }
-.detail-header h1 { font-size: 22px; font-weight: 700; flex: 1; }
-.detail-overall {
-  background: #fff; border: 1px solid var(--ms-border);
-  border-radius: var(--radius); padding: 14px 20px;
-  margin-bottom: 20px; box-shadow: var(--shadow);
-  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+.right-sidecar.open { width:280px;border-left-color:var(--border); }
+.sc-inner { width:280px;height:100%;display:flex;flex-direction:column;overflow:hidden; }
+.sc-header { padding:18px 20px 16px;border-bottom:1px solid var(--border2); }
+.sc-eyebrow { font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px; }
+.sc-company { display:flex;align-items:center;gap:12px;margin-bottom:14px; }
+.sc-logo { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#0f0c29;flex-shrink:0; }
+.sc-name { font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px; }
+.sc-industry { font-size:11px;color:var(--muted);margin-top:2px; }
+.sc-pill { display:inline-flex;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:500;margin-top:2px; }
+.sc-adoption { text-align:center;padding:14px 20px 10px; }
+.sc-adoption-num { font-size:52px;font-weight:800;letter-spacing:-3px;line-height:1;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+.sc-adoption-lbl { font-size:11px;color:var(--muted);margin-top:4px; }
+.sc-bar-track { height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:10px; }
+.sc-bar-fill { height:100%;border-radius:99px; }
+.sc-body { flex:1;padding:14px 20px;display:flex;flex-direction:column;gap:8px;overflow-y:auto; }
+.sc-metric { background:var(--sc-metric-bg);border:1px solid var(--border2);border-radius:11px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center; }
+.sc-metric-lbl { font-size:11px;color:var(--muted); }
+.sc-metric-val { font-size:13px;font-weight:600;color:var(--text); }
+.sc-footer { padding:14px 20px;border-top:1px solid var(--border2); }
+.sc-open-btn {
+  width:100%;padding:10px 0;border-radius:10px;
+  background:linear-gradient(135deg,rgba(103,232,249,.15),rgba(196,181,253,.15));
+  color:var(--cyan);border:1px solid rgba(103,232,249,.25);
+  font-size:13px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:background .15s;
 }
-.do-pct { font-size: 36px; font-weight: 800; color: var(--ms-blue); }
-.do-bar-wrap { flex: 1; min-width: 180px; }
-.do-bar-label { font-size: 12px; color: var(--ms-muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
-.do-bar-bg { height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden; }
-.do-bar-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 5px; transition: width .5s; }
-.do-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.sc-open-btn:hover { background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25)); }
+[data-theme="light"] .sc-open-btn {
+  background:linear-gradient(135deg,rgba(8,145,178,.10),rgba(109,40,217,.10));
+  color:var(--lavender);border-color:rgba(109,40,217,.2);
+}
+[data-theme="light"] .sc-open-btn:hover { background:linear-gradient(135deg,rgba(8,145,178,.18),rgba(109,40,217,.18)); }
 
-/* Legend */
-.legend {
-  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center;
-}
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ms-muted); }
-.legend-dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+/* scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:var(--border);border-radius:99px; }
 
-/* Categories grid */
-.categories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
-}
-
-/* Category card */
-.category-card {
-  background: #fff; border: 1px solid var(--ms-border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  display: flex; flex-direction: column;
-}
-.category-header {
-  padding: 13px 16px 9px;
-  display: flex; align-items: center; gap: 10px;
-  border-bottom: 2px solid var(--ms-blue);
-}
-.category-icon { font-size: 20px; }
-.category-title { font-size: 14px; font-weight: 700; flex: 1; }
-.category-count {
-  font-size: 11px; background: var(--ms-light);
-  border-radius: 10px; padding: 2px 8px; color: var(--ms-muted);
-}
-.cat-prog-wrap { padding: 7px 14px 10px; }
-.cat-prog-bg { height: 5px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
-.cat-prog-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 3px; transition: width .4s; }
-.cat-prog-lbl { font-size: 10px; color: var(--ms-muted); margin-top: 3px; }
-.category-body { padding: 6px 12px; flex: 1; }
-.cat-header-actions { display: none; gap: 2px; margin-left: 2px; }
-.category-header:hover .cat-header-actions { display: flex; }
-.category-title[contenteditable="true"] { outline: 2px solid var(--ms-blue); border-radius: 3px; padding: 1px 4px; background: #fff; color: var(--ms-text); }
-.hbtn.fs-on { background: rgba(16,124,16,.25); border-color: rgba(16,124,16,.5); }
-.add-section-wrap { margin-top: 18px; text-align: center; }
-.add-section-card {
-  border: 2px dashed var(--ms-border) !important;
-  cursor: pointer; transition: border-color .15s, background .15s;
-  background: #fafafa;
-}
-.add-section-card:hover { border-color: var(--ms-blue) !important; background: var(--ms-blue-light); color: var(--ms-blue); }
-
-/* Item row */
-.item-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 4px; border-radius: 5px; transition: background .12s;
-}
-.item-row:hover { background: var(--ms-light); }
-.status-btn {
-  width: 26px; height: 26px; border-radius: 50%; border: none;
-  cursor: pointer; font-size: 13px;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform .1s; flex-shrink: 0;
-}
-.status-btn:hover { transform: scale(1.2); }
-.status-btn[data-status="done"]    { background: var(--done-bg);    color: var(--done); }
-.status-btn[data-status="missed"]  { background: var(--miss-bg);    color: var(--miss); }
-.status-btn[data-status="blocked"] { background: var(--block-bg);   color: var(--block); }
-.status-btn[data-status="unblock"] { background: var(--unblock-bg); color: var(--unblock); }
-.status-btn[data-status="pending"] { background: var(--pending-bg); color: var(--pending); }
-
-.item-label { flex: 1; font-size: 13px; line-height: 1.35; }
-.item-label.done-text { text-decoration: line-through; color: var(--ms-muted); }
-.item-label[contenteditable="true"] {
-  outline: 1px solid var(--ms-blue); border-radius: 3px;
-  padding: 1px 4px; background: #fff;
-}
-.item-actions { display: none; gap: 3px; }
-.item-row:hover .item-actions { display: flex; }
-.icon-btn {
-  width: 22px; height: 22px; border: none; background: none;
-  cursor: pointer; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: var(--ms-muted);
-}
-.icon-btn:hover { background: var(--ms-border); color: var(--ms-text); }
-
-/* Add item */
-.add-item-row { display: flex; gap: 6px; padding: 6px 12px 12px; }
-.add-item-row input {
-  flex: 1; padding: 5px 10px;
-  border: 1px solid var(--ms-border); border-radius: 6px;
-  font-size: 13px; font-family: inherit;
-}
-.add-item-row input:focus { outline: 2px solid var(--ms-blue); }
-.empty { color: var(--ms-muted); font-size: 13px; padding: 8px 4px; font-style: italic; }
-
-/* ── Shared Buttons ── */
-.btn {
-  padding: 7px 16px; border-radius: var(--radius);
-  border: 1px solid var(--ms-border); background: #fff;
-  font-size: 13px; font-family: inherit; cursor: pointer;
-  transition: background .15s, border-color .15s; white-space: nowrap;
-}
-.btn:hover { background: var(--ms-light); }
-.btn-blue { background: var(--ms-blue); color: #fff; border-color: var(--ms-blue); }
-.btn-blue:hover { background: var(--ms-blue-dark); border-color: var(--ms-blue-dark); }
-.btn-danger { color: var(--miss); border-color: #f0a0a5; }
-.btn-danger:hover { background: var(--miss-bg); border-color: var(--miss); }
-.btn-sm { padding: 4px 12px; font-size: 12px; }
-
-/* ── Modal ── */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.45);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1000; padding: 20px; overflow-y: auto;
-}
-.modal-overlay.hidden { display: none; }
-.modal {
-  background: #fff; border-radius: var(--radius); padding: 28px;
-  width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.25);
-}
-.modal-wide { max-width: 620px; }
-.modal h2 { font-size: 18px; margin-bottom: 20px; }
-.modal label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px; color: var(--ms-muted); text-transform: uppercase; letter-spacing: .4px; }
-.modal input, .modal select {
-  width: 100%; padding: 8px 12px;
-  border: 1px solid var(--ms-border); border-radius: var(--radius);
-  font-size: 14px; font-family: inherit; margin-bottom: 0;
-  background: #fff;
-}
-.modal input:focus, .modal select:focus { outline: 2px solid var(--ms-blue); }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
-
-/* 2-column form grid */
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 18px;
-}
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-group.full { grid-column: 1 / -1; }
-.form-section-label {
-  grid-column: 1 / -1;
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .6px; color: var(--ms-blue);
-  padding-bottom: 4px; border-bottom: 1px solid var(--ms-border);
-  margin-top: 6px;
-}
-
-/* ── Customer meta display ── */
-.cust-meta {
-  padding: 0 18px 12px;
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 4px 12px;
-}
-.meta-item {
-  font-size: 11px; color: var(--ms-muted);
-  display: flex; align-items: center; gap: 4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.meta-item strong { color: var(--ms-text); font-weight: 600; }
-
-/* Detail meta panel */
-.detail-meta {
-  background: #fff; border: 1px solid var(--ms-border);
-  border-radius: var(--radius); padding: 14px 20px;
-  margin-bottom: 16px; box-shadow: var(--shadow);
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px 24px;
-}
-.dm-item { display: flex; flex-direction: column; gap: 1px; }
-.dm-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--ms-muted); font-weight: 600; }
-.dm-value { font-size: 13px; font-weight: 600; color: var(--ms-text); }
-
-/* ── Pillars Management Panel ── */
-.pillars-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.5);
-  display: flex; align-items: flex-start; justify-content: center;
-  z-index: 2000; padding: 30px 20px; overflow-y: auto;
-}
-.pillars-overlay.hidden { display: none; }
-.pillars-sheet {
-  background: #fff; width: 100%; max-width: 680px;
-  border-radius: var(--radius); box-shadow: 0 12px 48px rgba(0,0,0,.3);
-  overflow: hidden; margin: auto;
-}
-.pillars-toolbar {
-  background: var(--ms-blue); color: #fff;
-  padding: 12px 20px; display: flex; align-items: center; gap: 10px;
-}
-.pillars-toolbar h3 { flex: 1; font-size: 15px; font-weight: 700; }
-.pillars-toolbar p { font-size: 11px; opacity: .8; }
-.pillars-body { padding: 20px; }
-.pillars-note {
-  font-size: 12px; color: var(--ms-muted); background: #fffbe6;
-  border: 1px solid #ffe58f; border-radius: 6px; padding: 8px 12px;
-  margin-bottom: 16px;
-}
-
-/* Pillar template card */
-.pillar-tmpl {
-  border: 1px solid var(--ms-border); border-radius: var(--radius);
-  margin-bottom: 10px; overflow: hidden;
-}
-.pillar-tmpl-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px; background: #faf9f8;
-  cursor: pointer; user-select: none;
-}
-.pillar-tmpl-header:hover { background: var(--ms-light); }
-.pt-icon { font-size: 18px; flex-shrink: 0; }
-.pt-name {
-  flex: 1; font-size: 14px; font-weight: 600;
-  border: none; background: transparent; font-family: inherit;
-  cursor: text; outline: none; padding: 2px 4px; border-radius: 4px;
-}
-.pt-name:focus { background: #fff; outline: 2px solid var(--ms-blue); }
-.pt-count { font-size: 11px; color: var(--ms-muted); }
-.pt-chevron { font-size: 12px; color: var(--ms-muted); transition: transform .2s; }
-.pt-chevron.open { transform: rotate(180deg); }
-.pillar-tmpl-items { display: none; padding: 8px 14px 12px; border-top: 1px solid var(--ms-border); }
-.pillar-tmpl-items.open { display: block; }
-.tmpl-item-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 4px 0; border-bottom: 1px solid #f0f0f0;
-  font-size: 13px;
-}
-.tmpl-item-row:last-child { border-bottom: none; }
-.tmpl-item-label { flex: 1; }
-.tmpl-add-row { display: flex; gap: 6px; margin-top: 10px; }
-.tmpl-add-row input {
-  flex: 1; padding: 5px 10px; border: 1px solid var(--ms-border);
-  border-radius: 6px; font-size: 13px; font-family: inherit;
-}
-.tmpl-add-row input:focus { outline: 2px solid var(--ms-blue); }
-
-/* Add new pillar form */
-.add-pillar-section {
-  border: 2px dashed var(--ms-border); border-radius: var(--radius);
-  padding: 14px 16px; margin-top: 16px;
-}
-.add-pillar-section h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--ms-muted); }
-.add-pillar-row { display: flex; gap: 8px; align-items: center; }
-.add-pillar-row select {
-  padding: 7px 10px; border: 1px solid var(--ms-border); border-radius: var(--radius);
-  font-size: 18px; font-family: inherit; background: #fff; cursor: pointer; width: 64px;
-}
-.add-pillar-row input {
-  flex: 1; padding: 7px 12px; border: 1px solid var(--ms-border);
-  border-radius: var(--radius); font-size: 14px; font-family: inherit;
-}
-.add-pillar-row input:focus, .add-pillar-row select:focus { outline: 2px solid var(--ms-blue); }
-
-/* ── Report Modal ── */
-.report-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.55);
-  display: flex; align-items: flex-start; justify-content: center;
-  z-index: 2000; padding: 30px 20px; overflow-y: auto;
-}
-.report-overlay.hidden { display: none; }
-.report-sheet {
-  background: #fff; width: 100%; max-width: 800px;
-  border-radius: var(--radius); box-shadow: 0 12px 48px rgba(0,0,0,.3);
-  overflow: hidden;
-}
-.report-toolbar {
-  background: var(--ms-blue); color: #fff;
-  padding: 10px 18px; display: flex; align-items: center; gap: 10px;
-}
-.report-toolbar h3 { flex: 1; font-size: 14px; }
-#report-content {
-  padding: 32px 36px; font-size: 12px; color: #111;
-  font-family: 'Segoe UI', sans-serif;
-}
-.report-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid var(--ms-blue);
-}
-.report-title-block h1 { font-size: 22px; color: var(--ms-blue); margin-bottom: 3px; }
-.report-title-block p { font-size: 12px; color: #666; }
-.report-meta { font-size: 11px; color: #666; text-align: right; line-height: 1.6; }
-.report-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 14px; }
-.report-category { border: 1px solid #d0d0d0; border-radius: 6px; overflow: hidden; }
-.report-cat-header {
-  background: var(--ms-blue); color: #fff; padding: 7px 12px;
-  font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;
-}
-.report-items { padding: 6px 10px; }
-.report-item { display: flex; align-items: center; gap: 7px; padding: 3px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; }
-.report-item:last-child { border-bottom: none; }
-.ri-dot { width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
-.report-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
-.summary-card { border-radius: 6px; padding: 10px 12px; text-align: center; }
-.summary-card .sc-num { font-size: 24px; font-weight: 700; }
-.summary-card .sc-label { font-size: 10px; margin-top: 2px; }
-.report-footer { border-top: 1px solid #ddd; padding-top: 10px; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
-.overall-progress { margin-bottom: 14px; background: #f5f5f5; border-radius: 6px; padding: 10px 14px; }
-.overall-progress .op-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; }
-.op-bar { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
-.op-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 4px; }
-
-/* ── Print ── */
-@media print {
-  body * { visibility: hidden; }
-  #report-content, #report-content * { visibility: visible; }
-  #report-content { position: fixed; inset: 0; padding: 24px 28px; font-size: 11px; }
-  .report-grid { gap: 10px; }
-}
-
-/* ── Responsive ── */
-@media (max-width: 700px) {
-  .dash-summary { grid-template-columns: repeat(2,1fr); }
-  .categories-grid { grid-template-columns: 1fr; }
-  .report-grid { grid-template-columns: 1fr; }
-  .report-summary { grid-template-columns: repeat(2,1fr); }
-  .customers-grid { grid-template-columns: 1fr; }
-}
-
-/* ── Hamburger button (hidden on desktop) ── */
-.nav-hamburger {
-  display: none;
-  background: rgba(255,255,255,.15);
-  border: 1px solid rgba(255,255,255,.3);
-  color: #fff; font-size: 20px; line-height: 1;
-  width: 38px; height: 38px;
-  border-radius: var(--radius); cursor: pointer;
-  align-items: center; justify-content: center;
-  margin-left: auto; flex-shrink: 0;
-}
-
-/* ── Mobile layout (≤640px) ── */
-@media (max-width: 640px) {
-  /* Header */
-  header {
-    padding: 8px 14px;
-    height: auto; min-height: 52px;
-    flex-wrap: wrap; gap: 0;
-  }
-  .logo { font-size: 15px; gap: 6px; }
-  .logo sub { display: none; }
-  .breadcrumb {
-    font-size: 11px;
-    max-width: calc(100vw - 160px);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .nav-hamburger { display: flex; }
-  header nav {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    margin-left: 0; margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,.15);
-    gap: 4px;
-  }
-  header nav.open { display: flex; }
-  .hbtn-sep { display: none; }
-  .hbtn { padding: 10px 14px; font-size: 14px; text-align: left; width: 100%; }
-
-  /* App */
-  .app { padding: 14px 12px; }
-  .dash-header h1 { font-size: 18px; }
-  .dash-header p { font-size: 13px; }
-  .ds-card { padding: 12px 14px; }
-  .ds-card .ds-num { font-size: 22px; }
-
-  /* Detail overall panel */
-  .detail-overall { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
-  .do-pct { font-size: 28px; }
-  .do-bar-wrap { min-width: 100%; order: 2; }
-  .do-pills { width: 100%; order: 3; }
-  .detail-overall .btn { order: 4; }
-
-  /* Form grid collapses to 1 column */
-  .form-grid { grid-template-columns: 1fr; }
-  .form-group.full { grid-column: 1; }
-
-  /* Modals */
-  .modal-overlay { padding: 10px; align-items: flex-start; padding-top: 16px; }
-  .modal { padding: 18px 14px; }
-  .modal h2 { font-size: 16px; margin-bottom: 14px; }
-  .modal-actions { flex-wrap: wrap; }
-  .modal-actions .btn { flex: 1; text-align: center; }
-
-  /* Legend */
-  .legend { gap: 6px 10px; font-size: 11px; }
-  .legend > span:last-child { display: none; }
-
-  /* Item rows: always show actions (no hover on touch) */
-  .item-actions { display: flex !important; }
-  .cat-header-actions { display: flex !important; }
-  .icon-btn { width: 28px; height: 28px; font-size: 13px; }
-  .status-btn { width: 30px; height: 30px; font-size: 14px; }
-  .item-label { font-size: 12px; }
-
-  /* Pillars / Report overlays */
-  .pillars-overlay { padding: 0; align-items: flex-start; }
-  .pillars-sheet { border-radius: 0; max-width: 100%; min-height: 100dvh; }
-  .pillars-body { padding: 14px 12px; }
-  .report-overlay { padding: 0; align-items: flex-start; }
-  .report-sheet { border-radius: 0; max-width: 100%; min-height: 100dvh; }
-  #report-content { padding: 16px 12px; }
-  .report-header { flex-direction: column; gap: 8px; }
-  .report-meta { text-align: left; }
-  .report-summary { grid-template-columns: repeat(2,1fr); }
-
-  /* Card footer */
-  .cust-card-footer { flex-wrap: wrap; gap: 6px; }
-  .cust-card-footer .btn { flex: 1; text-align: center; }
-
-  /* Cloud Sync modal tabs */
-  .od-tabs { flex-wrap: wrap; }
-  .od-tab { flex: none; min-width: 50%; }
-
-  /* Toast: wider on mobile */
-  .toast { width: calc(100% - 28px); text-align: center; left: 14px; transform: none; }
-}
-
-/* view toggle */
-.view { display: none; }
-.view.active { display: block; }
-
-/* ── OneDrive tabs ── */
-.od-tabs { display: flex; gap: 0; border: 1px solid var(--ms-border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
-.od-tab { flex: 1; padding: 8px 8px; background: #faf9f8; border: none; border-right: 1px solid var(--ms-border); cursor: pointer; font-size: 12px; font-family: inherit; color: var(--ms-muted); text-align: center; }
-.od-tab:last-child { border-right: none; }
-.od-tab.active { background: var(--ms-blue); color: #fff; font-weight: 600; }
-.od-tab:hover:not(.active) { background: var(--ms-light); }
-.od-info-box { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #5c4b00; margin-bottom: 14px; line-height: 1.6; }
-.od-help-box { background: #f0f6ff; border: 1px solid #cce0ff; border-radius: 6px; padding: 12px; font-size: 12px; line-height: 1.6; margin-top: 12px; }
-.od-connected-box { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--done-bg); border-radius: 6px; margin-bottom: 14px; }
-.hbtn.od-on { background: rgba(16,124,16,.25); border-color: rgba(16,124,16,.5); }
-
-/* ── Drag & Drop ── */
-.drag-handle {
-  cursor: grab; color: var(--ms-border); font-size: 13px;
-  flex-shrink: 0; padding: 0 2px; user-select: none; line-height: 1;
-}
-.drag-handle:active { cursor: grabbing; }
-.item-row[draggable="true"].dragging { opacity: .35; }
-.category-body.drag-over {
-  background: var(--ms-blue-light);
-  border-radius: 6px;
-  outline: 2px dashed var(--ms-blue);
-  outline-offset: -2px;
-}
-.drag-placeholder {
-  height: 28px; border-radius: 5px;
-  background: var(--ms-blue-light);
-  border: 2px dashed var(--ms-blue);
-  margin: 2px 0;
-}
-
-/* ── Customer card drag-and-drop ── */
-.card-drag-handle {
-  cursor: grab; color: var(--ms-muted); font-size: 15px;
-  flex-shrink: 0; line-height: 1; user-select: none; padding: 2px 4px;
-}
-.card-drag-handle:active { cursor: grabbing; }
-.cust-card.dragging { opacity: 0.4; transform: none !important; box-shadow: none !important; }
-.cust-card.card-drag-over {
-  outline: 2px dashed var(--ms-blue); outline-offset: -3px;
-  background: var(--ms-blue-light);
-}
-body.read-only .card-drag-handle { display: none !important; }
-
-/* ── Read-only mode ── */
-.ro-badge {
-  display: none;
-  background: rgba(245,158,11,.2); border: 1px solid rgba(245,158,11,.5);
-  color: #fcd34d; padding: 4px 10px; border-radius: var(--radius);
-  font-size: 12px; font-weight: 600; white-space: nowrap;
-}
-body.read-only .ro-badge { display: inline-flex; align-items: center; gap: 5px; }
-body.read-only .item-actions         { display: none !important; }
-body.read-only .cat-header-actions   { display: none !important; }
-body.read-only .add-item-row         { display: none !important; }
-body.read-only #add-section-wrap     { display: none !important; }
-body.read-only .drag-handle          { display: none !important; }
-body.read-only .detail-overall .btn  { display: none !important; }
-body.read-only .status-btn           { pointer-events: none; opacity: .75; cursor: default; }
-body.read-only #pillars-btn          { display: none !important; }
-body.read-only #add-customer-btn     { display: none !important; }
-body.read-only #fs-btn               { display: none !important; }
-body.read-only #od-btn               { display: none !important; }
-body.read-only #import-btn           { display: none !important; }
-body.read-only .hbtn-sep             { display: none !important; }
-
-/* ── AI Chat Panel ── */
-.ai-fab {
-  position: fixed; bottom: 24px; right: 24px; z-index: 900;
-  width: 54px; height: 54px; border-radius: 50%;
-  background: none;
-  border: 3px solid #7c3aed; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(124,58,237,.45);
-  overflow: hidden; padding: 0;
-  transition: transform .2s, box-shadow .2s;
-}
-.ai-fab img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: 50% 18%;
-  display: block;
-}
-.ai-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(124,58,237,.55); }
-
-.ai-panel {
-  position: fixed; right: 0; top: 0; bottom: 0; z-index: 800;
-  width: 380px; max-width: 100vw;
-  background: #fff; border-left: 1px solid var(--ms-border);
-  box-shadow: -4px 0 28px rgba(0,0,0,.14);
-  display: flex; flex-direction: column;
-  transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
-}
-.ai-panel.open { transform: translateX(0); }
-
-.ai-panel-header {
-  display: flex; align-items: center; gap: 10px; padding: 13px 16px;
-  background: linear-gradient(135deg, #4c1d95, #7c3aed); color: #fff; flex-shrink: 0;
-}
-.ai-panel-title { flex: 1; font-weight: 700; font-size: 14px; }
-.ai-panel-close { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 2px 7px; border-radius: 4px; line-height: 1; }
-.ai-panel-close:hover { background: rgba(255,255,255,.18); }
-
-
-.ai-messages { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
-.ai-msg { max-width: 90%; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.55; word-break: break-word; }
-.ai-msg.user { align-self: flex-end; background: var(--ms-blue); color: #fff; border-bottom-right-radius: 3px; }
-.ai-msg.assistant { align-self: flex-start; background: var(--ms-light); color: var(--ms-text); border-bottom-left-radius: 3px; }
-.ai-msg code { background: rgba(0,0,0,.1); padding: 1px 5px; border-radius: 3px; font-size: 11px; font-family: 'Courier New', monospace; }
-.ai-msg strong { font-weight: 700; }
-.ai-msg ul { padding-left: 16px; margin-top: 4px; }
-.ai-msg li { margin-bottom: 2px; }
-
-.ai-input-area { border-top: 1px solid var(--ms-border); padding: 11px 14px; flex-shrink: 0; }
-.ai-input-row { display: flex; gap: 8px; align-items: flex-end; }
-.ai-input-row textarea { flex: 1; padding: 8px 10px; border: 1px solid var(--ms-border); border-radius: var(--radius); font-size: 13px; font-family: inherit; resize: none; line-height: 1.4; max-height: 120px; min-height: 36px; }
-.ai-input-row textarea:focus { outline: none; border-color: var(--ms-blue); }
-.ai-send-btn { padding: 0 14px; background: var(--ms-blue); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-size: 13px; flex-shrink: 0; height: 36px; }
-.ai-send-btn:disabled { opacity: .45; cursor: not-allowed; }
-.ai-footer-note { font-size: 10px; color: var(--ms-muted); margin-top: 7px; text-align: center; }
-.ai-clear-btn { background: none; border: none; color: var(--ms-muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
-.ai-clear-btn:hover { color: var(--miss); }
-
+/* light-mode pill overrides for status (blocked/open/etc) */
+[data-theme="light"] .pill-blocked    { background:rgba(190,24,93,.10)!important;color:#be185d!important;border:1px solid rgba(190,24,93,.2)!important; }
+[data-theme="light"] .pill-open       { background:rgba(0,0,0,.06)!important;color:#5a5a7a!important;border:1px solid rgba(0,0,0,.1)!important; }
+[data-theme="light"] .pill-in-review  { background:rgba(109,40,217,.10)!important;color:#6d28d9!important;border:1px solid rgba(109,40,217,.2)!important; }
+[data-theme="light"] .pill-in-progress{ background:rgba(8,145,178,.10)!important;color:#0891b2!important;border:1px solid rgba(8,145,178,.2)!important; }
+[data-theme="light"] .pill-done       { background:rgba(5,150,105,.10)!important;color:#059669!important;border:1px solid rgba(5,150,105,.2)!important; }
 </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
 
+<div class="shell">
 
-<!-- ═══════════════════════════ LOCK SCREEN ═══════════════════════════ -->
-<div id="lock-screen">
-  <div class="lock-box">
-    <div class="lock-logo">
-      <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0078d4"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-      Copilot Adoption Tracker
+  <!-- ══════ SIDEBAR ══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name">Copilot Tracker</div>
+      <div class="sidebar-brand-tag">GitHub Copilot Dashboard</div>
     </div>
-    <div class="lock-tagline">by Tovik</div>
-    <div class="lock-icon">🔒</div>
-    <h2>Protected Access</h2>
-    <p>Enter your password to continue.</p>
-    <div class="lock-input-wrap">
-      <input type="password" id="lock-input" maxlength="20" placeholder="••••"
-             onkeydown="if(event.key==='Enter') checkPassword()" autocomplete="off" />
-      <button class="lock-toggle" onclick="toggleLockVisibility()" title="Show/hide">👁</button>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <a class="nav-item active" href="#"><span class="nav-icon">◈</span> Dashboard</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◎</span> Customers</a>
+      <a class="nav-item" href="#"><span class="nav-icon">⬡</span> Adoption</a>
     </div>
-    <div class="lock-error" id="lock-error"></div>
-    <button class="lock-btn" onclick="checkPassword()">Unlock →</button>
-    <div class="lock-footer">Access is restricted to authorized users only.</div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Manage</div>
+      <a class="nav-item" href="#"><span class="nav-icon">◷</span> Backlog<span class="nav-badge">5</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">◈</span> Milestones</a>
+      <a class="nav-item" href="#"><span class="nav-icon">⊞</span> Reports</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">System</div>
+      <a class="nav-item" href="#"><span class="nav-icon">⚙</span> Settings</a>
+      <a class="nav-item" href="#"><span class="nav-icon">⊕</span> Integrations</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar">AM</div>
+        <div><div class="user-name">Admin</div><div class="user-role">CSM Lead</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════ MAIN WRAPPER ══════ -->
+  <div class="main-wrapper">
+
+    <main class="main">
+
+      <!-- TOPBAR — list -->
+      <div class="topbar" id="tb-list">
+        <div><div class="topbar-title">Dashboard</div><div class="topbar-subtitle">All customers · March 2026</div></div>
+        <div class="topbar-actions">
+          <button class="theme-toggle" id="toggle-btn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
+          <button class="topbar-btn topbar-btn-ghost">⊞ Filter</button>
+          <button class="topbar-btn topbar-btn-primary">+ Add Customer</button>
+        </div>
+      </div>
+
+      <!-- TOPBAR — detail -->
+      <div class="topbar" id="tb-detail" hidden>
+        <div class="topbar-left">
+          <button class="topbar-btn topbar-btn-ghost" onclick="goBack()">← Back</button>
+          <div><div class="topbar-title" id="tb-detail-title">Customer</div><div class="topbar-subtitle">Customer Detail</div></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">🌙</button>
+          <button class="topbar-btn topbar-btn-ghost">⊞ Edit</button>
+          <button class="topbar-btn topbar-btn-primary">Schedule Meeting</button>
+        </div>
+      </div>
+
+      <!-- KPI ROW -->
+      <div class="kpi-row" id="kpi-row">
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-c);">3</div><div class="kpi-label">Customers</div></div></div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-m);">37%</div><div class="kpi-label">Avg Adoption</div></div></div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-l);">136</div><div class="kpi-label">Total Items</div></div></div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-p);">5</div><div class="kpi-label">Blocked</div></div></div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:#d97706;">89%</div><div class="kpi-label">Satisfaction</div></div></div>
+      </div>
+
+      <!-- LIST VIEW -->
+      <div class="view" id="view-list">
+        <div class="section-label">At a Glance</div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-num" style="color:var(--cyan);">3</div><div class="stat-lbl">Active Customers</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--mint);">37%</div><div class="stat-lbl">Avg Adoption</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--lavender);">136</div><div class="stat-lbl">Open Items</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--pink);">5</div><div class="stat-lbl">Blockers</div></div>
+        </div>
+        <div class="section-label">Customers</div>
+        <div class="customer-list" id="cust-list"></div>
+      </div>
+
+      <!-- DETAIL VIEW -->
+      <div id="view-detail" hidden style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div class="detail-hero" id="d-hero"></div>
+        <div class="detail-kpi-row" id="d-kpi"></div>
+        <div class="detail-body" id="d-body"></div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT SIDECAR -->
+    <div class="right-sidecar" id="sidecar">
+      <div class="sc-inner">
+        <div class="sc-header"  id="sc-header"></div>
+        <div id="sc-adoption" style="padding:14px 20px 10px;text-align:center;"></div>
+        <div class="sc-body"   id="sc-body"></div>
+        <div class="sc-footer">
+          <button class="sc-open-btn" id="sc-open-btn">Open Details →</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
-<header>
-  <div class="logo" onclick="goHome()">
-    <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="white" fill-opacity=".15"/><path d="M7 16a9 9 0 1 1 18 0A9 9 0 0 1 7 16z" stroke="white" stroke-width="2"/><path d="M16 10v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-    Copilot Adoption Tracker
-    <sub>by Tovik</sub>
-  </div>
-  <div class="breadcrumb" id="breadcrumb" style="display:none">
-    <span class="sep">›</span>
-    <span class="crumb-link" onclick="goHome()">All Customers</span>
-    <span class="sep">›</span>
-    <span id="crumb-name"></span>
-  </div>
-  <span class="ro-badge">👁 View Only</span>
-  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">☰</button>
-  <nav id="main-nav">
-<button class="hbtn" id="pillars-btn" onclick="openPillars();closeNav()">⚙️ Pillars</button>
-    <button class="hbtn" id="add-customer-btn" onclick="openAddCustomer();closeNav()">+ Add Customer</button>
-    <button class="hbtn primary" id="report-btn" onclick="openReport();closeNav()" disabled>📄 Report</button>
-    <div class="hbtn-sep"></div>
-    <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile();closeNav()">📁 Connect File</button>
-    <button class="hbtn" id="od-btn" title="Save and load via OneDrive, GitHub Gist, or URL" onclick="openOneDriveModal();closeNav()">☁️ Cloud Sync</button>
-    <div class="hbtn-sep"></div>
-    <button class="hbtn" title="Export all data to a JSON file" onclick="exportData();closeNav()">💾 Export</button>
-    <button class="hbtn" id="import-btn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click();closeNav()">📥 Import</button>
-    <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(this)" />
-  </nav>
-</header>
-
-<!-- ═══════════════════════════ APP ═══════════════════════════ -->
-<div class="app">
-
-  <!-- ── DASHBOARD VIEW ── -->
-  <div id="view-dashboard" class="view active">
-    <div class="dash-header">
-      <div>
-        <h1>Customer Dashboard</h1>
-        <p id="dash-subtitle">Track Copilot adoption progress across all customers.</p>
-      </div>
-    </div>
-
-    <!-- Summary strip -->
-    <div class="dash-summary" id="dash-summary">
-      <div class="ds-card accent"><div class="ds-num" id="ds-total">0</div><div class="ds-lbl">Customers</div></div>
-      <div class="ds-card green"><div class="ds-num" id="ds-avg">0%</div><div class="ds-lbl">Avg. Adoption</div></div>
-      <div class="ds-card red"><div class="ds-num" id="ds-items">0</div><div class="ds-lbl">Total Items</div></div>
-      <div class="ds-card orange"><div class="ds-num" id="ds-blocked">0</div><div class="ds-lbl">Blocked Items</div></div>
-    </div>
-
-    <!-- Customer cards -->
-    <div class="customers-grid" id="customers-grid">
-      <!-- filled by JS -->
-    </div>
-  </div>
-
-  <!-- ── DETAIL VIEW ── -->
-  <div id="view-detail" class="view">
-
-    <!-- Overall progress bar -->
-    <div class="detail-overall" id="detail-overall">
-      <div class="do-pct" id="do-pct">0%</div>
-      <div class="do-bar-wrap">
-        <div class="do-bar-label">
-          <span>Overall Adoption Progress</span>
-          <span id="do-counts"></span>
-        </div>
-        <div class="do-bar-bg"><div class="do-bar-fill" id="do-bar" style="width:0%"></div></div>
-      </div>
-      <div class="do-pills" id="do-pills"></div>
-      <button class="btn btn-sm" onclick="openEditCustomer()" style="white-space:nowrap">✏️ Edit Info</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteCustomer()">🗑 Delete</button>
-    </div>
-
-    <!-- Customer meta panel -->
-    <div class="detail-meta" id="detail-meta"></div>
-
-    <!-- Legend -->
-    <div class="legend">
-      <span style="font-size:12px;font-weight:600;color:var(--ms-muted)">Status:</span>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--done-bg);color:var(--done)">✓</div> Done / Will Happen</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--miss-bg);color:var(--miss)">✗</div> Didn't Happen</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--block-bg);color:var(--block)">⊘</div> Blocked</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--unblock-bg);color:var(--unblock)">↻</div> Unblocking</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--pending-bg);color:var(--pending)">○</div> Not Started</div>
-      <span style="font-size:11px;color:var(--ms-muted);margin-left:auto">Click status to cycle • Hover to edit/delete</span>
-    </div>
-
-    <!-- Categories -->
-    <div class="categories-grid" id="categories-grid"></div>
-    <div class="add-section-wrap" id="add-section-wrap" style="display:none">
-      <button class="btn btn-blue" onclick="openAddSection()">➕ Add Section</button>
-    </div>
-  </div>
-
-</div>
-
-<!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
-<div class="modal-overlay hidden" id="customer-modal">
-  <div class="modal modal-wide">
-    <h2 id="customer-modal-title">➕ Add Customer</h2>
-    <div class="form-grid">
-
-      <!-- Logo uploader -->
-      <div class="form-group full" style="align-items:center;text-align:center">
-        <div class="logo-uploader" id="cf-logo-preview" onclick="document.getElementById('cf-logo-input').click()" title="Click to upload logo">
-          <span id="cf-logo-initials">?</span>
-          <div class="logo-uploader-overlay"><div class="lo-icon">📷</div><div class="lo-lbl">Change</div></div>
-        </div>
-        <input type="file" id="cf-logo-input" accept="image/*" style="display:none" onchange="handleLogoUpload(this)" />
-        <div style="font-size:11px;color:var(--ms-muted);margin-top:4px">
-          Click avatar to upload logo
-          <button type="button" id="cf-logo-remove" onclick="removeLogo()" style="display:none;margin-left:8px;background:none;border:none;cursor:pointer;color:var(--miss);font-size:11px;text-decoration:underline">Remove</button>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;max-width:360px">
-          <input type="url" id="cf-logo-url" placeholder="Or paste image URL (e.g. OneDrive link)…"
-                 style="flex:1;padding:5px 10px;border:1px solid var(--ms-border);border-radius:6px;font-size:12px;font-family:inherit"
-                 oninput="handleLogoUrlInput(this.value)" />
-        </div>
-      </div>
-
-      <!-- Customer name -->
-      <div class="form-group full">
-        <label>Customer Name *</label>
-        <input type="text" id="cf-name" placeholder="e.g. Contoso Ltd." maxlength="80"
-               oninput="updateLogoInitials(this.value)" />
-      </div>
-
-      <div class="form-section-label">Account Details</div>
-
-      <div class="form-group">
-        <label># of Users</label>
-        <input type="number" id="cf-users" min="0" placeholder="e.g. 500" />
-      </div>
-      <div class="form-group">
-        <label># of Copilot 365 Users</label>
-        <input type="number" id="cf-copilot-users" min="0" placeholder="e.g. 100" />
-      </div>
-      <div class="form-group">
-        <label>Date of Renewal</label>
-        <input type="date" id="cf-renewal" />
-      </div>
-      <div class="form-group">
-        <label>AOP Due Date</label>
-        <input type="date" id="cf-aop" />
-      </div>
-
-      <div class="form-section-label">Usage</div>
-
-      <div class="form-group full">
-        <label>365 Core Usage</label>
-        <select id="cf-core-usage" style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--ms-bg)">
-          <option value="">— Not set —</option>
-          <option value="good">Good</option>
-          <option value="partial">Partial</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
-
-      <div class="form-section-label">Team</div>
-
-      <div class="form-group">
-        <label>AE Name</label>
-        <input type="text" id="cf-ae" placeholder="Account Executive" maxlength="60" />
-      </div>
-      <div class="form-group">
-        <label>ATS Name</label>
-        <input type="text" id="cf-ats" placeholder="ATS" maxlength="60" />
-      </div>
-      <div class="form-group">
-        <label>CSAM Name</label>
-        <input type="text" id="cf-csam" placeholder="Customer Success" maxlength="60" />
-      </div>
-      <div class="form-group">
-        <label>SE Name</label>
-        <input type="text" id="cf-se" placeholder="Solution Engineer" maxlength="60" />
-      </div>
-
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('customer-modal')">Cancel</button>
-      <button class="btn btn-blue" id="customer-modal-btn" onclick="confirmSaveCustomer()">Add Customer</button>
-    </div>
-  </div>
-</div>
-
-<div class="pillars-overlay hidden" id="pillars-modal">
-  <div class="pillars-sheet">
-    <div class="pillars-toolbar">
-      <div>
-        <h3>⚙️ Manage Pillars</h3>
-        <p>Define the default categories &amp; items used when creating a new customer</p>
-      </div>
-      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);margin-left:auto" onclick="closeModal('pillars-modal')">✕ Close</button>
-    </div>
-    <div class="pillars-body">
-      <div class="pillars-note">
-        ⚠️ Changes here apply to <strong>new customers only</strong>. To add a section to an existing customer, open that customer's tracker and use the <strong>➕ Add Section</strong> card at the end of their categories.
-      </div>
-      <div id="pillars-list"><!-- filled by JS --></div>
-      <div class="add-pillar-section">
-        <h4>+ Add New Pillar</h4>
-        <div class="add-pillar-row">
-          <select id="new-pillar-icon" title="Choose icon">
-            <option>🤖</option><option>🔌</option><option>🛠</option>
-            <option>🔗</option><option>🤝</option><option>📊</option>
-            <option>💼</option><option>🚀</option><option>⚡</option>
-            <option>🎯</option><option>🔧</option><option>🌐</option>
-            <option>🔒</option><option>⭐</option><option>📱</option>
-            <option>🧩</option><option>📋</option><option>💡</option>
-          </select>
-          <input type="text" id="new-pillar-name" placeholder="Pillar name…" maxlength="60"
-                 onkeydown="if(event.key==='Enter') addTemplatePillar()" />
-          <button class="btn btn-blue" onclick="addTemplatePillar()">Add Pillar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay hidden" id="section-modal">
-  <div class="modal" style="max-width:380px">
-    <h2>➕ Add Section</h2>
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px">
-      <select id="sf-icon" style="padding:8px;font-size:20px;border:1px solid var(--ms-border);border-radius:var(--radius);background:#fff;width:64px;cursor:pointer">
-        <option>🤖</option><option>🔌</option><option>🛠</option>
-        <option>🔗</option><option>🤝</option><option>📊</option>
-        <option>💼</option><option>🚀</option><option>⚡</option>
-        <option>🎯</option><option>🔧</option><option>🌐</option>
-        <option>🔒</option><option>⭐</option><option>📱</option>
-        <option>🧩</option><option>📋</option><option>💡</option>
-      </select>
-      <input type="text" id="sf-name" placeholder="Section name…" maxlength="60"
-             style="flex:1;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:14px;font-family:inherit"
-             onkeydown="if(event.key==='Enter') confirmAddSection()" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('section-modal')">Cancel</button>
-      <button class="btn btn-blue" onclick="confirmAddSection()">Add Section</button>
-    </div>
-  </div>
-</div>
-
-<div class="report-overlay hidden" id="report-modal">
-  <div class="report-sheet">
-    <div class="report-toolbar">
-      <h3>📄 Customer Report Preview</h3>
-      <button class="btn btn-blue" onclick="window.print()">🖨 Print / Save PDF</button>
-      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="closeModal('report-modal')">✕ Close</button>
-    </div>
-    <div id="report-content"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════ ONEDRIVE / URL MODAL ═══════════════════════════ -->
-<div class="modal-overlay hidden" id="onedrive-modal">
-  <div class="modal" style="max-width:500px">
-    <h2>☁️ Cloud Sync</h2>
-    <div class="od-tabs">
-      <button class="od-tab active" id="od-tab-msft" onclick="switchOdTab('msft')">Microsoft OneDrive</button>
-      <button class="od-tab" id="od-tab-url" onclick="switchOdTab('url')">Load from URL</button>
-      <button class="od-tab" id="od-tab-github" onclick="switchOdTab('github')">GitHub Gist</button>
-    </div>
-
-    <!-- ── Microsoft OneDrive Panel ── -->
-    <div id="od-panel-msft">
-      <!-- Signed-out state -->
-      <div id="od-signed-out-panel">
-        <p style="font-size:13px;color:var(--ms-muted);margin-bottom:14px">
-          Sign in with your Microsoft account to <strong>save</strong> and <strong>load</strong> data directly
-          from your OneDrive. The file is stored as <code>copilot-tracker-data.json</code> in your OneDrive root.
-        </p>
-        <div class="form-group" style="margin-bottom:4px">
-          <label>Azure App Client ID</label>
-          <input type="text" id="od-client-id"
-                 placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                 style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
-        </div>
-        <div style="font-size:11px;color:var(--ms-muted);margin-bottom:14px">
-          Need a Client ID?
-          <a href="#" style="color:var(--ms-blue)" onclick="toggleClientIdHelp();return false">How to register an Azure app →</a>
-        </div>
-        <div id="od-clientid-help" class="od-help-box" style="display:none">
-          <strong>Steps to register an Azure app (one-time setup):</strong><br>
-          1. Go to <strong>portal.azure.com</strong> → Azure Active Directory → App registrations<br>
-          2. Click <strong>New registration</strong>, give it any name<br>
-          3. Under "Supported account types" choose <em>Any organizational directory and personal Microsoft accounts</em><br>
-          4. Under "Redirect URI" choose <em>Single-page application (SPA)</em> and enter this page's URL<br>
-          5. Click <strong>Register</strong>, then copy the <strong>Application (client) ID</strong> and paste above
-        </div>
-        <button class="btn btn-blue" onclick="signInOneDrive()">Sign in with Microsoft →</button>
-      </div>
-
-      <!-- Signed-in state -->
-      <div id="od-signed-in-panel" style="display:none">
-        <div class="od-connected-box">
-          <span style="font-size:22px">✅</span>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600;color:var(--done)">Connected to OneDrive</div>
-            <div id="od-username-label" style="font-size:12px;color:var(--ms-muted)"></div>
-          </div>
-          <button class="btn btn-sm btn-danger" onclick="signOutOneDrive()">Sign Out</button>
-        </div>
-        <p style="font-size:12px;color:var(--ms-muted);margin-bottom:14px">
-          File: <strong>copilot-tracker-data.json</strong> in your OneDrive root
-        </p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="btn btn-blue" onclick="saveToOneDrive()">💾 Save to OneDrive</button>
-          <button class="btn" onclick="loadFromOneDriveMsft()">⬇️ Load from OneDrive</button>
-        </div>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-          <input type="checkbox" id="od-autosave-toggle" onchange="toggleOdAutosave(this.checked)" />
-          Auto-save to OneDrive on every change
-        </label>
-      </div>
-
-      <div id="od-msft-status" style="font-size:12px;min-height:18px;margin-top:10px"></div>
-    </div>
-
-    <!-- ── Load from URL Panel ── -->
-    <div id="od-panel-url" style="display:none">
-      <p style="font-size:13px;color:var(--ms-muted);margin-bottom:14px">
-        Load tracker data from any publicly accessible JSON URL (e.g. an OneDrive "Anyone with the link" share).
-      </p>
-      <div class="form-group" style="margin-bottom:10px">
-        <label>File URL</label>
-        <input type="url" id="od-url-input"
-               placeholder="https://… (OneDrive share link or direct JSON URL)"
-               style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
-      </div>
-      <div id="od-url-status" style="font-size:12px;min-height:18px;margin-bottom:10px"></div>
-      <div class="od-info-box">
-        <strong>Tips:</strong><br>
-        • OneDrive personal: share file → copy link → paste here<br>
-        • OneDrive for Business: <em>Share → Anyone with the link → Copy</em><br>
-        • The file must be a JSON export from this app
-      </div>
-      <button class="btn btn-blue" onclick="loadFromOneDriveUrl()">⬇️ Load from URL</button>
-    </div>
-
-    <!-- ── GitHub Gist Panel ── -->
-    <div id="od-panel-github" style="display:none">
-      <!-- Disconnected state -->
-      <div id="gh-disconnected-panel">
-        <p style="font-size:13px;color:var(--ms-muted);margin-bottom:14px">
-          Sync data via a public GitHub Gist. Every page load fetches <strong>fresh data from GitHub</strong>
-          (browser cache bypassed). Every change auto-saves back to the Gist, and the page polls for
-          remote updates every 30 seconds.
-        </p>
-        <div class="form-group" style="margin-bottom:8px">
-          <label>GitHub Personal Access Token (PAT)</label>
-          <input type="password" id="gh-pat-input"
-                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                 style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
-        </div>
-        <div style="font-size:11px;color:var(--ms-muted);margin-bottom:10px">
-          Generate at <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong><br>
-          ⚠️ Must be a <strong>Classic PAT</strong> (starts with <code>ghp_</code>) — fine-grained tokens do not support the Gist API.<br>
-          Required scope: <code>gist</code> — leave blank for read-only from a public Gist.
-        </div>
-        <div class="form-group" style="margin-bottom:14px">
-          <label>Gist ID <span style="font-weight:400;color:var(--ms-muted)">(leave blank to create a new Gist automatically)</span></label>
-          <input type="text" id="gh-gist-input"
-                 placeholder="e.g. a1b2c3d4e5f6… (optional)"
-                 style="width:100%;padding:8px 12px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:13px;font-family:inherit" />
-        </div>
-        <button class="btn btn-blue" onclick="connectGitHub()">Connect GitHub Gist →</button>
-      </div>
-      <!-- Connected state -->
-      <div id="gh-connected-panel" style="display:none">
-        <div class="od-connected-box">
-          <span style="font-size:22px">✅</span>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:var(--done)">Connected to GitHub Gist</div>
-            <div id="gh-gist-label" style="font-size:11px;color:var(--ms-muted);word-break:break-all"></div>
-          </div>
-          <button class="btn btn-sm btn-danger" onclick="disconnectGitHub()">Disconnect</button>
-        </div>
-        <!-- No-PAT warning (hidden when PAT is present) -->
-        <div id="gh-no-pat-warning" style="display:none;background:#fde7e9;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#7f1d1d">
-          ⚠️ <strong>Read-only:</strong> Changes load from GitHub but won't save back. Enter your PAT to enable saving.
-          <div style="display:flex;gap:6px;margin-top:8px">
-            <input type="password" id="gh-pat-update" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                   style="flex:1;padding:6px 10px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;font-family:inherit" />
-            <button class="btn btn-sm btn-blue" onclick="updateGhPat()">Save PAT</button>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="btn btn-blue" onclick="saveToGistManual()">💾 Save Now</button>
-          <button class="btn" onclick="loadFromGistManual()">⬇️ Load Now</button>
-        </div>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:12px">
-          <input type="checkbox" id="gh-autosave-toggle" onchange="toggleGhAutosave(this.checked)" />
-          Auto-sync: save on every change &amp; poll every 30 s
-        </label>
-        <div class="od-info-box" style="font-size:11px;margin-bottom:10px">
-          📌 Data is fetched fresh from GitHub on every page load — browser cache is bypassed.<br>
-          🔄 With auto-sync enabled, changes save immediately and remote updates are pulled every 30 s.
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input id="gh-share-url" type="text" readonly
-                 style="flex:1;padding:6px 10px;border:1px solid var(--ms-border);border-radius:var(--radius);font-size:11px;font-family:monospace;background:#faf9f8;color:var(--ms-text);min-width:0" />
-          <button class="btn btn-sm" onclick="copyGhShareUrl()" title="Copy share link">📋 Copy link</button>
-        </div>
-        <div style="font-size:11px;color:var(--ms-muted);margin-top:4px">
-          Share this URL — any browser opening it auto-loads data (read-only, no PAT needed).
-        </div>
-      </div>
-      <div id="gh-status" style="font-size:12px;min-height:18px;margin-top:10px"></div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('onedrive-modal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://alcdn.msauth.net/browser/3.28.1/js/msal-browser.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════
-//  LOCK SCREEN
-// ═══════════════════════════════════════════════════════
-(function () {
-  const SESSION_KEY = 'copilot-tracker-auth';
-  const PW    = '1201';
-  const PW_RO = '1234';
+/* ─── theme toggle ─── */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const icon = isDark ? '☀️' : '🌙';
+  document.getElementById('toggle-btn').textContent  = icon;
+  document.getElementById('toggle-btn2').textContent = icon;
+}
 
-  function unlock(readOnly) {
-    document.getElementById('lock-screen').classList.add('hidden');
-    if (readOnly) {
-      window.__readOnly = true;
-      document.body.classList.add('read-only');
-    }
+/* ─── customer data ─── */
+const CUSTOMERS = {
+  amdocs: {
+    id:'amdocs', name:'AMDOCS', letter:'A',
+    gradient:'linear-gradient(135deg,#f9a8d4,#c084fc)',
+    barGradient:'linear-gradient(90deg,#f9a8d4,#c084fc)',
+    adoption:24, status:'at-risk',
+    pillStyle:'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.25)',
+    meta:'Last sync 2h ago · 48 items', items:48, sync:'2h ago',
+    seats:320, activeUsers:77, codeAcceptance:31, completions:12400,
+    csm:'Sarah K.', contractEnd:'Dec 2025', industry:'Telecom', satisfaction:72,
+    recentItems:[
+      {title:'Onboarding blocked – SSO config', status:'blocked', color:'#f9a8d4'},
+      {title:'Training session scheduled',      status:'open',    color:'#c4b5fd'},
+      {title:'License expansion request',       status:'in-review', color:'#67e8f9'},
+      {title:'QBR deck preparation',            status:'open',    color:'#6ee7b7'},
+    ],
+    metrics:[
+      {label:'Active Users',  value:77,  max:320, color:'linear-gradient(90deg,#f9a8d4,#c084fc)'},
+      {label:'Code Accepted', value:31,  max:100, color:'linear-gradient(90deg,#c4b5fd,#f9a8d4)'},
+      {label:'Completions',   value:40,  max:100, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
+      {label:'Satisfaction',  value:72,  max:100, color:'linear-gradient(90deg,#fbbf24,#f9a8d4)'},
+    ]
+  },
+  nice: {
+    id:'nice', name:'NiCE', letter:'N',
+    gradient:'linear-gradient(135deg,#67e8f9,#6ee7b7)',
+    barGradient:'linear-gradient(90deg,#67e8f9,#6ee7b7)',
+    adoption:46, status:'on-track',
+    pillStyle:'background:rgba(103,232,249,.12);color:#0891b2;border:1px solid rgba(103,232,249,.3)',
+    meta:'Last sync 30m ago · 55 items', items:55, sync:'30m ago',
+    seats:540, activeUsers:248, codeAcceptance:58, completions:38700,
+    csm:'James T.', contractEnd:'Mar 2026', industry:'CX Software', satisfaction:88,
+    recentItems:[
+      {title:'Developer enablement week',       status:'in-progress', color:'#6ee7b7'},
+      {title:'Expand to 2nd engineering team',  status:'open',        color:'#67e8f9'},
+      {title:'Monthly adoption review',         status:'done',        color:'#c4b5fd'},
+      {title:'API integration milestone',       status:'open',        color:'#fbbf24'},
+    ],
+    metrics:[
+      {label:'Active Users',  value:248, max:540, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
+      {label:'Code Accepted', value:58,  max:100, color:'linear-gradient(90deg,#6ee7b7,#c4b5fd)'},
+      {label:'Completions',   value:72,  max:100, color:'linear-gradient(90deg,#67e8f9,#6ee7b7)'},
+      {label:'Satisfaction',  value:88,  max:100, color:'linear-gradient(90deg,#6ee7b7,#fbbf24)'},
+    ]
+  },
+  strauss: {
+    id:'strauss', name:'Strauss Group', letter:'S',
+    gradient:'linear-gradient(135deg,#6ee7b7,#c4b5fd)',
+    barGradient:'linear-gradient(90deg,#6ee7b7,#c4b5fd)',
+    adoption:42, status:'on-track',
+    pillStyle:'background:rgba(110,231,183,.12);color:#059669;border:1px solid rgba(110,231,183,.3)',
+    meta:'Last sync 1h ago · 33 items', items:33, sync:'1h ago',
+    seats:210, activeUsers:88, codeAcceptance:49, completions:21300,
+    csm:'Lior B.', contractEnd:'Jun 2026', industry:'Food & Beverage', satisfaction:91,
+    recentItems:[
+      {title:'Pilot team expansion approved', status:'done',        color:'#6ee7b7'},
+      {title:'Security review pending',       status:'blocked',     color:'#f9a8d4'},
+      {title:'Seat count renewal discussion', status:'open',        color:'#c4b5fd'},
+      {title:'Custom IDE plugin request',     status:'in-review',   color:'#67e8f9'},
+    ],
+    metrics:[
+      {label:'Active Users',  value:88, max:210, color:'linear-gradient(90deg,#6ee7b7,#c4b5fd)'},
+      {label:'Code Accepted', value:49, max:100, color:'linear-gradient(90deg,#c4b5fd,#6ee7b7)'},
+      {label:'Completions',   value:61, max:100, color:'linear-gradient(90deg,#6ee7b7,#67e8f9)'},
+      {label:'Satisfaction',  value:91, max:100, color:'linear-gradient(90deg,#c4b5fd,#fbbf24)'},
+    ]
   }
-
-  // If already authenticated this session, skip the lock screen
-  const sess = sessionStorage.getItem(SESSION_KEY);
-  if (sess === '1')  { unlock(false); return; }
-  if (sess === 'ro') { unlock(true);  return; }
-
-  // Otherwise show it and wait
-  window.__checkPassword = function () {
-    const val = document.getElementById('lock-input').value;
-    if (val === PW) {
-      sessionStorage.setItem(SESSION_KEY, '1');
-      unlock(false);
-    } else if (val === PW_RO) {
-      sessionStorage.setItem(SESSION_KEY, 'ro');
-      unlock(true);
-    } else {
-      const inp = document.getElementById('lock-input');
-      const err = document.getElementById('lock-error');
-      err.textContent = 'Incorrect password. Please try again.';
-      inp.classList.add('shake');
-      inp.value = '';
-      setTimeout(() => { inp.classList.remove('shake'); err.textContent = ''; }, 1600);
-      inp.focus();
-    }
-  };
-
-  window.__toggleLockVisibility = function () {
-    const inp = document.getElementById('lock-input');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-  };
-})();
-
-function checkPassword()       { window.__checkPassword(); }
-function toggleLockVisibility(){ window.__toggleLockVisibility(); }
-
-const WORKER_URL    = 'https://copilot-tracker-api.tovik.workers.dev';
-const AI_WORKER_URL = WORKER_URL + '/ai';
-
-
-// ═══════════════════════════════════════════════════════
-//  CONSTANTS — seed template (used only to init state.template)
-// ═══════════════════════════════════════════════════════
-const DEFAULT_CATEGORIES = [
-  { id:'copilot365',   icon:'🤖', title:'Copilot 365',           items:['Licenses','Deploy with Partner','WXP Training','SharePoint / OD Grounding','Security DSPM AI'] },
-  { id:'agents1st3rd', icon:'🔌', title:'1st / 3rd Party Agents', items:['Training for DA Agent','Deploy Training','Results Satisfaction','OOT Agents – Limited Access','Frontier Agents','Business Impact','Personal Impact','Governance and Monitor','PAYG Philosophy'] },
-  { id:'copilotstudio',icon:'🛠', title:'Copilot Studio',         items:['Training to IT','Training MIS','Provide Full Access for Makers','Agent PPP (3P) Offer','Governance and Monitor','A2A','Expand to Foundry','FDE','Environment and Billing Philosophy'] },
-  { id:'connectors3p', icon:'🔗', title:'3rd Party Connectors',   items:['JIRA','Confluence','Salesforce','Service Now','SAP'] },
-  { id:'agent365',     icon:'🤝', title:'Agent 365',              items:['Review MIS','Review IT','Review Studio','Review Moti'] },
-];
-
-const STATUS_CYCLE = ['pending','done','missed','blocked','unblock'];
-const STATUS_META  = {
-  pending:  { icon:'○', label:'Not Started',        bg:'var(--pending-bg)', color:'var(--pending)' },
-  done:     { icon:'✓', label:'Done / Will Happen', bg:'var(--done-bg)',    color:'var(--done)'    },
-  missed:   { icon:'✗', label:'Didn\'t Happen',     bg:'var(--miss-bg)',    color:'var(--miss)'    },
-  blocked:  { icon:'⊘', label:'Blocked',            bg:'var(--block-bg)',   color:'var(--block)'   },
-  unblock:  { icon:'↻', label:'Unblocking',         bg:'var(--unblock-bg)', color:'var(--unblock)' },
 };
 
-// ═══════════════════════════════════════════════════════
-//  STATE & PERSISTENCE
-// ═══════════════════════════════════════════════════════
-const STORE_KEY = 'copilot-tracker-v3';
-let state = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {customers:[],current:null}; } catch { return {customers:[],current:null}; } })();
-// Seed template from DEFAULT_CATEGORIES if not yet stored
-if (!state.template) {
-  state.template = DEFAULT_CATEGORIES.map(cat => ({
-    id: cat.id, icon: cat.icon, title: cat.title,
-    items: cat.items.map(label => ({ id: Math.random().toString(36).slice(2,10), label }))
-  }));
-}
+const STATUS_STYLES = {
+  'blocked':     'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.2)',
+  'open':        'background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.12)',
+  'in-review':   'background:rgba(196,181,253,.12);color:#a78bfa;border:1px solid rgba(196,181,253,.25)',
+  'in-progress': 'background:rgba(103,232,249,.12);color:#67e8f9;border:1px solid rgba(103,232,249,.25)',
+  'done':        'background:rgba(110,231,183,.12);color:#6ee7b7;border:1px solid rgba(110,231,183,.25)',
+};
+const STATUS_CLASS = {
+  'blocked':'pill-blocked','open':'pill-open','in-review':'pill-in-review',
+  'in-progress':'pill-in-progress','done':'pill-done'
+};
 
-// ── FILE SYSTEM AUTOSAVE ────────────────────────────────
-const FS_SUPPORTED = typeof window !== 'undefined' && 'showSaveFilePicker' in window;
-let _fsHandle = null;
-let _pendingFsHandle = null;
-let _fsSaveTimer = null;
-
-async function _idb(mode, value) {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('copilot-tracker-fs', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('h');
-    req.onsuccess = e => {
-      const db  = e.target.result;
-      const tx  = db.transaction('h', mode === 'get' ? 'readonly' : 'readwrite');
-      const r   = mode === 'get' ? tx.objectStore('h').get('f') : tx.objectStore('h').put(value, 'f');
-      r.onsuccess = () => resolve(r.result);
-      r.onerror   = reject;
-    };
-    req.onerror = reject;
-  });
-}
-
-async function saveToFs() {
-  if (!_fsHandle) return;
-  try {
-    const writable = await _fsHandle.createWritable();
-    const payload  = { _version: 1, _app: 'Copilot Adoption Tracker by Tovik', customers: state.customers, template: state.template };
-    await writable.write(JSON.stringify(payload, null, 2));
-    await writable.close();
-  } catch(e) { showToast('⚠️ Autosave failed: ' + e.message); }
-}
-
-async function loadFromFs() {
-  if (!_fsHandle) return false;
-  try {
-    const file = await _fsHandle.getFile();
-    const text = await file.text();
-    if (!text.trim()) return false;
-    const payload = JSON.parse(text);
-    if (!payload.customers || !Array.isArray(payload.customers)) return false;
-    state.customers = payload.customers;
-    state.template  = payload.template || state.template;
-    state.current   = null;
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
-    return true;
-  } catch(e) { return false; }
-}
-
-async function initFileSystem() {
-  if (!FS_SUPPORTED) return;
-  try {
-    const handle = await _idb('get');
-    if (!handle) return;
-    const perm = await handle.queryPermission({ mode: 'readwrite' });
-    if (perm === 'granted') {
-      _fsHandle = handle;
-      const loaded = await loadFromFs();
-      updateFsBtn();
-      if (loaded) { renderDashboard(); showToast('✅ Data loaded from ' + handle.name); }
-    } else {
-      _pendingFsHandle = handle;
-      updateFsBtn();
-    }
-  } catch(e) { /* ignore */ }
-}
-
-async function connectFile() {
-  if (!FS_SUPPORTED) {
-    alert('Autosave requires Chrome or Edge (File System Access API not available in this browser).');
-    return;
-  }
-  // If there's a pending handle (needs permission), try to reconnect it first
-  if (_pendingFsHandle) {
-    try {
-      const perm = await _pendingFsHandle.requestPermission({ mode: 'readwrite' });
-      if (perm === 'granted') {
-        _fsHandle = _pendingFsHandle;
-        _pendingFsHandle = null;
-        await _idb('put', _fsHandle);
-        const loaded = await loadFromFs();
-        updateFsBtn();
-        if (loaded) { renderDashboard(); showToast('✅ Reconnected: ' + _fsHandle.name); }
-        else { await saveToFs(); showToast('✅ Reconnected: ' + _fsHandle.name); }
-        return;
-      }
-    } catch(e) { /* fall through to picker */ }
-  }
-  try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: 'copilot-tracker-data.json',
-      types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }]
-    });
-    _fsHandle = handle;
-    await _idb('put', handle);
-    // If the file already has valid data, offer to load from it
-    const file = await handle.getFile();
-    const text = await file.text().catch(() => '');
-    if (text.trim()) {
-      try {
-        const payload = JSON.parse(text);
-        if (payload.customers && Array.isArray(payload.customers)) {
-          const load = confirm(`"${handle.name}" already contains data (${payload.customers.length} customer(s)).\n\nOK → Load data from this file\nCancel → Overwrite file with current data`);
-          if (load) {
-            state.customers = payload.customers;
-            state.template  = payload.template || state.template;
-            state.current   = null;
-            localStorage.setItem(STORE_KEY, JSON.stringify(state));
-            renderDashboard();
-            showToast('✅ Loaded from ' + handle.name);
-            updateFsBtn();
-            return;
-          }
-        }
-      } catch(e) { /* ignore parse error, overwrite */ }
-    }
-    await saveToFs();
-    updateFsBtn();
-    showToast('✅ Autosave connected: ' + handle.name);
-  } catch(e) {
-    if (e.name !== 'AbortError') showToast('⚠️ Could not connect file: ' + e.message);
-  }
-}
-
-function disconnectFile() {
-  _fsHandle = null;
-  _pendingFsHandle = null;
-  _idb('put', null).catch(() => {});
-  updateFsBtn();
-  showToast('Autosave disconnected');
-}
-
-function updateFsBtn() {
-  const btn = document.getElementById('fs-btn');
-  if (!btn) return;
-  if (_fsHandle) {
-    btn.textContent = '🟢 ' + (_fsHandle.name || 'Autosave');
-    btn.title       = 'Autosave active — click to disconnect';
-    btn.classList.add('fs-on');
-    btn.onclick     = () => { if (confirm('Disconnect autosave file?')) disconnectFile(); };
-  } else if (_pendingFsHandle) {
-    btn.textContent = '🟡 Reconnect File';
-    btn.title       = 'Previously connected file needs permission — click to reconnect';
-    btn.classList.remove('fs-on');
-    btn.onclick     = connectFile;
-  } else {
-    btn.textContent = '📁 Connect File';
-    btn.title       = 'Connect a local .json file for autosave (survives HTML updates)';
-    btn.classList.remove('fs-on');
-    btn.onclick     = connectFile;
-  }
-}
-// ── END FILE SYSTEM ─────────────────────────────────────
-
-function save() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  if (_fsHandle) {
-    clearTimeout(_fsSaveTimer);
-    _fsSaveTimer = setTimeout(saveToFs, 400);
-  }
-  if (_odAutosave && _msalAccount) _scheduleOdSave();
-  if (_ghGistId) {
-    if (_ghPat && _ghAutosave) {
-      _scheduleGhSave();
-    } else if (!_ghPat && !window.__ghNoPatWarned) {
-      window.__ghNoPatWarned = true;
-      showToast('⚠️ Changes saved locally only — open Cloud Sync to enter your PAT');
-    }
-  }
-}
-function uid()  { return Math.random().toString(36).slice(2,10); }
-
-// ── Bootstrap
-window.addEventListener('DOMContentLoaded', async () => {
-  await initFileSystem();
-  await initOneDrive();
-  await initGitHub();   // fetches fresh JSON from GitHub on every page load
-  if (state.current) {
-    const c = state.customers.find(x => x.id === state.current);
-    if (c) { openDetail(state.current); return; }
-  }
-  renderDashboard();
-});
-
-// ═══════════════════════════════════════════════════════
-//  HELPERS: stats from a customer object
-// ═══════════════════════════════════════════════════════
-function custStats(customer) {
-  let total=0, done=0, missed=0, blocked=0, unblock=0, pending=0;
-  customer.categories.forEach(cat => cat.items.forEach(item => {
-    total++;
-    if (item.status==='done')    done++;
-    else if (item.status==='missed')  missed++;
-    else if (item.status==='blocked') blocked++;
-    else if (item.status==='unblock') unblock++;
-    else pending++;
-  }));
-  const pct = total ? Math.round((done/total)*100) : 0;
-  return { total, done, missed, blocked, unblock, pending, pct };
-}
-
-// ═══════════════════════════════════════════════════════
-//  MOBILE NAV HAMBURGER
-// ═══════════════════════════════════════════════════════
-function toggleNav() {
-  const nav = document.getElementById('main-nav');
-  const btn = document.getElementById('nav-hamburger');
-  const open = nav.classList.toggle('open');
-  btn.textContent = open ? '✕' : '☰';
-}
-function closeNav() {
-  const nav = document.getElementById('main-nav');
-  const btn = document.getElementById('nav-hamburger');
-  nav.classList.remove('open');
-  btn.textContent = '☰';
-}
-document.addEventListener('click', function(e) {
-  const nav = document.getElementById('main-nav');
-  if (!nav || !nav.classList.contains('open')) return;
-  if (!e.target.closest('#main-nav') && !e.target.closest('#nav-hamburger')) closeNav();
-});
-
-// ═══════════════════════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════════════════════
-function goHome() {
-  state.current = null; save();
-  document.getElementById('view-dashboard').classList.add('active');
-  document.getElementById('view-detail').classList.remove('active');
-  document.getElementById('breadcrumb').style.display = 'none';
-  document.getElementById('report-btn').disabled = true;
-  document.getElementById('add-section-wrap').style.display = 'none';
-  renderDashboard();
-}
-
-function openDetail(id, updateHistory=true) {
-  const customer = state.customers.find(c => c.id === id);
-  if (!customer) return;
-  state.current = id; save();
-  document.getElementById('view-dashboard').classList.remove('active');
-  document.getElementById('view-detail').classList.add('active');
-  document.getElementById('breadcrumb').style.display = 'flex';
-  document.getElementById('crumb-name').textContent = customer.name;
-  document.getElementById('report-btn').disabled = false;
-  document.getElementById('add-section-wrap').style.display = '';
-  renderDetailHeader(customer);
-  renderCategories(customer);
-}
-
-// ═══════════════════════════════════════════════════════
-//  DASHBOARD
-// ═══════════════════════════════════════════════════════
-function renderDashboard() {
-  const grid = document.getElementById('customers-grid');
-  grid.innerHTML = '';
-
-  if (state.customers.length === 0) {
-    grid.innerHTML = `
-      <div class="dash-empty">
-        <div class="de-icon">🏢</div>
-        <h2>No customers yet</h2>
-        <p>Add your first customer to start tracking Copilot adoption.</p>
-        <button class="btn btn-blue" onclick="openAddCustomer()">+ Add Customer</button>
-      </div>`;
-    updateDashSummary([]);
-    return;
-  }
-
-  updateDashSummary(state.customers);
-  state.customers.forEach(c => grid.appendChild(buildCustomerCard(c)));
-}
-
-function updateDashSummary(customers) {
-  const total = customers.length;
-  let allPcts=[], allItems=0, allBlocked=0;
-  customers.forEach(c => {
-    const s = custStats(c);
-    allPcts.push(s.pct);
-    allItems += s.total;
-    allBlocked += s.blocked + s.unblock;
-  });
-  const avg = total ? Math.round(allPcts.reduce((a,b)=>a+b,0)/total) : 0;
-  document.getElementById('ds-total').textContent   = total;
-  document.getElementById('ds-avg').textContent     = avg + '%';
-  document.getElementById('ds-items').textContent   = allItems;
-  document.getElementById('ds-blocked').textContent = allBlocked;
-  document.getElementById('dash-subtitle').textContent =
-    total ? `Tracking ${total} customer${total>1?'s':''} · ${allItems} total adoption items` : 'Add your first customer to begin.';
-}
-
-function buildCustomerCard(customer) {
-  const s = custStats(customer);
-  const card = document.createElement('div');
-  card.className = 'cust-card';
-  card.draggable = true;
-  card.onclick = () => openDetail(customer.id);
-
-  card.addEventListener('dragstart', e => {
-    if (document.body.classList.contains('read-only')) { e.preventDefault(); return; }
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', customer.id);
-    setTimeout(() => card.classList.add('dragging'), 0);
-  });
-  card.addEventListener('dragend', () => card.classList.remove('dragging'));
-  card.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    card.classList.add('card-drag-over');
-  });
-  card.addEventListener('dragleave', e => {
-    if (!card.contains(e.relatedTarget)) card.classList.remove('card-drag-over');
-  });
-  card.addEventListener('drop', e => {
-    e.preventDefault(); e.stopPropagation();
-    card.classList.remove('card-drag-over');
-    const fromId = e.dataTransfer.getData('text/plain');
-    const toId = customer.id;
-    if (fromId === toId) return;
-    const fromIdx = state.customers.findIndex(c => c.id === fromId);
-    const toIdx   = state.customers.findIndex(c => c.id === toId);
-    if (fromIdx < 0 || toIdx < 0) return;
-    const [moved] = state.customers.splice(fromIdx, 1);
-    state.customers.splice(toIdx, 0, moved);
-    save();
-    renderDashboard();
-  });
-
-  // Color the progress bar based on pct
-  const barColor = s.pct >= 75 ? 'linear-gradient(90deg,var(--done),#92d36e)'
-                  : s.pct >= 40 ? 'linear-gradient(90deg,#7c3aed,#db2777)'
-                  : 'linear-gradient(90deg,#ca5010,#f5a55b)';
-
-  // Avatar: logo image or initials
-  const initials = customer.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-  const avatarHtml = customer.logo
-    ? `<div class="cust-avatar" style="background:none;border:1px solid var(--ms-border)"><img src="${customer.logo}" /></div>`
-    : `<div class="cust-avatar">${initials}</div>`;
-
-  // Created date
-  const created = customer.createdAt
-    ? new Date(customer.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
-    : '';
-
-  // Format a date string nicely
-  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : null;
-
-  // Meta fields to show on card
-  const metaItems = [
-    customer.users        ? `👥 <strong>${Number(customer.users).toLocaleString()}</strong> users` : null,
-    customer.copilotUsers ? `🤖 <strong>${Number(customer.copilotUsers).toLocaleString()}</strong> Copilot 365` : null,
-    customer.renewalDate  ? `📅 Renewal: <strong>${fmtDate(customer.renewalDate)}</strong>` : null,
-    customer.aopDate      ? `📋 AOP: <strong>${fmtDate(customer.aopDate)}</strong>` : null,
-    customer.aeName       ? `👤 AE: <strong>${escHtml(customer.aeName)}</strong>` : null,
-    customer.csamName     ? `🎯 CSAM: <strong>${escHtml(customer.csamName)}</strong>` : null,
-  ].filter(Boolean);
-
-  const metaHtml = metaItems.length
-    ? metaItems.map(m => `<div class="meta-item">${m}</div>`).join('')
-    : '';
-
-  // Category mini bars
-  const catBars = customer.categories.map(cat => {
-    const done = cat.items.filter(i=>i.status==='done').length;
-    const pct  = cat.items.length ? Math.round(done/cat.items.length*100) : 0;
-    return `<div class="cat-mini-row">
-      <span class="cat-mini-icon">${cat.icon}</span>
-      <span class="cat-mini-label">${escHtml(cat.title)}</span>
-      <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%;background:${pct>=75?'var(--done)':pct>=40?'var(--ms-blue)':'var(--block)'}"></div></div>
-      <span class="cat-mini-pct">${pct}%</span>
-    </div>`;
-  }).join('');
-
-  card.innerHTML = `
-    <div class="cust-card-top">
-      ${avatarHtml}
+/* ─── build list ─── */
+function buildList() {
+  document.getElementById('cust-list').innerHTML = Object.values(CUSTOMERS).map(c => `
+    <div class="cust-card" data-id="${c.id}"
+         onmouseenter="openSidecar('${c.id}')"
+         onmouseleave="closeSidecar()"
+         onclick="goToDetail('${c.id}')">
+      <div class="cust-logo" style="background:${c.gradient};">${c.letter}</div>
       <div class="cust-info">
-        <div class="cust-name">${escHtml(customer.name)}</div>
-        <div class="cust-date">${created ? 'Since ' + created : ''}</div>
+        <div class="cust-name">${c.name}</div>
+        <div class="cust-meta">${c.meta}</div>
       </div>
-      <span class="card-drag-handle" title="Drag to reorder" onclick="event.stopPropagation()">⠿</span>
-      <div class="cust-pct-badge">${s.pct}%</div>
-    </div>
-
-    <div class="cust-progress">
-      <div class="cp-bar-bg">
-        <div class="cp-bar-fill" style="width:${s.pct}%;background:${barColor}"></div>
+      <div class="cust-bar-col">
+        <div class="cust-bar-label-text">Adoption</div>
+        <div class="cust-bar-track"><div class="cust-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>
       </div>
-      <div class="cp-labels">
-        <span>${s.done} done of ${s.total} items</span>
-        <span>${s.pct}% complete</span>
-      </div>
-    </div>
-
-    <div class="cust-status-row">
-      ${s.done    ? `<span class="status-pill" style="background:var(--done-bg);color:var(--done)">✓ ${s.done} Done</span>` : ''}
-      ${s.missed  ? `<span class="status-pill" style="background:var(--miss-bg);color:var(--miss)">✗ ${s.missed} Missed</span>` : ''}
-      ${s.blocked ? `<span class="status-pill" style="background:var(--block-bg);color:var(--block)">⊘ ${s.blocked} Blocked</span>` : ''}
-      ${s.unblock ? `<span class="status-pill" style="background:var(--unblock-bg);color:var(--unblock)">↻ ${s.unblock} Unblocking</span>` : ''}
-      ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending} Pending</span>` : ''}
-    </div>
-
-    ${customer.coreUsage ? (() => {
-      const cu = {
-        good:    { label: 'Good',    bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
-        partial: { label: 'Partial', bg: '#fff7ed', color: '#92400e', dot: '#f59e0b' },
-        low:     { label: 'Low',     bg: '#fee2e2', color: '#7f1d1d', dot: '#ef4444' },
-      }[customer.coreUsage];
-      return cu ? `<div style="margin:6px 0 2px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:${cu.bg};color:${cu.color};font-size:11px;font-weight:600;border:1px solid ${cu.dot}33"><span style="width:8px;height:8px;border-radius:50%;background:${cu.dot};display:inline-block"></span>365 Core Usage: ${cu.label}</span></div>` : '';
-    })() : ''}
-
-    ${metaHtml ? `<div class="cust-meta">${metaHtml}</div>` : ''}
-
-    <div class="cust-cats">${catBars}</div>
-
-    <div class="cust-card-footer">
-      <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openDetail('${customer.id}')">Open Tracker →</button>
-      <button class="btn btn-sm" onclick="event.stopPropagation();openReportFor('${customer.id}')">📄 Report</button>
-    </div>`;
-  return card;
+      <div class="cust-pct" style="background:${c.gradient};">${c.adoption}%</div>
+      <div class="cust-pill" style="${c.pillStyle};">${c.status}</div>
+      <div class="cust-arrow">›</div>
+    </div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-//  DETAIL VIEW
-// ═══════════════════════════════════════════════════════
-function renderDetailHeader(customer) {
-  const s = custStats(customer);
-  document.getElementById('do-pct').textContent    = s.pct + '%';
-  document.getElementById('do-bar').style.width    = s.pct + '%';
-  document.getElementById('do-counts').textContent = `${s.done} done · ${s.total} total`;
-  document.getElementById('do-pills').innerHTML    = `
-    ${s.done    ? `<span class="status-pill" style="background:var(--done-bg);color:var(--done)">✓ ${s.done}</span>` : ''}
-    ${s.missed  ? `<span class="status-pill" style="background:var(--miss-bg);color:var(--miss)">✗ ${s.missed}</span>` : ''}
-    ${s.blocked ? `<span class="status-pill" style="background:var(--block-bg);color:var(--block)">⊘ ${s.blocked}</span>` : ''}
-    ${s.unblock ? `<span class="status-pill" style="background:var(--unblock-bg);color:var(--unblock)">↻ ${s.unblock}</span>` : ''}
-    ${s.pending ? `<span class="status-pill" style="background:var(--pending-bg);color:var(--pending)">○ ${s.pending}</span>` : ''}`;
+/* ─── sidecar ─── */
+let scTimer = null;
 
-  // Meta panel
-  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-  const fields = [
-    { label:'# of Users',         value: customer.users        ? Number(customer.users).toLocaleString()        : null },
-    { label:'Copilot 365 Users',   value: customer.copilotUsers ? Number(customer.copilotUsers).toLocaleString() : null },
-    { label:'Renewal Date',        value: customer.renewalDate  ? fmtDate(customer.renewalDate) : null },
-    { label:'AOP Due Date',        value: customer.aopDate      ? fmtDate(customer.aopDate)     : null },
-    { label:'AE',                  value: customer.aeName  || null },
-    { label:'ATS',                 value: customer.atsName || null },
-    { label:'CSAM',                value: customer.csamName|| null },
-    { label:'SE',                  value: customer.seName  || null },
-  ].filter(f => f.value);
+function openSidecar(id) {
+  clearTimeout(scTimer);
+  const c = CUSTOMERS[id];
 
-  const metaEl = document.getElementById('detail-meta');
-  if (fields.length) {
-    metaEl.style.display = '';
-    metaEl.innerHTML = fields.map(f =>
-      `<div class="dm-item"><div class="dm-label">${f.label}</div><div class="dm-value">${escHtml(String(f.value))}</div></div>`
-    ).join('');
-  } else {
-    metaEl.style.display = 'none';
-  }
-}
-
-function renderCategories(customer) {
-  const grid = document.getElementById('categories-grid');
-  grid.innerHTML = '';
-  customer.categories.forEach(cat => grid.appendChild(buildCategoryCard(customer, cat)));
-  // "Add Section" card at the end of the grid
-  const addCard = document.createElement('div');
-  addCard.className = 'category-card add-section-card';
-  addCard.onclick = () => openAddSection();
-  addCard.innerHTML = `
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;color:var(--ms-muted)">
-      <div style="font-size:32px">➕</div>
-      <div style="font-size:13px;font-weight:600">Add Section</div>
-      <div style="font-size:11px;text-align:center">Add a custom category to this customer's tracker</div>
-    </div>`;
-  grid.appendChild(addCard);
-}
-
-function buildCategoryCard(customer, cat) {
-  const card = document.createElement('div');
-  card.className = 'category-card';
-  card.id = `cat-${cat.id}`;
-  const done  = cat.items.filter(i=>i.status==='done').length;
-  const total = cat.items.length;
-  const pct   = total ? Math.round(done/total*100) : 0;
-
-  card.innerHTML = `
-    <div class="category-header">
-      <span class="category-icon">${cat.icon}</span>
-      <span class="category-title" title="Double-click to rename"
-            ondblclick="startSectionRename(this,'${customer.id}','${cat.id}')">${escHtml(cat.title)}</span>
-      <span class="category-count">${done}/${total}</span>
-      <div class="cat-header-actions">
-        <button class="icon-btn" title="Rename section"
-                onclick="startSectionRename(this.closest('.category-header').querySelector('.category-title'),'${customer.id}','${cat.id}')">✏️</button>
-        <button class="icon-btn" title="Delete section"
-                onclick="deleteCustomerSection('${customer.id}','${cat.id}')">🗑</button>
+  document.getElementById('sc-header').innerHTML = `
+    <div class="sc-eyebrow">Customer Preview</div>
+    <div class="sc-company">
+      <div class="sc-logo" style="background:${c.gradient};">${c.letter}</div>
+      <div>
+        <div class="sc-name">${c.name}</div>
+        <div class="sc-industry">${c.industry}</div>
+        <div class="sc-pill" style="${c.pillStyle};">${c.status}</div>
       </div>
-    </div>
-    <div class="cat-prog-wrap">
-      <div class="cat-prog-bg"><div class="cat-prog-fill" style="width:${pct}%"></div></div>
-      <div class="cat-prog-lbl">${pct}% complete</div>
-    </div>
-    <div class="category-body" id="body-${cat.id}"></div>
-    <div class="add-item-row">
-      <input type="text" placeholder="Add new item…" id="new-item-${cat.id}"
-             onkeydown="if(event.key==='Enter') addItem('${customer.id}','${cat.id}')" />
-      <button class="btn btn-blue btn-sm" onclick="addItem('${customer.id}','${cat.id}')">+</button>
     </div>`;
 
-  const body = card.querySelector(`#body-${cat.id}`);
-  if (cat.items.length === 0) {
-    body.innerHTML = '<div class="empty">No items yet — add one below.</div>';
-  } else {
-    cat.items.forEach(item => body.appendChild(buildItemRow(customer, cat, item)));
-  }
+  document.getElementById('sc-adoption').innerHTML = `
+    <div class="sc-adoption-num" style="background:${c.gradient};">${c.adoption}%</div>
+    <div class="sc-adoption-lbl">Copilot Adoption Rate</div>
+    <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>`;
 
-  // Drop zone setup
-  body.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    body.classList.add('drag-over');
-  });
-  body.addEventListener('dragleave', e => {
-    if (!body.contains(e.relatedTarget)) body.classList.remove('drag-over');
-  });
-  body.addEventListener('drop', e => {
-    e.preventDefault();
-    body.classList.remove('drag-over');
-    let payload;
-    try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
-    const { itemId, srcCatId, custId } = payload;
-    if (srcCatId === cat.id) return; // same section, no-op
-    const cust = state.customers.find(c => c.id === custId);
-    if (!cust) return;
-    const srcCat = cust.categories.find(c => c.id === srcCatId);
-    const dstCat = cust.categories.find(c => c.id === cat.id);
-    if (!srcCat || !dstCat) return;
-    const itemIdx = srcCat.items.findIndex(i => i.id === itemId);
-    if (itemIdx === -1) return;
-    const [movedItem] = srcCat.items.splice(itemIdx, 1);
-    dstCat.items.push(movedItem);
-    save();
-    // Re-render both affected cards
-    const srcCardEl = document.getElementById(`cat-${srcCatId}`);
-    const dstCardEl = document.getElementById(`cat-${cat.id}`);
-    if (srcCardEl) srcCardEl.replaceWith(buildCategoryCard(cust, srcCat));
-    if (dstCardEl) dstCardEl.replaceWith(buildCategoryCard(cust, dstCat));
-    renderDetailHeader(cust);
-    showToast(`✅ Moved "${escHtml(movedItem.label)}" to ${escHtml(dstCat.title)}`);
-  });
+  document.getElementById('sc-body').innerHTML = `
+    <div class="sc-metric"><span class="sc-metric-lbl">Seats</span><span class="sc-metric-val">${c.seats.toLocaleString()}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Active Users</span><span class="sc-metric-val">${c.activeUsers}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Code Accepted</span><span class="sc-metric-val">${c.codeAcceptance}%</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Open Items</span><span class="sc-metric-val">${c.items}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">Last Sync</span><span class="sc-metric-val">${c.sync}</span></div>
+    <div class="sc-metric"><span class="sc-metric-lbl">CSM</span><span class="sc-metric-val">${c.csm}</span></div>`;
 
-  return card;
+  document.getElementById('sc-open-btn').onclick = () => goToDetail(id);
+  document.getElementById('sidecar').classList.add('open');
 }
 
-function buildItemRow(customer, cat, item) {
-  const row = document.createElement('div');
-  row.className = 'item-row';
-  row.id = `item-${item.id}`;
-  row.setAttribute('draggable', window.__readOnly ? 'false' : 'true');
-  row.dataset.itemId = item.id;
-  row.dataset.catId  = cat.id;
-  row.dataset.custId = customer.id;
-  const m = STATUS_META[item.status] || STATUS_META.pending;
-  row.innerHTML = `
-    <span class="drag-handle" title="Drag to move to another section">⠿</span>
-    <button class="status-btn" data-status="${item.status}" title="${m.label} — click to cycle"
-            onclick="cycleStatus('${customer.id}','${cat.id}','${item.id}')">${m.icon}</button>
-    <span class="item-label${item.status==='done'?' done-text':''}"
-          ondblclick="startRename(this,'${customer.id}','${cat.id}','${item.id}')">${escHtml(item.label)}</span>
-    <div class="item-actions">
-      <button class="icon-btn" title="Rename" onclick="startRename(this.closest('.item-row').querySelector('.item-label'),'${customer.id}','${cat.id}','${item.id}')">✏️</button>
-      <button class="icon-btn" title="Delete" onclick="deleteItem('${customer.id}','${cat.id}','${item.id}')">🗑</button>
+function closeSidecar() {
+  scTimer = setTimeout(() => document.getElementById('sidecar').classList.remove('open'), 180);
+}
+
+document.getElementById('sidecar').addEventListener('mouseenter', () => clearTimeout(scTimer));
+document.getElementById('sidecar').addEventListener('mouseleave', closeSidecar);
+
+/* ─── detail view ─── */
+function goToDetail(id) {
+  const c = CUSTOMERS[id];
+  clearTimeout(scTimer);
+  document.getElementById('sidecar').classList.remove('open');
+
+  document.getElementById('tb-list').hidden   = true;
+  document.getElementById('tb-detail').hidden = false;
+  document.getElementById('tb-detail-title').textContent = c.name;
+  document.getElementById('kpi-row').hidden   = true;
+
+  document.getElementById('d-hero').innerHTML = `
+    <div class="detail-hero-row">
+      <div class="detail-hero-left">
+        <div class="detail-big-logo" style="background:${c.gradient};">${c.letter}</div>
+        <div>
+          <div class="detail-name">${c.name}</div>
+          <div class="detail-sub">${c.industry} · ${c.seats.toLocaleString()} seats · CSM: ${c.csm}</div>
+          <div class="detail-hero-pill" style="${c.pillStyle};">${c.status}</div>
+        </div>
+      </div>
+      <div class="detail-hero-actions">
+        <button class="topbar-btn topbar-btn-ghost">Export</button>
+        <button class="topbar-btn topbar-btn-primary">View in GitHub →</button>
+      </div>
     </div>`;
 
-  row.addEventListener('dragstart', e => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', JSON.stringify({ itemId: item.id, srcCatId: cat.id, custId: customer.id }));
-    setTimeout(() => row.classList.add('dragging'), 0);
-  });
-  row.addEventListener('dragend', () => row.classList.remove('dragging'));
-  return row;
-}
+  document.getElementById('d-kpi').innerHTML = `
+    <div class="detail-kpi"><div class="detail-kpi-num" style="background:${c.gradient};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${c.adoption}%</div><div class="detail-kpi-lbl">Adoption Rate</div></div>
+    <div class="kpi-divider" style="margin:0 4px;"></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--cyan);">${c.activeUsers}</div><div class="detail-kpi-lbl">Active Users</div></div>
+    <div class="kpi-divider" style="margin:0 4px;"></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--mint);">${c.codeAcceptance}%</div><div class="detail-kpi-lbl">Code Accepted</div></div>
+    <div class="kpi-divider" style="margin:0 4px;"></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--lavender);">${c.completions.toLocaleString()}</div><div class="detail-kpi-lbl">Completions</div></div>
+    <div class="kpi-divider" style="margin:0 4px;"></div>
+    <div class="detail-kpi"><div class="detail-kpi-num" style="color:#d97706;">${c.satisfaction}%</div><div class="detail-kpi-lbl">Satisfaction</div></div>`;
 
-// ═══════════════════════════════════════════════════════
-//  ITEM ACTIONS
-// ═══════════════════════════════════════════════════════
-function cycleStatus(custId, catId, itemId) {
-  if (window.__readOnly) return;
-  const customer = state.customers.find(c=>c.id===custId);
-  const cat  = customer.categories.find(c=>c.id===catId);
-  const item = cat.items.find(i=>i.id===itemId);
-  item.status = STATUS_CYCLE[(STATUS_CYCLE.indexOf(item.status)+1) % STATUS_CYCLE.length];
-  save();
-  document.getElementById(`cat-${catId}`).replaceWith(buildCategoryCard(customer, cat));
-  renderDetailHeader(customer);
-}
-
-function addItem(custId, catId) {
-  const input = document.getElementById(`new-item-${catId}`);
-  const label = input.value.trim();
-  if (!label) return;
-  const customer = state.customers.find(c=>c.id===custId);
-  const cat = customer.categories.find(c=>c.id===catId);
-  cat.items.push({ id:uid(), label, status:'pending' });
-  save();
-  input.value = '';
-  document.getElementById(`cat-${catId}`).replaceWith(buildCategoryCard(customer, cat));
-  renderDetailHeader(customer);
-  document.getElementById(`new-item-${catId}`)?.focus();
-}
-
-function deleteItem(custId, catId, itemId) {
-  const customer = state.customers.find(c=>c.id===custId);
-  const cat = customer.categories.find(c=>c.id===catId);
-  const item = cat.items.find(i=>i.id===itemId);
-  if (!confirm(`Delete "${item.label}"?`)) return;
-  cat.items = cat.items.filter(i=>i.id!==itemId);
-  save();
-  document.getElementById(`cat-${catId}`).replaceWith(buildCategoryCard(customer, cat));
-  renderDetailHeader(customer);
-}
-
-function startRename(labelEl, custId, catId, itemId) {
-  if (window.__readOnly) return;
-  if (labelEl.getAttribute('contenteditable')==='true') return;
-  labelEl.setAttribute('contenteditable','true');
-  labelEl.focus();
-  const r = document.createRange(); r.selectNodeContents(labelEl); r.collapse(false);
-  window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
-
-  const finish = () => {
-    labelEl.removeAttribute('contenteditable');
-    const newLabel = labelEl.textContent.trim();
-    const customer = state.customers.find(c=>c.id===custId);
-    const cat  = customer.categories.find(c=>c.id===catId);
-    const item = cat.items.find(i=>i.id===itemId);
-    if (newLabel) { item.label = newLabel; save(); }
-    else { labelEl.textContent = item.label; }
-    labelEl.removeEventListener('keydown', keyHandler);
-  };
-  const keyHandler = e => {
-    if (e.key==='Enter') { e.preventDefault(); finish(); }
-    if (e.key==='Escape') { labelEl.textContent=''; finish(); }
-  };
-  labelEl.addEventListener('blur', finish, {once:true});
-  labelEl.addEventListener('keydown', keyHandler);
-}
-
-// ═══════════════════════════════════════════════════════
-//  CUSTOMER MANAGEMENT
-// ═══════════════════════════════════════════════════════
-let _editingCustomerId = null; // null = adding new
-let _logoDataUrl = null;
-
-function handleLogoUpload(input) {
-  const file = input.files[0];
-  if (!file) return;
-  input.value = '';
-  if (file.size > 3 * 1024 * 1024) { showToast('⚠️ Image too large (max 3 MB)'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    _logoDataUrl = e.target.result;
-    const urlInput = document.getElementById('cf-logo-url');
-    if (urlInput) urlInput.value = '';
-    _applyLogoPreview();
-  };
-  reader.readAsDataURL(file);
-}
-
-function handleLogoUrlInput(url) {
-  url = url.trim();
-  if (!url) { if (_logoDataUrl && _logoDataUrl.startsWith('http')) { _logoDataUrl = null; _applyLogoPreview(); } return; }
-  // Basic URL validation
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return;
-  _logoDataUrl = url;
-  _applyLogoPreview();
-}
-
-function removeLogo() {
-  _logoDataUrl = null;
-  _applyLogoPreview();
-  const nameVal = document.getElementById('cf-name').value.trim();
-  updateLogoInitials(nameVal);
-}
-
-function updateLogoInitials(nameVal) {
-  if (_logoDataUrl) return; // image set, don't change
-  const el = document.getElementById('cf-logo-initials');
-  if (!el) return;
-  el.textContent = nameVal ? nameVal.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() : '?';
-}
-
-function _applyLogoPreview() {
-  const preview  = document.getElementById('cf-logo-preview');
-  const initials = document.getElementById('cf-logo-initials');
-  const removeBtn = document.getElementById('cf-logo-remove');
-  if (!preview) return;
-  // Remove any existing img
-  preview.querySelectorAll('img').forEach(i => i.remove());
-  if (_logoDataUrl) {
-    const img = document.createElement('img');
-    img.src = _logoDataUrl;
-    preview.insertBefore(img, preview.firstChild);
-    if (initials) initials.style.visibility = 'hidden';
-    if (removeBtn) removeBtn.style.display = '';
-  } else {
-    if (initials) initials.style.visibility = '';
-    if (removeBtn) removeBtn.style.display = 'none';
-  }
-}
-
-function _clearForm() {
-  _logoDataUrl = null;
-  ['cf-name','cf-ae','cf-ats','cf-csam','cf-se'].forEach(id => document.getElementById(id).value = '');
-  ['cf-users','cf-copilot-users'].forEach(id => document.getElementById(id).value = '');
-  ['cf-renewal','cf-aop'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('cf-core-usage').value = '';
-  const urlField = document.getElementById('cf-logo-url');
-  if (urlField) urlField.value = '';
-  // Reset logo preview
-  const initials = document.getElementById('cf-logo-initials');
-  if (initials) { initials.textContent = '?'; initials.style.visibility = ''; }
-  document.getElementById('cf-logo-preview')?.querySelectorAll('img').forEach(i => i.remove());
-  const removeBtn = document.getElementById('cf-logo-remove');
-  if (removeBtn) removeBtn.style.display = 'none';
-}
-
-function _readForm() {
-  return {
-    name:         document.getElementById('cf-name').value.trim(),
-    logo:         _logoDataUrl,
-    users:        document.getElementById('cf-users').value.trim(),
-    copilotUsers: document.getElementById('cf-copilot-users').value.trim(),
-    renewalDate:  document.getElementById('cf-renewal').value,
-    aopDate:      document.getElementById('cf-aop').value,
-    aeName:       document.getElementById('cf-ae').value.trim(),
-    atsName:      document.getElementById('cf-ats').value.trim(),
-    csamName:     document.getElementById('cf-csam').value.trim(),
-    seName:       document.getElementById('cf-se').value.trim(),
-    coreUsage:    document.getElementById('cf-core-usage').value,
-  };
-}
-
-function openAddCustomer() {
-  _editingCustomerId = null;
-  _clearForm();
-  document.getElementById('customer-modal-title').textContent = '➕ Add Customer';
-  document.getElementById('customer-modal-btn').textContent   = 'Add Customer';
-  document.getElementById('customer-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('cf-name').focus(), 80);
-}
-
-function openEditCustomer() {
-  const c = state.customers.find(x => x.id === state.current);
-  if (!c) return;
-  _editingCustomerId = c.id;
-  _clearForm();
-  document.getElementById('cf-name').value          = c.name || '';
-  _logoDataUrl = c.logo || null;
-  const nm = (c.name || '').trim();
-  const initEl = document.getElementById('cf-logo-initials');
-  if (initEl) initEl.textContent = nm ? nm.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() : '?';
-  // If logo is a URL (not data URL), populate the URL field
-  if (c.logo && c.logo.startsWith('http')) {
-    const urlField = document.getElementById('cf-logo-url');
-    if (urlField) urlField.value = c.logo;
-  }
-  _applyLogoPreview();
-  document.getElementById('cf-users').value         = c.users || '';
-  document.getElementById('cf-copilot-users').value = c.copilotUsers || '';
-  document.getElementById('cf-renewal').value       = c.renewalDate || '';
-  document.getElementById('cf-aop').value           = c.aopDate || '';
-  document.getElementById('cf-ae').value            = c.aeName || '';
-  document.getElementById('cf-ats').value           = c.atsName || '';
-  document.getElementById('cf-csam').value          = c.csamName || '';
-  document.getElementById('cf-se').value            = c.seName || '';
-  document.getElementById('cf-core-usage').value   = c.coreUsage || '';
-  document.getElementById('customer-modal-title').textContent = '✏️ Edit Customer';
-  document.getElementById('customer-modal-btn').textContent   = 'Save Changes';
-  document.getElementById('customer-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('cf-name').focus(), 80);
-}
-
-function confirmSaveCustomer() {
-  const data = _readForm();
-  if (!data.name) { document.getElementById('cf-name').focus(); return; }
-
-  if (_editingCustomerId) {
-    // Edit existing
-    const c = state.customers.find(x => x.id === _editingCustomerId);
-    Object.assign(c, data);
-    save();
-    closeModal('customer-modal');
-    document.getElementById('crumb-name').textContent = c.name;
-    renderDetailHeader(c);
-  } else {
-    // Add new — use live template
-    const customer = {
-      id: uid(), createdAt: new Date().toISOString(),
-      ...data,
-      categories: state.template.map(cat => ({
-        id: cat.id, icon: cat.icon, title: cat.title,
-        items: cat.items.map(ti => ({ id:uid(), label: ti.label, status:'pending' }))
-      }))
-    };
-    state.customers.push(customer);
-    state.current = customer.id;
-    save();
-    closeModal('customer-modal');
-    openDetail(customer.id);
-  }
-}
-
-function deleteCustomer() {
-  const c = state.customers.find(x=>x.id===state.current);
-  if (!c || !confirm(`Delete customer "${c.name}"? This cannot be undone.`)) return;
-  state.customers = state.customers.filter(x=>x.id!==state.current);
-  state.current = null;
-  save();
-  goHome();
-}
-
-// ═══════════════════════════════════════════════════════
-//  REPORT
-// ═══════════════════════════════════════════════════════
-function openReport() { openReportFor(state.current); }
-
-function openReportFor(id) {
-  const customer = state.customers.find(c=>c.id===id);
-  if (!customer) return;
-  const s = custStats(customer);
-  const dateStr = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-
-  const catCards = customer.categories.map(cat => {
-    const catDone = cat.items.filter(i=>i.status==='done').length;
-    const items = cat.items.map(item => {
-      const m = STATUS_META[item.status]||STATUS_META.pending;
-      return `<div class="report-item">
-        <div class="ri-dot" style="background:${m.bg};color:${m.color}">${m.icon}</div>
-        <span>${escHtml(item.label)}</span>
-      </div>`;
-    }).join('');
-    return `<div class="report-category">
-      <div class="report-cat-header">${cat.icon} ${escHtml(cat.title)} <span style="margin-left:auto;opacity:.8;font-weight:400;font-size:10px">${catDone}/${cat.items.length}</span></div>
-      <div class="report-items">${items||'<div class="report-item" style="color:#999;font-style:italic">No items</div>'}</div>
+  const barsHtml = c.metrics.map(m => {
+    const pct = Math.round((m.value / m.max) * 100);
+    const label = m.max === 100 ? `${m.value}%` : `${m.value}/${m.max}`;
+    return `<div class="bar-item">
+      <div class="bar-item-label">${m.label}</div>
+      <div class="bar-item-track"><div class="bar-item-fill" style="width:${pct}%;background:${m.color};"></div></div>
+      <div class="bar-item-val">${label}</div>
     </div>`;
   }).join('');
 
-  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-  const metaRows = [
-    ['# of Users',       customer.users        ? Number(customer.users).toLocaleString()        : null],
-    ['Copilot 365 Users',customer.copilotUsers ? Number(customer.copilotUsers).toLocaleString() : null],
-    ['Renewal Date',     customer.renewalDate  ? fmtDate(customer.renewalDate) : null],
-    ['AOP Due Date',     customer.aopDate      ? fmtDate(customer.aopDate)     : null],
-    ['AE',               customer.aeName  || null],
-    ['ATS',              customer.atsName || null],
-    ['CSAM',             customer.csamName|| null],
-    ['SE',               customer.seName  || null],
-  ].filter(([,v]) => v);
+  const itemsHtml = c.recentItems.map(it => `
+    <div class="item-row">
+      <div class="item-dot" style="background:${it.color};"></div>
+      <div class="item-title">${it.title}</div>
+      <div class="item-pill ${STATUS_CLASS[it.status]}" style="${STATUS_STYLES[it.status]}">${it.status}</div>
+    </div>`).join('');
 
-  const metaTableHtml = metaRows.length ? `
-    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px">
-      <tbody>
-        ${metaRows.map(([ l, v], i) => `
-          <tr style="background:${i%2?'#f9f9f9':'#fff'}">
-            <td style="padding:4px 10px;font-weight:600;color:#555;width:160px;border:1px solid #e8e8e8">${l}</td>
-            <td style="padding:4px 10px;border:1px solid #e8e8e8">${escHtml(String(v))}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>` : '';
-
-  document.getElementById('report-content').innerHTML = `
-    <div class="report-header">
-      <div class="report-title-block">
-        <h1>Copilot Adoption Report</h1>
-        <p>Customer: <strong>${escHtml(customer.name)}</strong></p>
+  document.getElementById('d-body').innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-panel-label">Adoption Metrics</div>
+      <div class="bar-row">${barsHtml}</div>
+    </div>
+    <div class="detail-panel">
+      <div class="detail-panel-label">Account Info</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-lbl">Contract End</div><div class="info-item-val">${c.contractEnd}</div></div>
+        <div class="info-item"><div class="info-item-lbl">CSM Owner</div><div class="info-item-val">${c.csm}</div></div>
+        <div class="info-item"><div class="info-item-lbl">Industry</div><div class="info-item-val">${c.industry}</div></div>
+        <div class="info-item"><div class="info-item-lbl">Total Seats</div><div class="info-item-val">${c.seats.toLocaleString()}</div></div>
+        <div class="info-item"><div class="info-item-lbl">Active Users</div><div class="info-item-val">${c.activeUsers}</div></div>
+        <div class="info-item"><div class="info-item-lbl">Last Sync</div><div class="info-item-val">${c.sync}</div></div>
       </div>
-      <div class="report-meta"><div>📅 ${dateStr}</div><div>Copilot Adoption Tracker · by Tovik</div></div>
     </div>
-    ${metaTableHtml}
-    <div class="overall-progress">
-      <div class="op-label"><span>Overall Adoption Progress</span><span style="color:var(--ms-blue);font-weight:700">${s.pct}%</span></div>
-      <div class="op-bar"><div class="op-fill" style="width:${s.pct}%"></div></div>
-    </div>
-    <div class="report-summary">
-      <div class="summary-card" style="background:var(--done-bg)"><div class="sc-num" style="color:var(--done)">${s.done}</div><div class="sc-label" style="color:var(--done)">✓ Done</div></div>
-      <div class="summary-card" style="background:var(--miss-bg)"><div class="sc-num" style="color:var(--miss)">${s.missed}</div><div class="sc-label" style="color:var(--miss)">✗ Missed</div></div>
-      <div class="summary-card" style="background:var(--block-bg)"><div class="sc-num" style="color:var(--block)">${s.blocked}</div><div class="sc-label" style="color:var(--block)">⊘ Blocked</div></div>
-      <div class="summary-card" style="background:#e8f0fe"><div class="sc-num" style="color:var(--ms-blue)">${s.total}</div><div class="sc-label" style="color:var(--ms-blue)">Total Items</div></div>
-    </div>
-    <div class="report-grid">${catCards}</div>
-    <div class="report-footer">
-      <span>Confidential – For ${escHtml(customer.name)} only</span>
-      <span>Generated ${dateStr} • Microsoft Copilot Adoption Tracker</span>
+    <div class="detail-panel detail-full">
+      <div class="detail-panel-label">Recent Items</div>
+      <div class="items-list">${itemsHtml}</div>
     </div>`;
 
-  document.getElementById('report-modal').classList.remove('hidden');
+  document.getElementById('view-list').hidden   = true;
+  document.getElementById('view-detail').hidden = false;
 }
 
-// ═══════════════════════════════════════════════════════
-//  PILLAR TEMPLATE MANAGEMENT
-// ═══════════════════════════════════════════════════════
-function openPillars() {
-  renderPillarsModal();
-  document.getElementById('pillars-modal').classList.remove('hidden');
+function goBack() {
+  document.getElementById('tb-list').hidden   = false;
+  document.getElementById('tb-detail').hidden = true;
+  document.getElementById('kpi-row').hidden   = false;
+  document.getElementById('view-list').hidden   = false;
+  document.getElementById('view-detail').hidden = true;
 }
 
-function renderPillarsModal() {
-  const list = document.getElementById('pillars-list');
-  if (!state.template.length) {
-    list.innerHTML = '<div class="empty" style="padding:16px 0">No pillars yet — add one below.</div>';
-    return;
-  }
-  list.innerHTML = state.template.map(cat => {
-    const itemsHtml = cat.items.map(item => `
-      <div class="tmpl-item-row" id="ti-${item.id}">
-        <span class="tmpl-item-label">${escHtml(item.label)}</span>
-        <button class="icon-btn" title="Delete item"
-                onclick="deleteTemplateItem('${cat.id}','${item.id}')">🗑</button>
-      </div>`).join('');
-    return `
-      <div class="pillar-tmpl" id="pt-${cat.id}">
-        <div class="pillar-tmpl-header" onclick="togglePillarExpand('${cat.id}')">
-          <span class="pt-icon">${cat.icon}</span>
-          <input class="pt-name" value="${escHtml(cat.title)}" maxlength="60"
-                 onclick="event.stopPropagation()"
-                 onblur="renamePillar('${cat.id}',this.value)"
-                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" />
-          <span class="pt-count">${cat.items.length} items</span>
-          <span class="pt-chevron" id="chev-${cat.id}">▼</span>
-          <button class="icon-btn btn-danger" title="Delete pillar" style="color:var(--miss)"
-                  onclick="event.stopPropagation();deleteTemplatePillar('${cat.id}')">🗑</button>
-        </div>
-        <div class="pillar-tmpl-items" id="pti-${cat.id}">
-          ${itemsHtml || '<div class="empty">No items yet.</div>'}
-          <div class="tmpl-add-row">
-            <input type="text" id="new-ti-${cat.id}" placeholder="Add item to this pillar…" maxlength="100"
-                   onkeydown="if(event.key==='Enter') addTemplateItem('${cat.id}')" />
-            <button class="btn btn-blue btn-sm" onclick="addTemplateItem('${cat.id}')">+</button>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function togglePillarExpand(catId) {
-  const items  = document.getElementById(`pti-${catId}`);
-  const chev   = document.getElementById(`chev-${catId}`);
-  const isOpen = items.classList.contains('open');
-  // Close all others
-  document.querySelectorAll('.pillar-tmpl-items').forEach(el => el.classList.remove('open'));
-  document.querySelectorAll('.pt-chevron').forEach(el => el.classList.remove('open'));
-  if (!isOpen) {
-    items.classList.add('open');
-    chev.classList.add('open');
-  }
-}
-
-function renamePillar(catId, newTitle) {
-  newTitle = newTitle.trim();
-  if (!newTitle) return;
-  const cat = state.template.find(c => c.id === catId);
-  if (cat) { cat.title = newTitle; save(); }
-}
-
-function deleteTemplatePillar(catId) {
-  const cat = state.template.find(c => c.id === catId);
-  if (!cat || !confirm(`Delete pillar "${cat.title}" from template? Existing customers are not affected.`)) return;
-  state.template = state.template.filter(c => c.id !== catId);
-  save();
-  renderPillarsModal();
-}
-
-function addTemplateItem(catId) {
-  const input = document.getElementById(`new-ti-${catId}`);
-  const label = input.value.trim();
-  if (!label) return;
-  const cat = state.template.find(c => c.id === catId);
-  cat.items.push({ id: uid(), label });
-  save();
-  input.value = '';
-  renderPillarsModal();
-  // Re-expand the pillar
-  const items = document.getElementById(`pti-${catId}`);
-  const chev  = document.getElementById(`chev-${catId}`);
-  if (items) { items.classList.add('open'); chev && chev.classList.add('open'); }
-  document.getElementById(`new-ti-${catId}`)?.focus();
-}
-
-function deleteTemplateItem(catId, itemId) {
-  const cat = state.template.find(c => c.id === catId);
-  cat.items = cat.items.filter(i => i.id !== itemId);
-  save();
-  renderPillarsModal();
-  // Re-expand the pillar
-  const items = document.getElementById(`pti-${catId}`);
-  const chev  = document.getElementById(`chev-${catId}`);
-  if (items) { items.classList.add('open'); chev && chev.classList.add('open'); }
-}
-
-function addTemplatePillar() {
-  const icon  = document.getElementById('new-pillar-icon').value;
-  const name  = document.getElementById('new-pillar-name').value.trim();
-  if (!name) { document.getElementById('new-pillar-name').focus(); return; }
-  state.template.push({ id: uid(), icon, title: name, items: [] });
-  save();
-  document.getElementById('new-pillar-name').value = '';
-  renderPillarsModal();
-  // Auto-expand the new pillar
-  const last = state.template[state.template.length - 1];
-  togglePillarExpand(last.id);
-}
-
-// ═══════════════════════════════════════════════════════
-//  CUSTOMER SECTION MANAGEMENT (in detail view)
-// ═══════════════════════════════════════════════════════
-let _sectionCustId = null;
-
-function openAddSection() {
-  _sectionCustId = state.current;
-  document.getElementById('sf-name').value = '';
-  document.getElementById('section-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('sf-name').focus(), 80);
-}
-
-function confirmAddSection() {
-  const name = document.getElementById('sf-name').value.trim();
-  if (!name) { document.getElementById('sf-name').focus(); return; }
-  const icon     = document.getElementById('sf-icon').value;
-  const customer = state.customers.find(c => c.id === _sectionCustId);
-  if (!customer) return;
-  customer.categories.push({ id: uid(), icon, title: name, items: [] });
-  save();
-  closeModal('section-modal');
-  renderCategories(customer);
-  renderDetailHeader(customer);
-}
-
-function deleteCustomerSection(custId, catId) {
-  const customer = state.customers.find(c => c.id === custId);
-  const cat = customer && customer.categories.find(c => c.id === catId);
-  if (!cat || !confirm(`Delete section "${cat.title}"?\nAll items in this section will be removed.`)) return;
-  customer.categories = customer.categories.filter(c => c.id !== catId);
-  save();
-  renderCategories(customer);
-  renderDetailHeader(customer);
-}
-
-function startSectionRename(labelEl, custId, catId) {
-  if (labelEl.getAttribute('contenteditable') === 'true') return;
-  labelEl.setAttribute('contenteditable', 'true');
-  labelEl.focus();
-  const r = document.createRange(); r.selectNodeContents(labelEl); r.collapse(false);
-  window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
-
-  const finish = () => {
-    labelEl.removeAttribute('contenteditable');
-    const newTitle = labelEl.textContent.trim();
-    const customer = state.customers.find(c => c.id === custId);
-    const cat      = customer && customer.categories.find(c => c.id === catId);
-    if (!cat) return;
-    if (newTitle) { cat.title = newTitle; save(); }
-    else { labelEl.textContent = cat.title; }
-    labelEl.removeEventListener('keydown', kh);
-  };
-  const kh = e => {
-    if (e.key === 'Enter')  { e.preventDefault(); finish(); }
-    if (e.key === 'Escape') { labelEl.textContent = ''; finish(); }
-  };
-  labelEl.addEventListener('blur', finish, { once: true });
-  labelEl.addEventListener('keydown', kh);
-}
-
-// ═══════════════════════════════════════════════════════
-//  EXPORT / IMPORT
-// ═══════════════════════════════════════════════════════
-function exportData() {
-  const payload = {
-    _version: 1,
-    _exported: new Date().toISOString(),
-    _app: 'Copilot Adoption Tracker by Tovik',
-    customers: state.customers,
-    template:  state.template,
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
-  a.href     = url;
-  a.download = `copilot-tracker-backup-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('✅ Data exported successfully');
-}
-
-function importData(input) {
-  if (window.__readOnly) return;
-  const file = input.files[0];
-  if (!file) return;
-  input.value = ''; // reset so same file can be re-selected
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const payload = JSON.parse(e.target.result);
-      // Validate basic structure
-      if (!payload.customers || !Array.isArray(payload.customers)) {
-        throw new Error('Invalid file: missing customers array');
-      }
-      const custCount = payload.customers.length;
-      const mode = confirm(
-        `Import file contains ${custCount} customer(s).\n\n` +
-        `• OK  → REPLACE all current data with imported data\n` +
-        `• Cancel → Merge imported customers into existing data (skip duplicates)`
-      );
-      if (mode) {
-        // Replace
-        state.customers = payload.customers;
-        state.template  = payload.template || state.template;
-        state.current   = null;
-      } else {
-        // Merge — skip customers that share the same id
-        const existingIds = new Set(state.customers.map(c => c.id));
-        const newOnes = payload.customers.filter(c => !existingIds.has(c.id));
-        state.customers.push(...newOnes);
-        if (payload.template) state.template = payload.template;
-      }
-      save();
-      goHome();
-      showToast(`✅ Imported ${custCount} customer(s) successfully`);
-    } catch (err) {
-      alert('Import failed: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-// ═══════════════════════════════════════════════════════
-//  ONEDRIVE — MICROSOFT GRAPH (MSAL)
-// ═══════════════════════════════════════════════════════
-const OD_FILE_NAME  = 'copilot-tracker-data.json';
-const GRAPH_SCOPES  = ['Files.ReadWrite', 'User.Read'];
-const OD_STORE_KEY  = 'copilot-tracker-od';
-const OD_CID_KEY    = 'copilot-tracker-od-clientid';
-
-let _msalApp     = null;
-let _msalAccount = null;
-let _odAutosave  = false;
-let _odSaveTimer = null;
-
-async function initOneDrive() {
-  // Restore autosave preference and attempt silent sign-in
-  try {
-    const od = JSON.parse(localStorage.getItem(OD_STORE_KEY) || '{}');
-    _odAutosave = !!od.autosave;
-    const clientId = localStorage.getItem(OD_CID_KEY);
-    if (!clientId) return;
-    if (typeof msal === 'undefined') return;
-    const app = await _buildMsalApp(clientId);
-    const accounts = app.getAllAccounts();
-    if (accounts.length > 0) {
-      _msalAccount = accounts[0];
-      updateOdBtn();
-    }
-  } catch { /* silent fail */ }
-}
-
-async function _buildMsalApp(clientId) {
-  if (_msalApp && _msalApp._config && _msalApp._config.auth.clientId === clientId) return _msalApp;
-  const app = new msal.PublicClientApplication({
-    auth: {
-      clientId,
-      authority: 'https://login.microsoftonline.com/common',
-      redirectUri: window.location.href.split('?')[0].split('#')[0],
-    },
-    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false },
-  });
-  await app.initialize();
-  _msalApp = app;
-  return app;
-}
-
-async function _getAccessToken() {
-  if (!_msalApp || !_msalAccount) throw new Error('Not signed in to OneDrive');
-  try {
-    const r = await _msalApp.acquireTokenSilent({ scopes: GRAPH_SCOPES, account: _msalAccount });
-    return r.accessToken;
-  } catch {
-    const r = await _msalApp.acquireTokenPopup({ scopes: GRAPH_SCOPES, account: _msalAccount });
-    _msalAccount = r.account;
-    return r.accessToken;
-  }
-}
-
-function openOneDriveModal() {
-  const saved = localStorage.getItem(OD_CID_KEY) || '';
-  const cidEl = document.getElementById('od-client-id');
-  if (cidEl && saved) cidEl.value = saved;
-  _renderOdState();
-  document.getElementById('od-msft-status').textContent = '';
-  // If a ?gist= param is present, jump straight to the GitHub tab
-  const urlGist = new URLSearchParams(window.location.search).get('gist');
-  switchOdTab(urlGist ? 'github' : 'msft');
-  document.getElementById('onedrive-modal').classList.remove('hidden');
-}
-
-function switchOdTab(tab) {
-  document.getElementById('od-panel-msft').style.display   = tab === 'msft'   ? '' : 'none';
-  document.getElementById('od-panel-url').style.display    = tab === 'url'    ? '' : 'none';
-  document.getElementById('od-panel-github').style.display = tab === 'github' ? '' : 'none';
-  document.getElementById('od-tab-msft').classList.toggle('active', tab === 'msft');
-  document.getElementById('od-tab-url').classList.toggle('active', tab === 'url');
-  document.getElementById('od-tab-github').classList.toggle('active', tab === 'github');
-  if (tab === 'github') _renderGhState();
-}
-
-function _renderOdState() {
-  const signedIn = !!_msalAccount;
-  document.getElementById('od-signed-out-panel').style.display = signedIn ? 'none' : '';
-  document.getElementById('od-signed-in-panel').style.display  = signedIn ? '' : 'none';
-  if (signedIn) {
-    document.getElementById('od-username-label').textContent = _msalAccount.username || _msalAccount.name || '';
-    document.getElementById('od-autosave-toggle').checked = _odAutosave;
-  }
-}
-
-function toggleClientIdHelp() {
-  const el = document.getElementById('od-clientid-help');
-  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
-}
-
-async function signInOneDrive() {
-  const clientId = document.getElementById('od-client-id').value.trim();
-  const st = document.getElementById('od-msft-status');
-  if (!clientId) { st.style.color = 'var(--miss)'; st.textContent = '⚠️ Enter your Client ID first.'; return; }
-  if (typeof msal === 'undefined') { st.style.color = 'var(--miss)'; st.textContent = '⚠️ MSAL library failed to load. Check your internet connection.'; return; }
-  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Opening Microsoft sign-in…';
-  try {
-    localStorage.setItem(OD_CID_KEY, clientId);
-    const app = await _buildMsalApp(clientId);
-    const result = await app.loginPopup({ scopes: GRAPH_SCOPES });
-    _msalAccount = result.account;
-    st.textContent = '';
-    _renderOdState();
-    updateOdBtn();
-    showToast('✅ Signed in as ' + (_msalAccount.username || _msalAccount.name));
-  } catch(e) {
-    if (e.errorCode !== 'user_cancelled') {
-      st.style.color = 'var(--miss)';
-      st.textContent = '⚠️ Sign-in failed: ' + (e.message || e.errorCode || String(e));
-    } else { st.textContent = ''; }
-  }
-}
-
-function signOutOneDrive() {
-  if (_msalApp && _msalAccount) _msalApp.logoutPopup({ account: _msalAccount }).catch(() => {});
-  _msalAccount = null;
-  _odAutosave = false;
-  localStorage.setItem(OD_STORE_KEY, JSON.stringify({ autosave: false }));
-  _renderOdState();
-  updateOdBtn();
-  showToast('Signed out from OneDrive');
-}
-
-function toggleOdAutosave(enabled) {
-  _odAutosave = enabled;
-  localStorage.setItem(OD_STORE_KEY, JSON.stringify({ autosave: enabled }));
-  updateOdBtn();
-  showToast(enabled ? '✅ OneDrive auto-save enabled' : 'OneDrive auto-save disabled');
-  if (enabled) _scheduleOdSave();
-}
-
-function _scheduleOdSave() {
-  if (!_odAutosave || !_msalAccount) return;
-  clearTimeout(_odSaveTimer);
-  _odSaveTimer = setTimeout(_doOdSave, 800);
-}
-
-async function _doOdSave() {
-  try {
-    const token = await _getAccessToken();
-    const payload = {
-      _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
-      _saved: new Date().toISOString(),
-      customers: state.customers, template: state.template,
-    };
-    const res = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/root:/${OD_FILE_NAME}:/content`,
-      { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload, null, 2) }
-    );
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    updateOdBtn(true); // flash green
-  } catch(e) { showToast('⚠️ OneDrive auto-save failed: ' + e.message); }
-}
-
-async function saveToOneDrive() {
-  const st = document.getElementById('od-msft-status');
-  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Saving…';
-  try {
-    const token = await _getAccessToken();
-    const payload = {
-      _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
-      _saved: new Date().toISOString(),
-      customers: state.customers, template: state.template,
-    };
-    const res = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/root:/${OD_FILE_NAME}:/content`,
-      { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload, null, 2) }
-    );
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    st.style.color = 'var(--done)'; st.textContent = '✅ Saved to OneDrive successfully';
-    showToast('✅ Saved to OneDrive');
-    updateOdBtn();
-  } catch(e) {
-    st.style.color = 'var(--miss)'; st.textContent = '⚠️ Save failed: ' + e.message;
-    showToast('⚠️ OneDrive save failed');
-  }
-}
-
-async function loadFromOneDriveMsft() {
-  const st = document.getElementById('od-msft-status');
-  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Loading from OneDrive…';
-  try {
-    const token = await _getAccessToken();
-    const res = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/root:/${OD_FILE_NAME}:/content`,
-      { headers: { Authorization: 'Bearer ' + token } }
-    );
-    if (res.status === 404) throw new Error('File not found in OneDrive — save first to create it.');
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    const payload = JSON.parse(await res.text());
-    if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid file format');
-    const custCount = payload.customers.length;
-    const replace = confirm(
-      `OneDrive file has ${custCount} customer(s).\n\nOK → Replace all current data\nCancel → Merge (skip duplicates)`
-    );
-    if (replace) {
-      state.customers = payload.customers;
-      state.template  = payload.template || state.template;
-      state.current   = null;
-    } else {
-      const ids = new Set(state.customers.map(c => c.id));
-      state.customers.push(...payload.customers.filter(c => !ids.has(c.id)));
-      if (payload.template) state.template = payload.template;
-    }
-    save();
-    closeModal('onedrive-modal');
-    goHome();
-    showToast(`✅ Loaded ${custCount} customer(s) from OneDrive`);
-  } catch(e) {
-    st.style.color = 'var(--miss)'; st.textContent = '⚠️ Load failed: ' + e.message;
-  }
-}
-
-function updateOdBtn() {
-  const btn = document.getElementById('od-btn');
-  if (!btn) return;
-  if (_msalAccount) {
-    const name = (_msalAccount.name || _msalAccount.username || 'OneDrive').split(' ')[0];
-    btn.textContent = '🟢 ' + name + (_odAutosave ? ' ●' : '');
-    btn.title = 'OneDrive: ' + (_msalAccount.username || '') + (_odAutosave ? ' (auto-save on)' : '') + ' — click to manage';
-    btn.classList.add('od-on');
-  } else if (_ghGistId) {
-    btn.textContent = '🐙 GitHub' + (_ghAutosave ? ' ●' : '');
-    btn.title = 'GitHub Gist: ' + _ghGistId + (_ghAutosave ? ' (auto-sync on)' : '') + ' — click to manage';
-    btn.classList.add('od-on');
-  } else {
-    btn.textContent = '☁️ Cloud Sync';
-    btn.title = 'Save and load via OneDrive, GitHub Gist, or URL';
-    btn.classList.remove('od-on');
-  }
-}
-
-// ── Load from URL (anonymous public URL) ────────────────
-function _resolveOdShareUrl(url) {
-  if (/^https?:\/\/(1drv\.ms|onedrive\.live\.com)\//i.test(url)) {
-    try {
-      const encoded = btoa(url).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-      return `https://api.onedrive.com/v1.0/shares/u!${encoded}/root/content`;
-    } catch { return url; }
-  }
-  if (/sharepoint\.com/i.test(url) && !url.includes('download=1')) {
-    return url + (url.includes('?') ? '&' : '?') + 'download=1';
-  }
-  return url;
-}
-
-async function loadFromOneDriveUrl() {
-  const rawUrl = document.getElementById('od-url-input').value.trim();
-  const st = document.getElementById('od-url-status');
-  if (!rawUrl) { st.style.color = 'var(--miss)'; st.textContent = '⚠️ Please enter a URL.'; return; }
-  st.style.color = 'var(--ms-muted)'; st.textContent = '⏳ Fetching…';
-  try {
-    const res = await fetch(_resolveOdShareUrl(rawUrl));
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    const payload = JSON.parse(await res.text());
-    if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid file: missing customers array');
-    const custCount = payload.customers.length;
-    const replace = confirm(
-      `File has ${custCount} customer(s).\n\nOK → Replace all current data\nCancel → Merge (skip duplicates)`
-    );
-    if (replace) {
-      state.customers = payload.customers;
-      state.template  = payload.template || state.template;
-      state.current   = null;
-    } else {
-      const ids = new Set(state.customers.map(c => c.id));
-      state.customers.push(...payload.customers.filter(c => !ids.has(c.id)));
-      if (payload.template) state.template = payload.template;
-    }
-    save();
-    closeModal('onedrive-modal');
-    goHome();
-    showToast(`✅ Loaded ${custCount} customer(s) from URL`);
-  } catch(e) {
-    st.style.color = 'var(--miss)';
-    const msg = e.message || '';
-    if (e.name === 'TypeError' || msg.toLowerCase().includes('failed to fetch')) {
-      st.textContent = '⚠️ Could not reach URL — the file may not be publicly accessible or CORS is blocked. Use the Microsoft OneDrive tab (signed-in) for reliable access.';
-    } else {
-      st.textContent = '⚠️ Error: ' + msg;
-    }
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-//  GITHUB GIST SYNC
-//  • On page load  → fetch fresh JSON from Gist (no browser cache)
-//  • On every save → debounced PATCH to Gist (800 ms)
-//  • Auto-poll     → re-fetch every 30 s for remote changes
-// ═══════════════════════════════════════════════════════
-const GH_PAT_KEY   = 'copilot-tracker-gh-pat';
-const GH_GIST_KEY  = 'copilot-tracker-gh-gist';
-const GH_RAW_KEY   = 'copilot-tracker-gh-raw';   // raw URL for cache-busting reads
-const GH_AUTO_KEY  = 'copilot-tracker-gh-auto';
-const GH_FILE      = 'copilot-tracker-data.json';
-// GitHub username — used to auto-discover the public Gist in any browser (no setup needed)
-const GH_OWNER     = 'toviksiton';
-
-let _ghPat      = localStorage.getItem(GH_PAT_KEY)  || '';
-let _ghGistId   = localStorage.getItem(GH_GIST_KEY) || '';
-let _ghRawUrl   = localStorage.getItem(GH_RAW_KEY)  || '';
-let _ghAutosave = localStorage.getItem(GH_AUTO_KEY) === 'true';
-let _ghSaveTimer = null;
-let _ghPollTimer = null;
-let _ghSaving    = false;  // true while PATCH is in-flight
-
-// Warn before refresh/close when a save is pending or in-flight
-window.addEventListener('beforeunload', e => {
-  if (_ghSaveTimer || _ghSaving) {
-    e.preventDefault();
-    e.returnValue = 'Changes are still being saved to GitHub. Leave anyway?';
-    return e.returnValue;
-  }
-});
-
-// ── Init: called on DOMContentLoaded ─────────────────
-async function initGitHub() {
-  // Layer 1: ?gist=ID URL param (from share link)
-  const urlGist = new URLSearchParams(window.location.search).get('gist');
-  if (urlGist && urlGist !== _ghGistId) {
-    _ghGistId = urlGist;
-    localStorage.setItem(GH_GIST_KEY, _ghGistId);
-  }
-
-  // Layer 2: Auto-discover — ALWAYS run (not just when empty) so browsers with a
-  // stale/wrong Gist ID automatically correct to the most recently updated one.
-  // Uses PAT if available for higher rate limits.
-  if (GH_OWNER && !urlGist) {
-    try {
-      const hdrs = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
-      if (_ghPat) hdrs['Authorization'] = 'token ' + _ghPat;
-      const res = await fetch(
-        `https://api.github.com/users/${GH_OWNER}/gists?per_page=30`,
-        { headers: hdrs, cache: 'no-store' }
-      );
-      if (res.ok) {
-        const list = await res.json();
-        // Pick the most-recently-updated tracker Gist (handles the case where
-        // the user has multiple old Gists and only one has real data)
-        const found = Array.isArray(list) && list
-          .filter(g => g.description === 'Copilot Adoption Tracker data' && g.files && g.files[GH_FILE])
-          .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
-        if (found && found.id !== _ghGistId) {
-          _ghGistId = found.id;
-          localStorage.setItem(GH_GIST_KEY, _ghGistId);
-          _ghRawUrl = '';                      // raw URL belongs to the old Gist
-          localStorage.removeItem(GH_RAW_KEY);
-        }
-      }
-    } catch(e) { /* no network or no gist yet — silent */ }
-  }
-
-  if (!_ghGistId) return;
-  updateOdBtn();
-  // Always fetch from GitHub API on page load — never use cached raw URL here,
-  // as it points to a specific old commit and would miss the most recent save.
-  _ghRawUrl = '';
-  const loaded = await _loadFromGist(true);
-  if (loaded) {
-    renderDashboard();
-    if (urlGist) showToast('✅ Data loaded from shared GitHub Gist');
-    else         showToast('✅ Data loaded from GitHub Gist');
-  }
-  if (_ghAutosave) _startGhPoll();
-}
-
-// ── Read: fetch Gist content, bypassing all browser caches ──
-async function _loadFromGist(silent) {
-  if (!_ghGistId) return false;
-  try {
-    let payload;
-    if (_ghRawUrl) {
-      // Raw URL + timestamp query = guaranteed fresh response
-      const res = await fetch(_ghRawUrl + '?t=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      payload = JSON.parse(await res.text());
-    } else {
-      // Fall back to GitHub API (always fresh, CORS-safe, no auth needed for public gists)
-      const headers = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
-      if (_ghPat) headers['Authorization'] = 'token ' + _ghPat;
-      const res = await fetch('https://api.github.com/gists/' + _ghGistId, { headers, cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const gist = await res.json();
-      const file = gist.files[GH_FILE];
-      if (!file) throw new Error('File "' + GH_FILE + '" not found in Gist');
-      // Store raw_url so future reads skip the API overhead
-      _ghRawUrl = file.raw_url.split('?')[0]; // strip any existing query
-      localStorage.setItem(GH_RAW_KEY, _ghRawUrl);
-      // Large gists: content may be truncated; use raw_url in that case
-      const content = file.truncated
-        ? await (await fetch(_ghRawUrl + '?t=' + Date.now(), { cache: 'no-store' })).text()
-        : file.content;
-      payload = JSON.parse(content);
-    }
-    if (!payload.customers || !Array.isArray(payload.customers)) throw new Error('Invalid data structure');
-    state.customers = payload.customers;
-    state.template  = payload.template || state.template;
-    state.current   = null;
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
-    _ghStatus('✅ Synced from GitHub · ' + new Date().toLocaleTimeString(), 'var(--done)');
-    return true;
-  } catch(e) {
-    if (!silent) _ghStatus('⚠️ Load failed: ' + e.message, 'var(--miss)');
-    return false;
-  }
-}
-
-// ── Write: push current state to Gist ────────────────
-function _scheduleGhSave() {
-  if (!_ghPat || !_ghGistId) return;
-  clearTimeout(_ghSaveTimer);
-  _ghSaveTimer = setTimeout(_doGhSave, 800);
-  _updateOdBtnSaving(true);
-}
-
-async function _doGhSave() {
-  _ghSaveTimer = null;
-  if (!_ghPat || !_ghGistId) return;
-  _ghSaving = true;
-  try {
-    const payload = {
-      _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
-      _saved: new Date().toISOString(),
-      customers: state.customers, template: state.template,
-    };
-    const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': 'token ' + _ghPat,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-      body: JSON.stringify({ files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
-    });
-    if (!res.ok) {
-      let msg = 'HTTP ' + res.status;
-      if (res.status === 403) {
-        msg = 'HTTP 403 — PAT missing "gist" scope or expired. Go to github.com/settings/tokens and create a new token with the "gist" scope, then re-enter it here.';
-      } else if (res.status === 404) {
-        msg = 'HTTP 404 — Gist not found. Check the Gist ID or reconnect.';
-      } else if (res.status === 401) {
-        msg = 'HTTP 401 — Invalid PAT. Please update your GitHub token.';
-      } else {
-        try { const body = await res.json(); if (body.message) msg += ': ' + body.message; } catch(_) {}
-      }
-      throw new Error(msg);
-    }
-    const gist = await res.json();
-    const file = gist.files[GH_FILE];
-    if (file && file.raw_url) {
-      _ghRawUrl = file.raw_url.split('?')[0];
-      localStorage.setItem(GH_RAW_KEY, _ghRawUrl);
-    }
-    _ghStatus('✅ Saved to GitHub · ' + new Date().toLocaleTimeString(), 'var(--done)');
-  } catch(e) {
-    showToast('⚠️ GitHub save failed: ' + e.message);
-    _ghStatus('⚠️ Save failed: ' + e.message, 'var(--miss)');
-  } finally {
-    _ghSaving = false;
-    _updateOdBtnSaving(false);
-  }
-}
-
-function _updateOdBtnSaving(saving) {
-  const btn = document.getElementById('od-btn');
-  if (!btn) return;
-  if (saving) { btn.textContent = '⏳ Saving…'; }
-  else         { updateOdBtn(); }
-}
-
-// ── Polling: pull remote changes every 30 s ──────────
-function _startGhPoll() {
-  clearInterval(_ghPollTimer);
-  _ghPollTimer = setInterval(async () => {
-    const loaded = await _loadFromGist(true);
-    if (loaded) renderDashboard();
-  }, 30000);
-}
-function _stopGhPoll() { clearInterval(_ghPollTimer); _ghPollTimer = null; }
-
-// ── UI helpers ────────────────────────────────────────
-function _ghStatus(msg, color) {
-  const el = document.getElementById('gh-status');
-  if (el) { el.textContent = msg; el.style.color = color || 'var(--ms-muted)'; }
-}
-
-function _renderGhState() {
-  const connected = !!(_ghGistId);
-  const outEl = document.getElementById('gh-disconnected-panel');
-  const inEl  = document.getElementById('gh-connected-panel');
-  if (!outEl || !inEl) return;
-  outEl.style.display = connected ? 'none' : '';
-  inEl.style.display  = connected ? '' : 'none';
-  if (connected) {
-    const lbl = document.getElementById('gh-gist-label');
-    if (lbl) lbl.textContent = 'Gist ID: ' + _ghGistId;
-    const tog = document.getElementById('gh-autosave-toggle');
-    if (tog) tog.checked = _ghAutosave;
-    // Show PAT warning when write access is unavailable
-    const warn = document.getElementById('gh-no-pat-warning');
-    if (warn) warn.style.display = _ghPat ? 'none' : '';
-    // Populate share URL
-    const shareEl = document.getElementById('gh-share-url');
-    if (shareEl) {
-      const base = window.location.origin + window.location.pathname;
-      shareEl.value = base + '?gist=' + _ghGistId;
-    }
-  } else {
-    // Pre-fill saved values in the inputs; also check URL param as fallback
-    const urlGist = new URLSearchParams(window.location.search).get('gist');
-    const patEl  = document.getElementById('gh-pat-input');
-    const gistEl = document.getElementById('gh-gist-input');
-    if (patEl && _ghPat)                       patEl.value  = _ghPat;
-    if (gistEl && (_ghGistId || urlGist))      gistEl.value = _ghGistId || urlGist;
-  }
-}
-
-// Returns an error string if the PAT is invalid or missing gist scope, null if OK
-async function _validateGhPatScopes(pat) {
-  if (pat.startsWith('github_pat_')) {
-    return 'Fine-grained PATs do not support the Gist API. Please create a Classic PAT (ghp_…) at github.com/settings/tokens with the "gist" scope.';
-  }
-  try {
-    const res = await fetch('https://api.github.com/user', {
-      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-    });
-    if (!res.ok) return 'Invalid PAT (HTTP ' + res.status + ') — check the token and try again.';
-    const scopes = (res.headers.get('X-OAuth-Scopes') || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (!scopes.includes('gist')) {
-      return 'Token is missing the "gist" scope (current scopes: ' + (scopes.join(', ') || 'none') + '). Edit the token at github.com/settings/tokens and add the "gist" scope.';
-    }
-    return null; // all good
-  } catch(e) {
-    return 'Could not reach GitHub: ' + e.message;
-  }
-}
-
-// Update PAT while staying connected (shown when no PAT is stored)
-async function updateGhPat() {
-  const pat = (document.getElementById('gh-pat-update').value || '').trim();
-  if (!pat) { _ghStatus('⚠️ Enter a PAT first.', 'var(--miss)'); return; }
-  _ghStatus('⏳ Validating…', 'var(--ms-muted)');
-  const scopeErr = await _validateGhPatScopes(pat);
-  if (scopeErr) { _ghStatus('⚠️ ' + scopeErr, 'var(--miss)'); return; }
-  _ghPat = pat;
-  localStorage.setItem(GH_PAT_KEY, _ghPat);
-  _renderGhState();
-  _ghStatus('✅ PAT saved — auto-sync now enabled', 'var(--done)');
-  if (_ghAutosave) { _scheduleGhSave(); _startGhPoll(); }
-}
-
-function copyGhShareUrl() {
-  const el = document.getElementById('gh-share-url');
-  if (!el) return;
-  navigator.clipboard.writeText(el.value).then(() => showToast('📋 Share link copied!'));
-}
-
-// ── Connect / Disconnect ──────────────────────────────
-async function connectGitHub() {
-  const pat    = (document.getElementById('gh-pat-input').value  || '').trim();
-  const gistId = (document.getElementById('gh-gist-input').value || '').trim();
-  if (!pat && !gistId) {
-    _ghStatus('⚠️ Enter a PAT and/or Gist ID to connect.', 'var(--miss)'); return;
-  }
-  _ghStatus('⏳ Connecting…', 'var(--ms-muted)');
-
-  let resolvedGistId = gistId;
-
-  if (pat) {
-    // Verify PAT and check gist scope
-    const scopeErr = await _validateGhPatScopes(pat);
-    if (scopeErr) { _ghStatus('⚠️ ' + scopeErr, 'var(--miss)'); return; }
-    const userRes = await fetch('https://api.github.com/user', {
-      headers: { 'Authorization': 'token ' + pat, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-    });
-    if (!userRes.ok) { _ghStatus('⚠️ Invalid PAT (HTTP ' + userRes.status + ')', 'var(--miss)'); return; }
-    const user = await userRes.json();
-
-    if (!resolvedGistId) {
-      // Create a new public Gist with current data
-      const payload = {
-        _version: 1, _app: 'Copilot Adoption Tracker by Tovik',
-        _saved: new Date().toISOString(),
-        customers: state.customers, template: state.template,
-      };
-      const createRes = await fetch('https://api.github.com/gists', {
-        method: 'POST',
-        headers: { 'Authorization': 'token ' + pat, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-        body: JSON.stringify({ description: 'Copilot Adoption Tracker data', public: true, files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
-      });
-      if (!createRes.ok) { _ghStatus('⚠️ Could not create Gist (HTTP ' + createRes.status + ')', 'var(--miss)'); return; }
-      const gist = await createRes.json();
-      resolvedGistId = gist.id;
-      const file = gist.files[GH_FILE];
-      if (file && file.raw_url) { _ghRawUrl = file.raw_url.split('?')[0]; localStorage.setItem(GH_RAW_KEY, _ghRawUrl); }
-      showToast('✅ New Gist created! ID: ' + resolvedGistId);
-    }
-
-    _ghPat = pat;
-    localStorage.setItem(GH_PAT_KEY, pat);
-    _ghStatus('✅ Connected as ' + user.login, 'var(--done)');
-  }
-
-  _ghGistId = resolvedGistId;
-  localStorage.setItem(GH_GIST_KEY, _ghGistId);
-
-  // Load existing Gist data (or save current data if Gist was just created)
-  _ghStatus('⏳ Loading from Gist…', 'var(--ms-muted)');
-  const loaded = await _loadFromGist(false);
-  if (loaded) {
-    renderDashboard();
-    showToast('✅ Connected & loaded from GitHub Gist');
-  } else if (pat && gistId) {
-    // Gist exists but couldn't load — try saving current data to it
-    await _doGhSave();
-  }
-
-  _renderGhState();
-  updateOdBtn();
-  if (_ghAutosave && _ghPat) _startGhPoll();
-}
-
-function disconnectGitHub() {
-  _stopGhPoll();
-  _ghPat = ''; _ghGistId = ''; _ghRawUrl = ''; _ghAutosave = false;
-  localStorage.removeItem(GH_PAT_KEY);
-  localStorage.removeItem(GH_GIST_KEY);
-  localStorage.removeItem(GH_RAW_KEY);
-  localStorage.removeItem(GH_AUTO_KEY);
-  _renderGhState();
-  _ghStatus('', '');
-  updateOdBtn();
-  showToast('Disconnected from GitHub Gist');
-}
-
-function toggleGhAutosave(enabled) {
-  _ghAutosave = enabled;
-  localStorage.setItem(GH_AUTO_KEY, enabled ? 'true' : 'false');
-  if (enabled) { _scheduleGhSave(); _startGhPoll(); }
-  else { _stopGhPoll(); }
-  updateOdBtn();
-  showToast(enabled ? '✅ GitHub auto-sync enabled' : 'GitHub auto-sync disabled');
-}
-
-// ── Manual actions ────────────────────────────────────
-async function saveToGistManual() {
-  _ghStatus('⏳ Saving…', 'var(--ms-muted)');
-  await _doGhSave();
-}
-
-async function loadFromGistManual() {
-  _ghStatus('⏳ Loading…', 'var(--ms-muted)');
-  const loaded = await _loadFromGist(false);
-  if (loaded) { renderDashboard(); showToast('✅ Data loaded from GitHub Gist'); }
-}
-
-let _toastTimer = null;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-// ═══════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').forEach(el =>
-  el.addEventListener('click', e => { if (e.target===el) el.classList.add('hidden'); })
-);
-
-// ═══════════════════════════════════════════════════════
-//  AI CHAT ASSISTANT
-// ═══════════════════════════════════════════════════════
-
-let _aiHistory  = [];   // [{role, content}]
-let _aiStreaming = false;
-
-function toggleAiChat() {
-  const panel = document.getElementById('ai-panel');
-  const fab   = document.getElementById('ai-fab');
-  panel.classList.toggle('open');
-  const isOpen = panel.classList.contains('open');
-  fab.style.display = isOpen ? 'none' : '';
-  if (isOpen) setTimeout(() => document.getElementById('ai-input')?.focus(), 320);
-}
-
-function clearAiChat() {
-  _aiHistory = [];
-  document.getElementById('ai-messages').innerHTML = _aiWelcomeHtml();
-}
-
-function _aiWelcomeHtml() {
-  return `<div class="ai-msg assistant">👋 Hi! I have access to all your customer data. Ask me anything — adoption rates, blockers, team assignments, renewal dates, comparisons across customers, etc.</div>`;
-}
-
-function _buildAiSystemPrompt() {
-  const now = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
-  const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : null;
-  const customers = state.customers.map(c => {
-    const s = custStats(c);
-    return {
-      name: c.name,
-      users: c.users ? Number(c.users) : null,
-      copilotUsers: c.copilotUsers ? Number(c.copilotUsers) : null,
-      renewalDate: fmtD(c.renewalDate),
-      aopDate: fmtD(c.aopDate),
-      aeName: c.aeName || null,
-      atsName: c.atsName || null,
-      csamName: c.csamName || null,
-      seName: c.seName || null,
-      coreUsage: c.coreUsage || null,
-      adoption: { pct: s.pct, done: s.done, missed: s.missed, blocked: s.blocked, unblocking: s.unblock, pending: s.pending, total: s.total },
-      categories: c.categories.map(cat => ({ name: cat.title, items: cat.items.map(i => ({ label: i.label, status: i.status })) }))
-    };
-  });
-  return `You are an AI assistant inside the "Copilot Adoption Tracker" app, used by a Microsoft partner to manage Microsoft 365 Copilot rollouts across customers.
-
-Today: ${now}
-Customers tracked: ${customers.length}
-
-Customer data (JSON):
-${JSON.stringify(customers, null, 2)}
-
-Item status legend: done=completed, missed=not done/failed, blocked=blocked, unblocking=resolving blocker, pending=not started.
-365 Core Usage: good=green, partial=orange, low=red, null=not set.
-
-Be concise and specific. Use customer names and real numbers. Format responses with **bold** and bullet points where helpful.`;
-}
-
-function _fmtAiText(raw) {
-  return escHtml(raw)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\n- /g, '\n• ')
-    .replace(/\n/g, '<br>');
-}
-
-function _appendMsg(role, html, id) {
-  const wrap = document.getElementById('ai-messages');
-  const div  = document.createElement('div');
-  div.className = `ai-msg ${role}`;
-  if (id) div.id = id;
-  div.innerHTML = html;
-  wrap.appendChild(div);
-  wrap.scrollTop = wrap.scrollHeight;
-  return div;
-}
-
-async function sendAiMessage() {
-  if (_aiStreaming) return;
-  if (!AI_WORKER_URL) { showToast('⚠️ AI_WORKER_URL is not set in index.html'); return; }
-  const input = document.getElementById('ai-input');
-  const text  = (input.value || '').trim();
-  if (!text) return;
-  input.value = '';
-  input.style.height = 'auto';
-  document.getElementById('ai-send-btn').disabled = true;
-  _aiStreaming = true;
-
-  _aiHistory.push({ role: 'user', content: text });
-  _appendMsg('user', _fmtAiText(text));
-  const streamDiv = _appendMsg('assistant', '<span style="opacity:.5">▍</span>', 'ai-stream');
-
-  try {
-    const res = await fetch(AI_WORKER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-6',
-        max_tokens: 2048,
-        system: _buildAiSystemPrompt(),
-        messages: _aiHistory.map(m => ({ role: m.role, content: m.content })),
-        stream: true,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
-    }
-
-    let full = '';
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder();
-    let   buf     = '';
-    const msgWrap = document.getElementById('ai-messages');
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6);
-        if (data === '[DONE]') break;
-        try {
-          const evt = JSON.parse(data);
-          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-            full += evt.delta.text;
-            streamDiv.innerHTML = _fmtAiText(full) + '<span style="opacity:.4">▍</span>';
-            msgWrap.scrollTop = msgWrap.scrollHeight;
-          }
-        } catch { /* ignore */ }
-      }
-    }
-
-    streamDiv.innerHTML = _fmtAiText(full);
-    streamDiv.removeAttribute('id');
-    _aiHistory.push({ role: 'assistant', content: full });
-
-  } catch (e) {
-    streamDiv.innerHTML = `⚠️ ${escHtml(e.message)}`;
-    streamDiv.style.cssText += ';background:var(--miss-bg);color:var(--miss)';
-    streamDiv.removeAttribute('id');
-    _aiHistory.pop();
-  } finally {
-    _aiStreaming = false;
-    document.getElementById('ai-send-btn').disabled = false;
-    document.getElementById('ai-input')?.focus();
-  }
-}
-
-// also close customer-modal on Enter in last field
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !document.getElementById('customer-modal').classList.contains('hidden')) {
-    const active = document.activeElement;
-    if (active && active.tagName === 'INPUT' && active.closest('#customer-modal')) {
-      confirmSaveCustomer();
-    }
-  }
-});
+buildList();
 </script>
-
-<!-- ── AI Chat FAB ── -->
-<button class="ai-fab" id="ai-fab" onclick="toggleAiChat()" title="AI Assistant"><img src="me.jpeg" alt="AI Assistant"></button>
-
-<!-- ── AI Chat Panel ── -->
-<div class="ai-panel" id="ai-panel">
-  <div class="ai-panel-header">
-    <span style="font-size:19px">🤖</span>
-    <div class="ai-panel-title">AI Assistant</div>
-    <button class="ai-panel-close" onclick="toggleAiChat()">✕</button>
-  </div>
-
-  <div class="ai-messages" id="ai-messages">
-    <div class="ai-msg assistant">👋 Hi! I have access to all your customer data. Ask me anything — adoption rates, blockers, team assignments, renewal dates, comparisons across customers, etc.</div>
-  </div>
-
-  <div class="ai-input-area">
-    <div class="ai-input-row">
-      <textarea id="ai-input" placeholder="Ask about your customers…" rows="1"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage()}"
-        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-      <button class="ai-send-btn" id="ai-send-btn" onclick="sendAiMessage()">Send</button>
-    </div>
-    <div class="ai-footer-note">
-      All customer data is included as context ·
-      <button class="ai-clear-btn" onclick="clearAiChat()">Clear chat</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
