@@ -567,6 +567,20 @@ html, body {
         <div class="section-label">Settings</div>
         <div class="detail-panel" style="max-width:520px;">
           <div class="settings-section">
+            <div class="settings-section-title">GitHub Gist Sync</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Auto-sync data via a public GitHub Gist. Data loads fresh on every page open and saves automatically on each change.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+              <input class="modal-input" id="gh-pat-input" type="password" placeholder="GitHub PAT (starts with ghp_) — leave blank for read-only">
+              <input class="modal-input" id="gh-gist-input" placeholder="Gist ID — leave blank to auto-discover">
+              <div id="gh-status" style="font-size:11px;color:var(--muted);min-height:16px;"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="settings-btn settings-btn-primary" onclick="connectGist()">Connect Gist →</button>
+                <button class="settings-btn settings-btn-primary" id="gh-save-btn" onclick="saveToGistNow()" style="display:none;">💾 Save Now</button>
+                <button class="settings-btn settings-btn-primary" id="gh-load-btn" onclick="loadFromGistNow()" style="display:none;">⬇ Load Now</button>
+                <button class="settings-btn settings-btn-danger" id="gh-disconnect-btn" onclick="disconnectGist()" style="display:none;">Disconnect</button>
+              </div>
+            </div>
+            <div class="settings-divider"></div>
             <div class="settings-section-title">Data Management</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Import or export all customer data as JSON. Data is stored locally in your browser.</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -826,6 +840,7 @@ let RAW_DATA = null; // the full parsed localStorage object
 function saveData() {
   if (!RAW_DATA) return;
   localStorage.setItem(STORE_KEY, JSON.stringify(RAW_DATA));
+  scheduleGhSave();
 }
 
 function exportData() {
@@ -1386,6 +1401,196 @@ function deleteItem(event, custId, catIdx, itemIdx) {
   saveData();
   goToDetail(custId);
 }
+
+/* ─── Reports ─── */
+function populateReportSelect() {
+  const sel = document.getElementById('report-customer-select');
+  if (!sel) return;
+  const custs = Object.values(CUSTOMERS);
+  sel.innerHTML = '<option value="">Select a customer…</option>' +
+    custs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function renderReport() {
+  const id = document.getElementById('report-customer-select')?.value;
+  const output = document.getElementById('report-output');
+  if (!id || !CUSTOMERS[id]) { if (output) output.style.display='none'; return; }
+  if (output) output.style.display='';
+  const c = CUSTOMERS[id];
+  const raw = RAW_DATA?.customers?.find(r => r.id === id);
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  const catRows = raw ? raw.categories.map(cat => {
+    const done = cat.items.filter(i=>i.status==='done').length;
+    const total = cat.items.length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const itemsHtml = cat.items.map(item => {
+      const dot = item.status==='done'?'🟢':item.status==='blocked'||item.status==='missed'?'🔴':item.status==='unblock'?'🔵':'⚪';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;border-bottom:1px solid var(--border2);">${dot} <span>${item.label}</span> <span style="margin-left:auto;font-size:11px;color:var(--muted);">${item.status}</span></div>`;
+    }).join('');
+    return `<div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:6px;">${cat.icon||''} ${cat.title} — ${done}/${total} done (${pct}%)</div>
+      ${itemsHtml}
+    </div>`;
+  }).join('') : '';
+
+  document.getElementById('report-content').innerHTML = `
+    <div style="margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+      <div style="font-size:20px;font-weight:700;">${c.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Copilot Adoption Report · ${now}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      <div style="text-align:center;"><div style="font-size:24px;font-weight:700;color:var(--cyan);">${c.adoption}%</div><div style="font-size:11px;color:var(--muted);">Adoption</div></div>
+      <div style="text-align:center;"><div style="font-size:24px;font-weight:700;color:var(--mint);">${c.done}</div><div style="font-size:11px;color:var(--muted);">Done</div></div>
+      <div style="text-align:center;"><div style="font-size:24px;font-weight:700;color:#f97316;">${c.blocked}</div><div style="font-size:11px;color:var(--muted);">Blocked</div></div>
+      <div style="text-align:center;"><div style="font-size:24px;font-weight:700;color:var(--lavender);">${c.items}</div><div style="font-size:11px;color:var(--muted);">Total Items</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;font-size:12px;">
+      ${c.seats?`<div><span style="color:var(--muted)">Total Users:</span> ${c.seats.toLocaleString()}</div>`:''}
+      ${c.activeUsers?`<div><span style="color:var(--muted)">Copilot Users:</span> ${c.activeUsers.toLocaleString()}</div>`:''}
+      ${c.csm?`<div><span style="color:var(--muted)">CSAM:</span> ${c.csm}</div>`:''}
+      ${c.ae?`<div><span style="color:var(--muted)">AE:</span> ${c.ae}</div>`:''}
+      ${raw?.atsName?`<div><span style="color:var(--muted)">ATS:</span> ${raw.atsName}</div>`:''}
+      ${raw?.seName?`<div><span style="color:var(--muted)">SE:</span> ${raw.seName}</div>`:''}
+      ${c.contractEnd&&c.contractEnd!=='N/A'?`<div><span style="color:var(--muted)">Renewal:</span> ${c.contractEnd}</div>`:''}
+      ${c.aopDate&&c.aopDate!=='N/A'?`<div><span style="color:var(--muted)">AOP Date:</span> ${c.aopDate}</div>`:''}
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text);">Pillar Breakdown</div>
+    ${catRows}
+  `;
+}
+
+/* ─── GitHub Gist sync ─── */
+const GH_PAT_KEY  = 'copilot-tracker-gh-pat';
+const GH_GIST_KEY = 'copilot-tracker-gh-gist';
+const GH_RAW_KEY  = 'copilot-tracker-gh-raw';
+const GH_FILE     = 'copilot-tracker-data.json';
+const GH_OWNER    = 'toviksiton';
+
+let _ghPat     = localStorage.getItem(GH_PAT_KEY)  || '';
+let _ghGistId  = localStorage.getItem(GH_GIST_KEY) || '';
+let _ghRawUrl  = localStorage.getItem(GH_RAW_KEY)  || '';
+let _ghTimer   = null;
+let _ghSaving  = false;
+
+function ghStatus(msg, color) {
+  const el = document.getElementById('gh-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--muted)'; }
+}
+
+function ghUpdateUI() {
+  const saveBtn = document.getElementById('gh-save-btn');
+  const loadBtn = document.getElementById('gh-load-btn');
+  const discBtn = document.getElementById('gh-disconnect-btn');
+  if (saveBtn) saveBtn.style.display = (_ghGistId && _ghPat) ? '' : 'none';
+  if (loadBtn) loadBtn.style.display = _ghGistId ? '' : 'none';
+  if (discBtn) discBtn.style.display = _ghGistId ? '' : 'none';
+  const patInput = document.getElementById('gh-pat-input');
+  const gistInput = document.getElementById('gh-gist-input');
+  if (patInput) patInput.value = _ghPat;
+  if (gistInput) gistInput.value = _ghGistId;
+}
+
+async function connectGist() {
+  const pat  = (document.getElementById('gh-pat-input')?.value || '').trim();
+  const gist = (document.getElementById('gh-gist-input')?.value || '').trim();
+  if (pat) { _ghPat = pat; localStorage.setItem(GH_PAT_KEY, pat); }
+  if (gist) { _ghGistId = gist; localStorage.setItem(GH_GIST_KEY, gist); _ghRawUrl = ''; localStorage.removeItem(GH_RAW_KEY); }
+  ghStatus('Connecting…', 'var(--cyan)');
+  const ok = await _ghLoad(false);
+  if (ok) { ghStatus('✅ Connected and synced · ' + new Date().toLocaleTimeString(), '#6ee7b7'); ghUpdateUI(); }
+  else if (!_ghGistId) ghStatus('⚠️ No Gist ID found. Enter a Gist ID or PAT to auto-discover.', '#f97316');
+}
+
+async function disconnectGist() {
+  _ghPat = ''; _ghGistId = ''; _ghRawUrl = '';
+  localStorage.removeItem(GH_PAT_KEY); localStorage.removeItem(GH_GIST_KEY); localStorage.removeItem(GH_RAW_KEY);
+  ghStatus('Disconnected.', 'var(--muted)');
+  ghUpdateUI();
+}
+
+async function saveToGistNow() {
+  ghStatus('Saving…', 'var(--cyan)');
+  await _ghSave();
+}
+
+async function loadFromGistNow() {
+  ghStatus('Loading…', 'var(--cyan)');
+  const ok = await _ghLoad(false);
+  if (ok) { ghStatus('✅ Loaded from Gist · ' + new Date().toLocaleTimeString(), '#6ee7b7'); updateKPIs(); buildList(); }
+}
+
+function scheduleGhSave() {
+  if (!_ghPat || !_ghGistId) return;
+  clearTimeout(_ghTimer);
+  _ghTimer = setTimeout(_ghSave, 900);
+}
+
+async function _ghSave() {
+  _ghTimer = null;
+  if (!_ghPat || !_ghGistId || !RAW_DATA) return;
+  _ghSaving = true;
+  try {
+    const payload = { _version:1, _app:'Copilot Adoption Tracker by Tovik', _saved:new Date().toISOString(), customers: RAW_DATA.customers };
+    const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
+      method: 'PATCH',
+      headers: { 'Authorization':'token '+_ghPat, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' },
+      body: JSON.stringify({ files: { [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } }),
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error((e&&e.message)||'HTTP '+res.status); }
+    const gist = await res.json();
+    const f = gist.files && gist.files[GH_FILE];
+    if (f && f.raw_url) { _ghRawUrl = f.raw_url.split('?')[0]; localStorage.setItem(GH_RAW_KEY, _ghRawUrl); }
+    ghStatus('✅ Saved to Gist · ' + new Date().toLocaleTimeString(), '#6ee7b7');
+  } catch(e) { ghStatus('⚠️ Save failed: ' + e.message, '#f87171'); }
+  finally { _ghSaving = false; }
+}
+
+async function _ghLoad(silent) {
+  if (!_ghGistId && !GH_OWNER) return false;
+  try {
+    const hdrs = { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+    if (_ghPat) hdrs['Authorization'] = 'token ' + _ghPat;
+    // Auto-discover if no Gist ID
+    if (!_ghGistId && GH_OWNER) {
+      const r = await fetch('https://api.github.com/users/'+GH_OWNER+'/gists?per_page=30', { headers:hdrs, cache:'no-store' });
+      if (!r.ok) return false;
+      const list = await r.json();
+      const found = list.filter(g=>g.description==='Copilot Adoption Tracker data'&&g.files&&g.files[GH_FILE]).sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at))[0];
+      if (!found) return false;
+      _ghGistId = found.id;
+      localStorage.setItem(GH_GIST_KEY, _ghGistId);
+    }
+    const res = await fetch('https://api.github.com/gists/'+_ghGistId, { headers:hdrs, cache:'no-store' });
+    if (!res.ok) return false;
+    const gist = await res.json();
+    const file = gist.files && gist.files[GH_FILE];
+    if (!file) return false;
+    _ghRawUrl = (file.raw_url||'').split('?')[0];
+    localStorage.setItem(GH_RAW_KEY, _ghRawUrl);
+    const content = file.truncated
+      ? await (await fetch(_ghRawUrl+'?t='+Date.now(), {cache:'no-store'})).text()
+      : file.content;
+    const payload = JSON.parse(content);
+    if (!payload.customers) return false;
+    RAW_DATA = payload;
+    CUSTOMERS = {};
+    payload.customers.forEach((raw,i) => { const m=mapCustomer(raw,i); CUSTOMERS[m.id]=m; });
+    localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+    ghStatus('✅ Synced from Gist · ' + new Date().toLocaleTimeString(), '#6ee7b7');
+    ghUpdateUI();
+    return true;
+  } catch(e) { if (!silent) ghStatus('⚠️ Load failed: '+e.message, '#f87171'); return false; }
+}
+
+// Init Gist on load
+(async () => {
+  const urlGist = new URLSearchParams(window.location.search).get('gist');
+  if (urlGist) { _ghGistId = urlGist; localStorage.setItem(GH_GIST_KEY, urlGist); }
+  const loaded = await _ghLoad(true);
+  if (loaded) { updateKPIs(); buildList(); }
+  ghUpdateUI();
+})();
 </script>
 </body>
 </html>
