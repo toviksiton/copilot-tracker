@@ -642,12 +642,13 @@ html, body {
   margin-right:8px;
 }
 
-/* Sidebar overlay backdrop */
+/* Sidebar overlay backdrop — pointer-events only when visible */
 .sidebar-backdrop {
   display:none;position:fixed;inset:0;z-index:199;
   background:rgba(0,0,0,.35);
+  pointer-events:none;
 }
-.sidebar-backdrop.visible { display:block; }
+.sidebar-backdrop.visible { display:block;pointer-events:auto; }
 
 @media (max-width: 767px) {
   /* show hamburger */
@@ -663,9 +664,17 @@ html, body {
     -webkit-backdrop-filter:none !important;
     background:var(--bg-c) !important;
     border-right:1px solid var(--border);
-    overflow-y:auto;
+    overflow:hidden;
+    pointer-events:auto;
   }
   .sidebar.mob-open { transform:translateX(0); }
+
+  /* ensure nav items are always tappable on mobile */
+  .sidebar .nav-item {
+    -webkit-tap-highlight-color:rgba(103,232,249,.12);
+    touch-action:manipulation;
+    cursor:pointer;
+  }
 
   /* shell no longer reserves sidebar space */
   .shell { flex-direction:column; }
