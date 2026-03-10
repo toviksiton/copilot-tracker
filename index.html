@@ -1997,6 +1997,25 @@ function renderReport() {
 }
 
 /* ─── Excelerate Plan ─── */
+function _parseRepairJson(raw) {
+  // Try clean parse first
+  try { return JSON.parse(raw); } catch (_) {}
+  // Truncated JSON: count open braces/brackets and close them
+  let s = raw.trimEnd();
+  // Remove trailing incomplete key/value (e.g. last "foo": or "foo": "bar)
+  s = s.replace(/,\s*$/, '');                    // trailing comma
+  s = s.replace(/"[^"]*$/, '""');               // unclosed string → close it
+  const stack = [];
+  for (const ch of s) {
+    if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if (ch === '}' || ch === ']') stack.pop();
+  }
+  // Close in reverse
+  s += stack.reverse().join('');
+  try { return JSON.parse(s); } catch (_) { return {}; }
+}
+
 async function generateExceleratePlan() {
   const id = document.getElementById('report-customer-select')?.value;
   const out = document.getElementById('excelerate-output');
@@ -2084,16 +2103,18 @@ Focus on the open/blocked/pending items and create a concrete plan to accelerate
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
+        max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMsg }],
       }),
     });
     const data = await res.json();
     const text = data.content?.[0]?.text || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*/);
     if (!jsonMatch) throw new Error('No JSON in response');
-    const plan = JSON.parse(jsonMatch[0]);
+    // Repair truncated JSON: close any open arrays/objects so parse doesn't fail
+    let raw = jsonMatch[0];
+    const plan = _parseRepairJson(raw);
     renderExceleratePlan(id, plan);
   } catch (err) {
     out.innerHTML = `<div class="xp-section" style="color:#f87171;">⚠ Failed to generate plan: ${err.message}. Check your Worker URL in Settings.</div>`;
