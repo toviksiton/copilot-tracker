@@ -613,6 +613,216 @@ html, body {
   .xp-header { background:linear-gradient(135deg,#eff6ff,#f5f3ff) !important; }
   :root { --text:#111; --muted:#6b7280; --border:#e5e7eb; --glass:#f9fafb; --surface:#fff; }
 }
+
+/* ═══════════════════════════════════════════════
+   CRM MODULE STYLES
+   ═══════════════════════════════════════════════ */
+
+/* ── CRM views shared ── */
+.crm-topbar { display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap; }
+.crm-topbar-title { font-size:20px;font-weight:800;letter-spacing:-.4px;color:var(--text);flex:1; }
+.crm-topbar select, .crm-topbar input { background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:7px 12px;font-size:12px;color:var(--text);font-family:inherit;outline:none; }
+.crm-topbar select:focus, .crm-topbar input:focus { border-color:var(--cyan); }
+
+/* ── stat cards (re-used for CRM KPIs) ── */
+.crm-stats { display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap; }
+.crm-stat { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;min-width:120px;flex:1; }
+.crm-stat-num { font-size:24px;font-weight:800;letter-spacing:-.5px; }
+.crm-stat-lbl { font-size:11px;color:var(--muted);margin-top:2px; }
+
+/* ── Contact cards ── */
+.contact-list { display:flex;flex-direction:column;gap:8px; }
+.contact-card {
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:13px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:background .15s,border-color .15s;
+}
+.contact-card:hover { background:var(--surface-hover);border-color:rgba(103,232,249,.3); }
+.contact-avatar {
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+}
+.contact-name { font-size:13px;font-weight:700;color:var(--text); }
+.contact-title { font-size:11px;color:var(--muted);margin-top:1px; }
+.contact-meta { display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px; }
+
+/* ── Persona / sentiment pills ── */
+.persona-pill {
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;
+  letter-spacing:.2px;white-space:nowrap;
+}
+.persona-exec-sponsor   { background:rgba(251,191,36,.15); color:#fbbf24; border:1px solid rgba(251,191,36,.3); }
+.persona-business-dm    { background:rgba(103,232,249,.15); color:var(--cyan); border:1px solid rgba(103,232,249,.3); }
+.persona-it-dm          { background:rgba(196,181,253,.15); color:var(--lavender); border:1px solid rgba(196,181,253,.3); }
+.persona-champion       { background:rgba(110,231,183,.15); color:var(--mint); border:1px solid rgba(110,231,183,.3); }
+.persona-technical-evaluator { background:rgba(103,232,249,.1); color:#67e8f9; border:1px solid rgba(103,232,249,.2); }
+.persona-blocker        { background:rgba(248,113,113,.15); color:#f87171; border:1px solid rgba(248,113,113,.3); }
+.persona-influencer     { background:rgba(255,255,255,.08); color:var(--muted); border:1px solid var(--border); }
+.persona-end-user-lead  { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.25); }
+
+.sentiment-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block; }
+.sentiment-champion  { background:#6ee7b7; }
+.sentiment-supportive { background:#67e8f9; }
+.sentiment-neutral   { background:#94a3b8; }
+.sentiment-skeptical { background:#fbbf24; }
+.sentiment-blocker   { background:#f87171; }
+
+/* ── Influence dots ── */
+.influence-critical { color:#f87171; }
+.influence-high     { color:#fb923c; }
+.influence-medium   { color:#fbbf24; }
+.influence-low      { color:#94a3b8; }
+
+/* ── Opportunity pipeline cards ── */
+.opp-list { display:flex;flex-direction:column;gap:8px; }
+.opp-card {
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:13px 16px;cursor:pointer;transition:background .15s,border-color .15s;
+}
+.opp-card:hover { background:var(--surface-hover);border-color:rgba(103,232,249,.3); }
+.opp-card-header { display:flex;align-items:flex-start;gap:8px;margin-bottom:8px; }
+.opp-name { font-size:13px;font-weight:700;color:var(--text);flex:1; }
+.opp-arr { font-size:16px;font-weight:800;color:var(--mint);white-space:nowrap; }
+.opp-meta { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+
+/* ── Stage pills ── */
+.stage-pill { font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px; }
+.stage-identify  { background:rgba(148,163,184,.12); color:#94a3b8; border:1px solid rgba(148,163,184,.25); }
+.stage-qualify   { background:rgba(103,232,249,.12); color:var(--cyan); border:1px solid rgba(103,232,249,.25); }
+.stage-discover  { background:rgba(196,181,253,.12); color:var(--lavender); border:1px solid rgba(196,181,253,.25); }
+.stage-value-prop { background:rgba(251,191,36,.12); color:#fbbf24; border:1px solid rgba(251,191,36,.25); }
+.stage-proposal  { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.25); }
+.stage-negotiate { background:rgba(249,115,22,.18); color:#f97316; border:1px solid rgba(249,115,22,.35); }
+.stage-commit    { background:rgba(110,231,183,.15); color:var(--mint); border:1px solid rgba(110,231,183,.3); }
+.stage-won       { background:rgba(110,231,183,.25); color:#34d399; border:1px solid rgba(110,231,183,.5); }
+.stage-lost      { background:rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.25); }
+.stage-on-hold   { background:rgba(148,163,184,.08); color:#64748b; border:1px solid rgba(148,163,184,.15); }
+
+/* ── MEDDPICC bar ── */
+.meddpicc-bar { display:flex;gap:3px;align-items:center; }
+.meddpicc-seg {
+  width:16px;height:6px;border-radius:3px;
+  background:rgba(255,255,255,.1);border:1px solid var(--border);
+  transition:background .2s;
+}
+.meddpicc-seg.filled { background:var(--cyan);border-color:rgba(103,232,249,.5); }
+.meddpicc-label { font-size:9px;font-weight:700;color:var(--muted);margin-left:4px; }
+
+/* ── Solution area chips ── */
+.sol-chip {
+  font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;
+  border:1px solid var(--border);
+}
+.sol-m365          { background:rgba(103,232,249,.12); color:var(--cyan); }
+.sol-security      { background:rgba(248,113,113,.12); color:#f87171; }
+.sol-azure         { background:rgba(96,165,250,.12);  color:#60a5fa; }
+.sol-copilot       { background:rgba(196,181,253,.15); color:var(--lavender); }
+.sol-devices       { background:rgba(251,191,36,.1);   color:#fbbf24; }
+.sol-analytics     { background:rgba(110,231,183,.12); color:var(--mint); }
+.sol-communications { background:rgba(249,115,22,.12); color:#fb923c; }
+
+/* ── Motion type tag ── */
+.motion-tag { font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border); }
+
+/* ── Activity feed ── */
+.activity-feed { display:flex;flex-direction:column;gap:6px; }
+.activity-group-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:4px 0 6px; }
+.activity-entry {
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;display:flex;gap:12px;align-items:flex-start;
+  cursor:pointer;transition:background .15s;
+}
+.activity-entry:hover { background:var(--surface-hover); }
+.activity-type-icon {
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  background:var(--glass);border:1px solid var(--border);
+}
+.activity-title { font-size:13px;font-weight:700;color:var(--text); }
+.activity-meta  { font-size:11px;color:var(--muted);margin-top:2px; }
+.activity-outcome { font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5; }
+.activity-next  { font-size:11px;color:var(--cyan);margin-top:4px; }
+
+/* ── CRM detail panel ── */
+.crm-detail-panel {
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:20px 22px;margin-bottom:14px;
+}
+.crm-panel-title { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px; }
+
+/* ── Stakeholder heatmap ── */
+.heatmap-wrap { display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative; }
+.heatmap-quadrant {
+  background:var(--glass);border:1px solid var(--border);border-radius:10px;
+  padding:10px 12px;min-height:80px;
+}
+.heatmap-q-label { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px; }
+.heatmap-contacts { display:flex;flex-wrap:wrap;gap:5px; }
+.heatmap-bubble {
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#fff;cursor:default;
+  border:2px solid rgba(255,255,255,.15);
+  title-attr:attr(title);
+}
+
+/* ── MEDDPICC detail grid ── */
+.meddpicc-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.meddpicc-field {
+  background:var(--glass);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;
+}
+.meddpicc-field-letter { font-size:16px;font-weight:900;color:var(--cyan);margin-bottom:2px;line-height:1; }
+.meddpicc-field-name   { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:5px; }
+.meddpicc-field-value  { font-size:12px;color:var(--text);line-height:1.5; }
+.meddpicc-field.empty .meddpicc-field-value { color:var(--dim);font-style:italic; }
+
+/* ── Follow-up pulse strip ── */
+.followup-pulse {
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;
+}
+.followup-chip {
+  display:flex;align-items:center;gap:7px;
+  background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:7px 12px;cursor:pointer;transition:background .15s;font-size:12px;
+}
+.followup-chip:hover { background:var(--surface-hover); }
+.followup-chip.overdue { border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.06); }
+.followup-chip.today   { border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06); }
+
+/* ── CRM modal wide ── */
+.modal-box-wide { width:640px;max-width:96vw; }
+.modal-tabs { display:flex;gap:2px;margin-bottom:18px;background:var(--glass);border-radius:10px;padding:3px; }
+.modal-tab {
+  flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:600;
+  cursor:pointer;text-align:center;color:var(--muted);transition:all .15s;border:none;background:none;
+}
+.modal-tab.active { background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.2); }
+
+/* ── Solution area multi-select checkboxes ── */
+.sol-check-grid { display:flex;flex-wrap:wrap;gap:6px;margin-top:4px; }
+.sol-check {
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:7px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid var(--border);background:var(--glass);
+  color:var(--muted);transition:all .15s;user-select:none;
+}
+.sol-check.on { border-color:rgba(103,232,249,.5);color:var(--text);background:rgba(103,232,249,.1); }
+
+/* ── Competitive risk indicator ── */
+.comp-risk-high   { color:#f87171; font-weight:700; }
+.comp-risk-medium { color:#fbbf24; font-weight:700; }
+.comp-risk-low    { color:var(--muted); }
+
+  .sidebar,.topbar,.kpi-row,#ai-fab,#ai-chat-panel,
+  .settings-btn,.nav-item,[onclick="window.print()"] { display:none !important; }
+  body { background:#fff !important; color:#111 !important; }
+  .xp-wrap,.xp-header,.xp-section,.xp-action-card { background:#fff !important; border-color:#e5e7eb !important; }
+  .xp-header { background:linear-gradient(135deg,#eff6ff,#f5f3ff) !important; }
+  :root { --text:#111; --muted:#6b7280; --border:#e5e7eb; --glass:#f9fafb; --surface:#fff; }
+}
 </style>
 </head>
 <body>
@@ -632,6 +842,12 @@ html, body {
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
       <a class="nav-item" id="nav-customers" href="#" onclick="showView('list');return false;"><span class="nav-icon">◎</span> Customers</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">CRM</div>
+      <a class="nav-item" id="nav-crm-contacts" href="#" onclick="showView('crm-contacts');return false;"><span class="nav-icon">👤</span> Contacts<span class="nav-badge" id="crm-contacts-badge" style="display:none;"></span></a>
+      <a class="nav-item" id="nav-crm-opps"     href="#" onclick="showView('crm-opps');return false;"><span class="nav-icon">◆</span> Pipeline<span class="nav-badge" id="crm-opps-badge" style="display:none;"></span></a>
+      <a class="nav-item" id="nav-crm-activities" href="#" onclick="showView('crm-activities');return false;"><span class="nav-icon">◷</span> Activities</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
@@ -794,6 +1010,93 @@ html, body {
         <div id="excelerate-output" style="display:none;max-width:900px;"></div>
       </div>
 
+      <!-- CRM: CONTACTS VIEW -->
+      <div class="view" id="view-crm-contacts" hidden>
+        <div class="crm-topbar">
+          <div class="crm-topbar-title">Contacts</div>
+          <select id="crm-contact-filter-account" onchange="buildCrmContacts()">
+            <option value="">All Accounts</option>
+          </select>
+          <select id="crm-contact-filter-persona" onchange="buildCrmContacts()">
+            <option value="">All Personas</option>
+            <option value="exec-sponsor">Exec Sponsor</option>
+            <option value="business-dm">Business DM</option>
+            <option value="it-dm">IT DM</option>
+            <option value="champion">Champion</option>
+            <option value="technical-evaluator">Technical Evaluator</option>
+            <option value="blocker">Blocker</option>
+            <option value="influencer">Influencer</option>
+            <option value="end-user-lead">End-User Lead</option>
+          </select>
+          <button class="settings-btn settings-btn-primary" onclick="openContactModal()">+ Add Contact</button>
+        </div>
+        <div class="crm-stats" id="crm-contacts-kpis"></div>
+        <div id="crm-followup-pulse"></div>
+        <div class="contact-list" id="crm-contact-list"></div>
+      </div>
+
+      <!-- CRM: OPPORTUNITIES VIEW -->
+      <div class="view" id="view-crm-opps" hidden>
+        <div class="crm-topbar">
+          <div class="crm-topbar-title">Pipeline</div>
+          <select id="crm-opp-filter-account" onchange="buildCrmOpps()">
+            <option value="">All Accounts</option>
+          </select>
+          <select id="crm-opp-filter-stage" onchange="buildCrmOpps()">
+            <option value="">All Stages</option>
+            <option value="identify">Identify</option>
+            <option value="qualify">Qualify</option>
+            <option value="discover">Discover</option>
+            <option value="value-prop">Value Prop</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiate">Negotiate</option>
+            <option value="commit">Commit</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+            <option value="on-hold">On Hold</option>
+          </select>
+          <select id="crm-opp-filter-sol" onchange="buildCrmOpps()">
+            <option value="">All Solutions</option>
+            <option value="m365">M365</option>
+            <option value="security">Security</option>
+            <option value="azure">Azure</option>
+            <option value="copilot">Copilot</option>
+            <option value="devices">Devices</option>
+            <option value="analytics">Analytics</option>
+            <option value="communications">Communications</option>
+          </select>
+          <button class="settings-btn settings-btn-primary" onclick="openOppModal()">+ New Opportunity</button>
+        </div>
+        <div class="crm-stats" id="crm-opps-kpis"></div>
+        <div class="opp-list" id="crm-opp-list"></div>
+      </div>
+
+      <!-- CRM: ACTIVITIES VIEW -->
+      <div class="view" id="view-crm-activities" hidden>
+        <div class="crm-topbar">
+          <div class="crm-topbar-title">Activity Feed</div>
+          <select id="crm-act-filter-account" onchange="buildCrmActivities()">
+            <option value="">All Accounts</option>
+          </select>
+          <select id="crm-act-filter-type" onchange="buildCrmActivities()">
+            <option value="">All Types</option>
+            <option value="call">Call</option>
+            <option value="meeting">Meeting</option>
+            <option value="email">Email</option>
+            <option value="demo">Demo</option>
+            <option value="workshop">Workshop</option>
+            <option value="exec-briefing">Exec Briefing</option>
+            <option value="qbr">QBR</option>
+            <option value="poc">PoC</option>
+            <option value="proposal">Proposal</option>
+            <option value="note">Note</option>
+          </select>
+          <button class="settings-btn settings-btn-primary" onclick="openActivityModal()">+ Log Activity</button>
+        </div>
+        <div class="crm-stats" id="crm-activities-kpis"></div>
+        <div class="activity-feed" id="crm-activity-feed"></div>
+      </div>
+
       <!-- DETAIL VIEW -->
       <div id="view-detail" hidden style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
         <div class="detail-hero" id="d-hero"></div>
@@ -878,6 +1181,294 @@ html, body {
   </div>
 </div>
 
+<!-- ══════ CRM: CONTACT MODAL ══════ -->
+<div class="modal-overlay" id="contact-modal" hidden onclick="if(event.target===this)closeContactModal()">
+  <div class="modal-box modal-box-wide" onclick="event.stopPropagation()">
+    <div class="modal-title" id="contact-modal-title">Add Contact</div>
+    <div class="modal-grid">
+      <div class="modal-grid-full">
+        <div class="modal-label">Account *</div>
+        <select class="modal-input" id="cm-contact-account"></select>
+      </div>
+      <div>
+        <div class="modal-label">Full Name *</div>
+        <input class="modal-input" id="cm-contact-name" placeholder="e.g. Jane Smith">
+      </div>
+      <div>
+        <div class="modal-label">Job Title</div>
+        <input class="modal-input" id="cm-contact-title" placeholder="e.g. VP Engineering">
+      </div>
+      <div>
+        <div class="modal-label">Email</div>
+        <input class="modal-input" id="cm-contact-email" type="email" placeholder="jane@company.com">
+      </div>
+      <div>
+        <div class="modal-label">Phone</div>
+        <input class="modal-input" id="cm-contact-phone" placeholder="+1 555 000 0000">
+      </div>
+      <div>
+        <div class="modal-label">Persona / Role Type *</div>
+        <select class="modal-input" id="cm-contact-persona">
+          <option value="exec-sponsor">Exec Sponsor</option>
+          <option value="business-dm">Business Decision-Maker</option>
+          <option value="it-dm">IT Decision-Maker</option>
+          <option value="champion">Champion</option>
+          <option value="technical-evaluator">Technical Evaluator</option>
+          <option value="blocker">Blocker</option>
+          <option value="influencer">Influencer</option>
+          <option value="end-user-lead">End-User Lead</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Influence Level</div>
+        <select class="modal-input" id="cm-contact-influence">
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Relationship / Sentiment</div>
+        <select class="modal-input" id="cm-contact-sentiment">
+          <option value="champion">Champion 🟢</option>
+          <option value="supportive">Supportive 🔵</option>
+          <option value="neutral" selected>Neutral ⚪</option>
+          <option value="skeptical">Skeptical 🟡</option>
+          <option value="blocker">Blocker 🔴</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Primary Solution Area</div>
+        <select class="modal-input" id="cm-contact-sol">
+          <option value="m365">M365 Copilot</option>
+          <option value="security">Security</option>
+          <option value="azure">Azure</option>
+          <option value="copilot">Copilot Studio</option>
+          <option value="devices">Devices</option>
+          <option value="analytics">Analytics</option>
+          <option value="communications">Communications</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Next Follow-Up Date</div>
+        <input class="modal-input" id="cm-contact-followup" type="date">
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">Their Key Pain (in their words)</div>
+        <textarea class="modal-input" id="cm-contact-pain" rows="2" placeholder="e.g. 'We can't measure productivity ROI on our Copilot investment'"></textarea>
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">Key Objection / Concern</div>
+        <textarea class="modal-input" id="cm-contact-objection" rows="2" placeholder="e.g. 'Security team won't approve data access for Copilot'"></textarea>
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">Notes</div>
+        <textarea class="modal-input" id="cm-contact-notes" rows="2" placeholder="Context, background, relationship history…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeContactModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save" onclick="saveContact()">Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ CRM: OPPORTUNITY MODAL ══════ -->
+<div class="modal-overlay" id="opp-modal" hidden onclick="if(event.target===this)closeOppModal()">
+  <div class="modal-box modal-box-wide" onclick="event.stopPropagation()">
+    <div class="modal-title" id="opp-modal-title">New Opportunity</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="opp-tab-summary"   onclick="switchOppTab('summary')">Summary</button>
+      <button class="modal-tab"        id="opp-tab-meddpicc"  onclick="switchOppTab('meddpicc')">MEDDPICC</button>
+      <button class="modal-tab"        id="opp-tab-competitive" onclick="switchOppTab('competitive')">Competitive</button>
+    </div>
+    <!-- Tab: Summary -->
+    <div id="opp-tab-body-summary">
+      <div class="modal-grid">
+        <div class="modal-grid-full">
+          <div class="modal-label">Account *</div>
+          <select class="modal-input" id="cm-opp-account"></select>
+        </div>
+        <div class="modal-grid-full">
+          <div class="modal-label">Opportunity Name *</div>
+          <input class="modal-input" id="cm-opp-name" placeholder="e.g. M365 Copilot Expansion Q3">
+        </div>
+        <div>
+          <div class="modal-label">Stage</div>
+          <select class="modal-input" id="cm-opp-stage">
+            <option value="identify">Identify</option>
+            <option value="qualify">Qualify</option>
+            <option value="discover">Discover</option>
+            <option value="value-prop">Value Prop</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiate">Negotiate</option>
+            <option value="commit">Commit</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+            <option value="on-hold">On Hold</option>
+          </select>
+        </div>
+        <div>
+          <div class="modal-label">Motion Type</div>
+          <select class="modal-input" id="cm-opp-motion">
+            <option value="new-business">New Business</option>
+            <option value="renewal">Renewal</option>
+            <option value="expansion">Expansion</option>
+            <option value="co-sell">Co-Sell</option>
+            <option value="partner-led">Partner-Led</option>
+          </select>
+        </div>
+        <div>
+          <div class="modal-label">Deal Size (ARR $)</div>
+          <input class="modal-input" id="cm-opp-arr" type="number" placeholder="e.g. 250000">
+        </div>
+        <div>
+          <div class="modal-label">Expected Close Date</div>
+          <input class="modal-input" id="cm-opp-closedate" type="date">
+        </div>
+        <div>
+          <div class="modal-label">Probability %</div>
+          <input class="modal-input" id="cm-opp-prob" type="number" min="0" max="100" placeholder="e.g. 60">
+        </div>
+        <div>
+          <div class="modal-label">Partner (co-sell)</div>
+          <input class="modal-input" id="cm-opp-partner" placeholder="e.g. Accenture">
+        </div>
+        <div class="modal-grid-full">
+          <div class="modal-label">Solution Areas</div>
+          <div class="sol-check-grid" id="cm-opp-sol-checks">
+            <span class="sol-check" data-sol="m365" onclick="toggleSolCheck(this)">M365</span>
+            <span class="sol-check" data-sol="security" onclick="toggleSolCheck(this)">Security</span>
+            <span class="sol-check" data-sol="azure" onclick="toggleSolCheck(this)">Azure</span>
+            <span class="sol-check" data-sol="copilot" onclick="toggleSolCheck(this)">Copilot Studio</span>
+            <span class="sol-check" data-sol="devices" onclick="toggleSolCheck(this)">Devices</span>
+            <span class="sol-check" data-sol="analytics" onclick="toggleSolCheck(this)">Analytics</span>
+            <span class="sol-check" data-sol="communications" onclick="toggleSolCheck(this)">Communications</span>
+          </div>
+        </div>
+        <div class="modal-grid-full">
+          <div class="modal-label">Next Action</div>
+          <input class="modal-input" id="cm-opp-nextaction" placeholder="e.g. Send proposal deck to CIO by Friday">
+        </div>
+        <div class="modal-grid-full">
+          <div class="modal-label">Notes</div>
+          <textarea class="modal-input" id="cm-opp-notes" rows="2" placeholder="Key context, internal notes…"></textarea>
+        </div>
+      </div>
+    </div>
+    <!-- Tab: MEDDPICC -->
+    <div id="opp-tab-body-meddpicc" hidden>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Fill in as much as you know. Gaps highlight where more discovery is needed.</div>
+      <div class="modal-grid">
+        <div class="modal-grid-full"><div class="modal-label">M — Metrics: What measurable outcome does the customer need?</div><textarea class="modal-input" id="cm-opp-m" rows="2" placeholder="e.g. 30% reduction in ticket resolution time, 2hrs/week saved per user"></textarea></div>
+        <div class="modal-grid-full"><div class="modal-label">E — Economic Buyer: Who can say yes (and no)?</div><input class="modal-input" id="cm-opp-e" placeholder="Name, title, relationship status"></div>
+        <div class="modal-grid-full"><div class="modal-label">D — Decision Criteria: How will they evaluate solutions?</div><textarea class="modal-input" id="cm-opp-d" rows="2" placeholder="e.g. Security compliance, ease of deployment, integration with SAP"></textarea></div>
+        <div class="modal-grid-full"><div class="modal-label">D — Decision Process: What are the steps to get a PO?</div><textarea class="modal-input" id="cm-opp-dp" rows="2" placeholder="e.g. IT committee review → CFO approval → procurement → PO"></textarea></div>
+        <div class="modal-grid-full"><div class="modal-label">P — Paper Process: Legal/procurement steps after verbal commit</div><input class="modal-input" id="cm-opp-p" placeholder="e.g. NDA signed, MSA in review, 4-week procurement cycle"></div>
+        <div class="modal-grid-full"><div class="modal-label">I — Implied Pain: What happens if they do nothing?</div><textarea class="modal-input" id="cm-opp-i" rows="2" placeholder="e.g. Competitors will have AI advantage, renewal at risk, headcount cost rises"></textarea></div>
+        <div class="modal-grid-full"><div class="modal-label">C — Champion: Who fights for you internally?</div><input class="modal-input" id="cm-opp-c" placeholder="Name, title, how strong is their influence?"></div>
+        <div class="modal-grid-full"><div class="modal-label">C — Competition: Who else is in the deal?</div><input class="modal-input" id="cm-opp-c2" placeholder="e.g. Google Workspace, Slack + Notion, incumbent ServiceNow"></div>
+      </div>
+    </div>
+    <!-- Tab: Competitive -->
+    <div id="opp-tab-body-competitive" hidden>
+      <div class="modal-grid">
+        <div class="modal-grid-full">
+          <div class="modal-label">Competitor Names (comma separated)</div>
+          <input class="modal-input" id="cm-opp-competitors" placeholder="e.g. Google Workspace, Slack, Zoom">
+        </div>
+        <div class="modal-grid-full">
+          <div class="modal-label">Competitive Strategy</div>
+          <select class="modal-input" id="cm-opp-comp-strategy">
+            <option value="differentiate">Differentiate — We win on unique value</option>
+            <option value="displace">Displace — Replace incumbent</option>
+            <option value="defend">Defend — Protect from competitive threat</option>
+            <option value="co-exist">Co-exist — Complement their stack</option>
+            <option value="avoid">Avoid — Deprioritise this deal</option>
+          </select>
+        </div>
+        <div class="modal-grid-full">
+          <div class="modal-label">Risk Reason (if deal is at risk)</div>
+          <textarea class="modal-input" id="cm-opp-risk" rows="2" placeholder="e.g. Champion left the company, budget frozen until Q4, competitor PoC in progress"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeOppModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save" onclick="saveOpportunity()">Save Opportunity</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ CRM: ACTIVITY MODAL ══════ -->
+<div class="modal-overlay" id="activity-modal" hidden onclick="if(event.target===this)closeActivityModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">Log Activity</div>
+    <div class="modal-grid">
+      <div>
+        <div class="modal-label">Account *</div>
+        <select class="modal-input" id="cm-act-account" onchange="populateActOpps()"></select>
+      </div>
+      <div>
+        <div class="modal-label">Linked Opportunity</div>
+        <select class="modal-input" id="cm-act-opp">
+          <option value="">— None —</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Activity Type *</div>
+        <select class="modal-input" id="cm-act-type">
+          <option value="call">📞 Call</option>
+          <option value="meeting" selected>🤝 Meeting</option>
+          <option value="email">📧 Email</option>
+          <option value="demo">🖥 Demo</option>
+          <option value="workshop">🛠 Workshop</option>
+          <option value="exec-briefing">🎯 Exec Briefing</option>
+          <option value="qbr">📊 QBR</option>
+          <option value="poc">🔬 PoC</option>
+          <option value="proposal">📄 Proposal</option>
+          <option value="note">📝 Note</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Date *</div>
+        <input class="modal-input" id="cm-act-date" type="date">
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">Title / Subject *</div>
+        <input class="modal-input" id="cm-act-title" placeholder="e.g. Discovery call with IT team — security concerns">
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">What happened? (Outcome)</div>
+        <textarea class="modal-input" id="cm-act-outcome" rows="2" placeholder="Key decisions, reactions, new info surfaced…"></textarea>
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">Next Steps</div>
+        <textarea class="modal-input" id="cm-act-nextsteps" rows="2" placeholder="e.g. Send security whitepaper, book exec briefing for week of 14th…"></textarea>
+      </div>
+      <div>
+        <div class="modal-label">Meeting Sentiment</div>
+        <select class="modal-input" id="cm-act-sentiment">
+          <option value="very-positive">Very Positive 🟢🟢</option>
+          <option value="positive">Positive 🟢</option>
+          <option value="neutral" selected>Neutral ⚪</option>
+          <option value="negative">Negative 🔴</option>
+          <option value="very-negative">Very Negative 🔴🔴</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Duration (min)</div>
+        <input class="modal-input" id="cm-act-duration" type="number" placeholder="60">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeActivityModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save" onclick="saveActivity()">Log Activity</button>
+    </div>
+  </div>
+</div>
+
 <!-- AI CHAT -->
 <div id="ai-chat-panel" style="display:none;position:fixed;bottom:80px;right:24px;width:360px;max-height:520px;z-index:2000;
   background:var(--bg-c);border:1px solid var(--border);border-radius:18px;
@@ -928,7 +1519,8 @@ const NAV_MAP = {
 
 function showView(name) {
   // hide all except detail which is managed separately
-  ['view-list','view-kanban','view-backlog','view-settings','view-reports'].forEach(id => {
+  ['view-list','view-kanban','view-backlog','view-settings','view-reports',
+   'view-crm-contacts','view-crm-opps','view-crm-activities'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = true;
   });
@@ -1284,7 +1876,8 @@ function goToDetail(id) {
   currentDetailId = id;
   clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
-  ['view-list','view-kanban','view-backlog','view-settings','view-reports'].forEach(v => {
+  ['view-list','view-kanban','view-backlog','view-settings','view-reports',
+   'view-crm-contacts','view-crm-opps','view-crm-activities'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.hidden = true;
   });
@@ -2648,6 +3241,733 @@ function saveWorkerUrl() {
   else localStorage.removeItem(AI_WORKER_URL_STORE);
   ghStatus('Worker URL saved.', 'var(--mint)');
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CRM MODULE — Data Layer, Build Functions, Modal Handlers
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Helpers ── */
+const CRM_PERSONA_LABELS = {
+  'exec-sponsor':'Exec Sponsor','business-dm':'Business DM','it-dm':'IT DM',
+  'champion':'Champion','technical-evaluator':'Tech Evaluator',
+  'blocker':'Blocker','influencer':'Influencer','end-user-lead':'End-User Lead'
+};
+const CRM_STAGE_LABELS = {
+  identify:'Identify',qualify:'Qualify',discover:'Discover','value-prop':'Value Prop',
+  proposal:'Proposal',negotiate:'Negotiate',commit:'Commit',won:'Won',lost:'Lost','on-hold':'On Hold'
+};
+const CRM_ACT_ICONS = {
+  call:'📞',meeting:'🤝',email:'📧',demo:'🖥',workshop:'🛠',
+  'exec-briefing':'🎯',qbr:'📊',poc:'🔬',proposal:'📄',note:'📝','teams-message':'💬'
+};
+const SOL_LABELS = {m365:'M365',security:'Security',azure:'Azure',copilot:'Copilot Studio',devices:'Devices',analytics:'Analytics',communications:'Communications'};
+const GRAD_PALETTE_CRM = ['linear-gradient(135deg,#6366f1,#8b5cf6)','linear-gradient(135deg,#0ea5e9,#6366f1)','linear-gradient(135deg,#10b981,#0ea5e9)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#ec4899,#8b5cf6)','linear-gradient(135deg,#14b8a6,#6366f1)'];
+
+function _crmContacts()    { return (RAW_DATA && RAW_DATA.contacts)    || []; }
+function _crmOpps()        { return (RAW_DATA && RAW_DATA.opportunities) || []; }
+function _crmActivities()  { return (RAW_DATA && RAW_DATA.activities)  || []; }
+
+function _custName(id) {
+  if (!RAW_DATA || !RAW_DATA.customers) return id;
+  const r = RAW_DATA.customers.find(c => c.id === id);
+  return r ? r.name : id;
+}
+
+function _getLastContacted(contactId) {
+  const acts = _crmActivities().filter(a => (a.contactIds||[]).includes(contactId));
+  if (!acts.length) return null;
+  return acts.map(a => a.date).sort().reverse()[0];
+}
+
+function _meddpiccScore(opp) {
+  const fields = ['metrics','economicBuyer','decisionCriteria','decisionProcess','paperProcess','impliedPain','champion'];
+  return fields.filter(f => opp[f] && opp[f].trim()).length;
+}
+
+function _meddpiccBar(opp) {
+  const fields = ['metrics','economicBuyer','decisionCriteria','decisionProcess','paperProcess','impliedPain','champion'];
+  const letters = ['M','E','D','D','P','I','C'];
+  return `<div class="meddpicc-bar">${fields.map((f,i)=>`<div class="meddpicc-seg ${opp[f]?'filled':''}" title="${letters[i]}: ${opp[f]||'not filled'}"></div>`).join('')}<span class="meddpicc-label">${_meddpiccScore(opp)}/7</span></div>`;
+}
+
+function _competitiveRisk(opp) {
+  if (!opp.competitorNames || !opp.competitorNames.length) return '';
+  const s = opp.competitiveStrategy;
+  if (s === 'displace' || s === 'defend') return `<span class="comp-risk-high">⚔ High Risk</span>`;
+  if (s === 'differentiate') return `<span class="comp-risk-medium">⚠ Competitive</span>`;
+  return `<span class="comp-risk-low">vs ${opp.competitorNames.join(', ')}</span>`;
+}
+
+function _daysAgo(dateStr) {
+  if (!dateStr) return null;
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 0) return `in ${-diff}d`;
+  return `${diff}d ago`;
+}
+
+function _avatarInitials(name) {
+  return (name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+
+function _gradForContact(c) {
+  const idx = (c.name||'').charCodeAt(0) % GRAD_PALETTE_CRM.length;
+  return GRAD_PALETTE_CRM[idx];
+}
+
+function _initCrmData() {
+  if (!RAW_DATA) return;
+  if (!RAW_DATA.contacts)      RAW_DATA.contacts      = [];
+  if (!RAW_DATA.opportunities) RAW_DATA.opportunities = [];
+  if (!RAW_DATA.activities)    RAW_DATA.activities    = [];
+}
+
+/* Extend loadRealData to initialise CRM arrays */
+const _origLoadRealData = loadRealData;
+(function() {
+  const orig = window.loadRealData;
+  // We call _initCrmData() once after app init
+})();
+// Call immediately if RAW_DATA already loaded
+_initCrmData();
+
+/* ── Populate account dropdowns in CRM ── */
+function _populateCrmAccountSelects() {
+  const custs = (RAW_DATA && RAW_DATA.customers) || [];
+  const opts  = custs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  ['crm-contact-filter-account','crm-opp-filter-account','crm-act-filter-account',
+   'cm-contact-account','cm-opp-account','cm-act-account'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isFilter = id.startsWith('crm-');
+    el.innerHTML = (isFilter ? '<option value="">All Accounts</option>' : '') + opts;
+  });
+}
+
+/* ─── CRM: CONTACTS VIEW ─── */
+function buildCrmContacts() {
+  _initCrmData();
+  _populateCrmAccountSelects();
+
+  const filterAccount = document.getElementById('crm-contact-filter-account')?.value || '';
+  const filterPersona = document.getElementById('crm-contact-filter-persona')?.value || '';
+  let contacts = _crmContacts();
+  if (filterAccount) contacts = contacts.filter(c => c.customerId === filterAccount);
+  if (filterPersona) contacts = contacts.filter(c => c.personaType === filterPersona);
+
+  // KPIs
+  const all = _crmContacts();
+  const champions   = all.filter(c => c.sentiment === 'champion').length;
+  const today       = new Date().toISOString().slice(0,10);
+  const followupDue = all.filter(c => c.nextFollowUp && c.nextFollowUp <= today).length;
+  const blockers    = all.filter(c => c.sentiment === 'blocker' || c.personaType === 'blocker').length;
+
+  const kpiEl = document.getElementById('crm-contacts-kpis');
+  if (kpiEl) kpiEl.innerHTML = `
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--cyan);">${all.length}</div><div class="crm-stat-lbl">Total Contacts</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--mint);">${champions}</div><div class="crm-stat-lbl">Champions</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:#fbbf24;">${followupDue}</div><div class="crm-stat-lbl">Follow-up Due</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:#f87171;">${blockers}</div><div class="crm-stat-lbl">Blockers</div></div>`;
+
+  // Follow-up pulse
+  const pulseEl = document.getElementById('crm-followup-pulse');
+  if (pulseEl) {
+    const overdue = all.filter(c => c.nextFollowUp && c.nextFollowUp < today);
+    const todayDue= all.filter(c => c.nextFollowUp === today);
+    if (overdue.length || todayDue.length) {
+      const chips = [
+        ...overdue.map(c=>`<div class="followup-chip overdue" onclick="openContactDetail('${c.id}')">🔴 <strong>${c.name}</strong> — overdue follow-up (${_custName(c.customerId)})</div>`),
+        ...todayDue.map(c=>`<div class="followup-chip today" onclick="openContactDetail('${c.id}')">🟡 <strong>${c.name}</strong> — follow up today (${_custName(c.customerId)})</div>`)
+      ].join('');
+      pulseEl.innerHTML = `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px;">Follow-Up Today</div><div class="followup-pulse">${chips}</div>`;
+    } else {
+      pulseEl.innerHTML = '';
+    }
+  }
+
+  // Update sidebar badge
+  const badge = document.getElementById('crm-contacts-badge');
+  if (badge) {
+    if (followupDue > 0) { badge.textContent = followupDue; badge.style.display = ''; }
+    else { badge.style.display = 'none'; }
+  }
+
+  // List
+  const listEl = document.getElementById('crm-contact-list');
+  if (!listEl) return;
+  if (!contacts.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">No contacts yet. Add your first contact →</div>`;
+    return;
+  }
+  listEl.innerHTML = contacts.map(c => {
+    const lastContacted = _getLastContacted(c.id);
+    const followupCls   = c.nextFollowUp && c.nextFollowUp <= today ? 'followup-chip overdue' : '';
+    return `<div class="contact-card" onclick="openContactDetail('${c.id}')">
+      <div class="contact-avatar" style="background:${_gradForContact(c)}">${_avatarInitials(c.name)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="contact-name">${c.name}</span>
+          <span class="persona-pill persona-${c.personaType||'influencer'}">${CRM_PERSONA_LABELS[c.personaType]||c.personaType}</span>
+          <span class="sentiment-dot sentiment-${c.sentiment||'neutral'}" title="${c.sentiment||'neutral'}"></span>
+        </div>
+        <div class="contact-title">${[c.title, _custName(c.customerId)].filter(Boolean).join(' · ')}</div>
+        <div class="contact-meta">
+          ${c.primarySolutionArea ? `<span class="sol-chip sol-${c.primarySolutionArea}">${SOL_LABELS[c.primarySolutionArea]||c.primarySolutionArea}</span>` : ''}
+          ${lastContacted ? `<span style="font-size:11px;color:var(--muted);">Last contact: ${_daysAgo(lastContacted)}</span>` : ''}
+          ${c.nextFollowUp ? `<span style="font-size:11px;color:${c.nextFollowUp <= today ? '#fbbf24' : 'var(--muted)'};">Follow-up: ${_daysAgo(c.nextFollowUp)}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="settings-btn" style="padding:0 10px;height:28px;font-size:11px;" onclick="event.stopPropagation();openContactModal('${c.id}')">Edit</button>
+        <button class="settings-btn" style="padding:0 10px;height:28px;font-size:11px;background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2);" onclick="event.stopPropagation();deleteCrmRecord('contacts','${c.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openContactDetail(id) {
+  const c = _crmContacts().find(x => x.id === id);
+  if (!c) return;
+  const activities = _crmActivities().filter(a => (a.contactIds||[]).includes(id)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const opps = _crmOpps().filter(o => (o.contactIds||[]).includes(id));
+  alert(`${c.name}\n${c.title||''}\n\nPersona: ${CRM_PERSONA_LABELS[c.personaType]||c.personaType}\nSentiment: ${c.sentiment}\n\nPain: ${c.keyPain||'—'}\nObjection: ${c.keyObjection||'—'}\n\nNotes: ${c.notes||'—'}`);
+}
+
+/* ─── CRM: OPPORTUNITIES VIEW ─── */
+function buildCrmOpps() {
+  _initCrmData();
+  _populateCrmAccountSelects();
+
+  const filterAccount = document.getElementById('crm-opp-filter-account')?.value || '';
+  const filterStage   = document.getElementById('crm-opp-filter-stage')?.value   || '';
+  const filterSol     = document.getElementById('crm-opp-filter-sol')?.value     || '';
+
+  const allOpps = _crmOpps();
+  let opps = allOpps;
+  if (filterAccount) opps = opps.filter(o => o.customerId === filterAccount);
+  if (filterStage)   opps = opps.filter(o => o.stage === filterStage);
+  if (filterSol)     opps = opps.filter(o => (o.solutionAreas||[]).includes(filterSol));
+
+  const openOpps     = allOpps.filter(o => !['won','lost'].includes(o.stage));
+  const pipeline     = openOpps.reduce((s,o) => s + (((o.dealSizeArr||0) * (o.probability||50)) / 100), 0);
+  const today        = new Date().toISOString().slice(0,10);
+  const thisMonth    = today.slice(0,7);
+  const closingMonth = openOpps.filter(o => o.closeDate && o.closeDate.startsWith(thisMonth)).length;
+  const atRisk       = openOpps.filter(o => o.isAtRisk || (o.riskReason && o.riskReason.trim())).length;
+
+  const kpiEl = document.getElementById('crm-opps-kpis');
+  if (kpiEl) kpiEl.innerHTML = `
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--cyan);">${openOpps.length}</div><div class="crm-stat-lbl">Open Deals</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--mint);">$${(pipeline/1000).toFixed(0)}k</div><div class="crm-stat-lbl">Weighted ARR</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:#fbbf24;">${closingMonth}</div><div class="crm-stat-lbl">Closing This Month</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:#f87171;">${atRisk}</div><div class="crm-stat-lbl">At Risk</div></div>`;
+
+  // Update badge
+  const badge = document.getElementById('crm-opps-badge');
+  if (badge) {
+    if (closingMonth > 0) { badge.textContent = closingMonth; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  }
+
+  const listEl = document.getElementById('crm-opp-list');
+  if (!listEl) return;
+  if (!opps.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">No opportunities yet. Create your first →</div>`;
+    return;
+  }
+  listEl.innerHTML = opps.sort((a,b)=>(b.dealSizeArr||0)-(a.dealSizeArr||0)).map(o => {
+    const solHtml = (o.solutionAreas||[]).map(s=>`<span class="sol-chip sol-${s}">${SOL_LABELS[s]||s}</span>`).join('');
+    const risk    = _competitiveRisk(o);
+    const atRiskBadge = (o.isAtRisk || o.riskReason) ? `<span style="font-size:10px;color:#f87171;font-weight:700;">⚠ At Risk</span>` : '';
+    return `<div class="opp-card" onclick="openOppDetail('${o.id}')">
+      <div class="opp-card-header">
+        <div>
+          <div class="opp-name">${o.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${_custName(o.customerId)}</div>
+        </div>
+        <div style="text-align:right;">
+          ${o.dealSizeArr ? `<div class="opp-arr">$${Number(o.dealSizeArr).toLocaleString()}</div>` : ''}
+          ${o.probability != null ? `<div style="font-size:11px;color:var(--muted);">${o.probability}% likely</div>` : ''}
+        </div>
+      </div>
+      <div class="opp-meta">
+        <span class="stage-pill stage-${o.stage||'identify'}">${CRM_STAGE_LABELS[o.stage]||o.stage}</span>
+        ${o.motionType ? `<span class="motion-tag">${o.motionType}</span>` : ''}
+        ${solHtml}
+        ${_meddpiccBar(o)}
+        ${risk} ${atRiskBadge}
+        ${o.closeDate ? `<span style="font-size:11px;color:var(--muted);">Close: ${o.closeDate}</span>` : ''}
+        ${o.partnerId ? `<span style="font-size:11px;color:var(--muted);">Partner: ${o.partnerId}</span>` : ''}
+      </div>
+      ${o.nextAction ? `<div style="font-size:11.5px;color:var(--cyan);margin-top:8px;">→ ${o.nextAction}</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <button class="settings-btn" style="padding:0 10px;height:26px;font-size:11px;" onclick="event.stopPropagation();openOppModal('${o.id}')">Edit</button>
+        <button class="settings-btn" style="padding:0 10px;height:26px;font-size:11px;background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2);" onclick="event.stopPropagation();deleteCrmRecord('opportunities','${o.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openOppDetail(id) {
+  const o = _crmOpps().find(x => x.id === id);
+  if (!o) return;
+  // Simple expansion inline — show MEDDPICC score in alert for now
+  const score = _meddpiccScore(o);
+  const missing = ['metrics','economicBuyer','decisionCriteria','decisionProcess','paperProcess','impliedPain','champion'].filter(f => !o[f] || !o[f].trim());
+  alert(`${o.name} — ${_custName(o.customerId)}\nStage: ${CRM_STAGE_LABELS[o.stage]}\nARR: $${(o.dealSizeArr||0).toLocaleString()}\n\nMEDDPICC: ${score}/7 filled\nMissing: ${missing.join(', ')||'—'}\n\nNext action: ${o.nextAction||'—'}`);
+}
+
+/* ─── CRM: ACTIVITIES VIEW ─── */
+function buildCrmActivities() {
+  _initCrmData();
+  _populateCrmAccountSelects();
+
+  const filterAccount = document.getElementById('crm-act-filter-account')?.value || '';
+  const filterType    = document.getElementById('crm-act-filter-type')?.value    || '';
+  let acts = _crmActivities().sort((a,b) => b.date.localeCompare(a.date));
+  if (filterAccount) acts = acts.filter(a => a.customerId === filterAccount);
+  if (filterType)    acts = acts.filter(a => a.type === filterType);
+
+  const allActs = _crmActivities();
+  const today   = new Date().toISOString().slice(0,10);
+  const weekAgo = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+  const thisWeek= allActs.filter(a => a.date >= weekAgo && a.date <= today).length;
+  const demos   = allActs.filter(a => a.type === 'demo').length;
+  const meetings= allActs.filter(a => a.type === 'meeting').length;
+  const withNextSteps = allActs.filter(a => a.nextSteps && a.nextSteps.trim()).length;
+
+  const kpiEl = document.getElementById('crm-activities-kpis');
+  if (kpiEl) kpiEl.innerHTML = `
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--cyan);">${thisWeek}</div><div class="crm-stat-lbl">This Week</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--lavender);">${demos}</div><div class="crm-stat-lbl">Total Demos</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:var(--mint);">${meetings}</div><div class="crm-stat-lbl">Meetings Logged</div></div>
+    <div class="crm-stat"><div class="crm-stat-num" style="color:#fbbf24;">${withNextSteps}</div><div class="crm-stat-lbl">With Next Steps</div></div>`;
+
+  const feedEl = document.getElementById('crm-activity-feed');
+  if (!feedEl) return;
+  if (!acts.length) {
+    feedEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">No activities logged yet. Click "Log Activity" to start →</div>`;
+    return;
+  }
+  // Group by date bucket
+  const groups = {};
+  acts.forEach(a => {
+    const d = a.date;
+    const label = d === today ? 'Today' : d === new Date(Date.now()-86400000).toISOString().slice(0,10) ? 'Yesterday' : d >= weekAgo ? 'Earlier This Week' : 'Older';
+    (groups[label] = groups[label]||[]).push(a);
+  });
+  const ORDER = ['Today','Yesterday','Earlier This Week','Older'];
+  feedEl.innerHTML = ORDER.filter(g => groups[g]).map(g => {
+    const entries = groups[g].map(a => {
+      const sentColor = {
+        'very-positive':'#6ee7b7','positive':'#67e8f9','neutral':'#94a3b8',
+        'negative':'#fbbf24','very-negative':'#f87171'
+      }[a.sentiment||'neutral'] || '#94a3b8';
+      const contactNames = (a.contactIds||[]).map(cid => {
+        const ct = _crmContacts().find(c => c.id === cid);
+        return ct ? ct.name : null;
+      }).filter(Boolean).join(', ');
+      return `<div class="activity-entry">
+        <div class="activity-type-icon">${CRM_ACT_ICONS[a.type]||'📝'}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="activity-title">${a.title}</span>
+            <span class="sentiment-dot" style="background:${sentColor};" title="${a.sentiment||'neutral'}"></span>
+          </div>
+          <div class="activity-meta">${_custName(a.customerId)}${contactNames ? ' · '+contactNames : ''}${a.duration ? ' · '+a.duration+'min' : ''} · ${a.date}</div>
+          ${a.outcome ? `<div class="activity-outcome">${a.outcome}</div>` : ''}
+          ${a.nextSteps ? `<div class="activity-next">→ ${a.nextSteps}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;align-self:flex-start;">
+          <button class="settings-btn" style="padding:0 8px;height:24px;font-size:10px;background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2);" onclick="deleteCrmRecord('activities','${a.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="activity-group-label">${g}</div>${entries}`;
+  }).join('');
+}
+
+/* ─── showView wiring (CRM extension, registered after parse) ─── */
+// We patch the existing showView at runtime using an IIFE so hoisting doesn't interfere
+(function _patchShowView() {
+  const _crmViews = ['view-crm-contacts','view-crm-opps','view-crm-activities'];
+  const _crmNative = showView;  // capture original BEFORE reassignment
+  showView = function(name) {
+    // Always hide CRM views first
+    _crmViews.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+
+    if (name === 'crm-contacts' || name === 'crm-opps' || name === 'crm-activities') {
+      ['view-list','view-kanban','view-backlog','view-settings','view-reports'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.hidden = true;
+      });
+      document.getElementById('view-detail').hidden = true;
+      document.getElementById('tb-list').hidden   = false;
+      document.getElementById('tb-detail').hidden = true;
+      document.getElementById('kpi-row').hidden   = false;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const navId = { 'crm-contacts':'nav-crm-contacts', 'crm-opps':'nav-crm-opps', 'crm-activities':'nav-crm-activities' }[name];
+      const nav = document.getElementById(navId); if (nav) nav.classList.add('active');
+      currentView = name;
+      const viewId = 'view-' + name;
+      document.getElementById(viewId).hidden = false;
+      if (name === 'crm-contacts')   buildCrmContacts();
+      if (name === 'crm-opps')       buildCrmOpps();
+      if (name === 'crm-activities') buildCrmActivities();
+    } else {
+      _crmNative(name);
+    }
+  };
+})();
+
+/* ─── CONTACT MODAL ─── */
+let _editingContactId = null;
+
+function openContactModal(id, prefillCustomerId) {
+  _editingContactId = id || null;
+  _initCrmData();
+  _populateCrmAccountSelects();
+  const modal = document.getElementById('contact-modal');
+  const titleEl = document.getElementById('contact-modal-title');
+  if (id) {
+    const c = _crmContacts().find(x => x.id === id);
+    if (!c) return;
+    titleEl.textContent = 'Edit Contact';
+    document.getElementById('cm-contact-account').value     = c.customerId || '';
+    document.getElementById('cm-contact-name').value        = c.name || '';
+    document.getElementById('cm-contact-title').value       = c.title || '';
+    document.getElementById('cm-contact-email').value       = c.email || '';
+    document.getElementById('cm-contact-phone').value       = c.phone || '';
+    document.getElementById('cm-contact-persona').value     = c.personaType || 'influencer';
+    document.getElementById('cm-contact-influence').value   = c.influence || 'medium';
+    document.getElementById('cm-contact-sentiment').value   = c.sentiment || 'neutral';
+    document.getElementById('cm-contact-sol').value         = c.primarySolutionArea || 'm365';
+    document.getElementById('cm-contact-followup').value    = c.nextFollowUp || '';
+    document.getElementById('cm-contact-pain').value        = c.keyPain || '';
+    document.getElementById('cm-contact-objection').value   = c.keyObjection || '';
+    document.getElementById('cm-contact-notes').value       = c.notes || '';
+  } else {
+    titleEl.textContent = 'Add Contact';
+    ['cm-contact-name','cm-contact-title','cm-contact-email','cm-contact-phone','cm-contact-pain','cm-contact-objection','cm-contact-notes','cm-contact-followup'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('cm-contact-persona').value   = 'business-dm';
+    document.getElementById('cm-contact-influence').value = 'medium';
+    document.getElementById('cm-contact-sentiment').value = 'neutral';
+    if (prefillCustomerId) document.getElementById('cm-contact-account').value = prefillCustomerId;
+  }
+  modal.hidden = false;
+}
+
+function closeContactModal() { document.getElementById('contact-modal').hidden = true; }
+
+function saveContact() {
+  const name = document.getElementById('cm-contact-name').value.trim();
+  if (!name) { alert('Contact name is required.'); return; }
+  const customerId = document.getElementById('cm-contact-account').value;
+  if (!customerId) { alert('Please select an account.'); return; }
+
+  _initCrmData();
+  const rec = {
+    id:                  _editingContactId || ('contact-' + Date.now()),
+    customerId,
+    name,
+    title:               document.getElementById('cm-contact-title').value.trim(),
+    email:               document.getElementById('cm-contact-email').value.trim(),
+    phone:               document.getElementById('cm-contact-phone').value.trim(),
+    personaType:         document.getElementById('cm-contact-persona').value,
+    influence:           document.getElementById('cm-contact-influence').value,
+    sentiment:           document.getElementById('cm-contact-sentiment').value,
+    primarySolutionArea: document.getElementById('cm-contact-sol').value,
+    nextFollowUp:        document.getElementById('cm-contact-followup').value || null,
+    keyPain:             document.getElementById('cm-contact-pain').value.trim(),
+    keyObjection:        document.getElementById('cm-contact-objection').value.trim(),
+    notes:               document.getElementById('cm-contact-notes').value.trim(),
+    updatedAt:           new Date().toISOString().slice(0,10),
+  };
+  if (!_editingContactId) rec.createdAt = rec.updatedAt;
+
+  const arr = RAW_DATA.contacts;
+  const idx = arr.findIndex(c => c.id === rec.id);
+  if (idx >= 0) arr[idx] = rec;
+  else arr.push(rec);
+
+  saveData();
+  closeContactModal();
+  buildCrmContacts();
+}
+
+/* ─── OPP MODAL ─── */
+let _editingOppId = null;
+
+function switchOppTab(tab) {
+  ['summary','meddpicc','competitive'].forEach(t => {
+    document.getElementById(`opp-tab-body-${t}`).hidden = (t !== tab);
+    document.getElementById(`opp-tab-${t}`).classList.toggle('active', t === tab);
+  });
+}
+
+function toggleSolCheck(el) { el.classList.toggle('on'); }
+
+function openOppModal(id, prefillCustomerId) {
+  _editingOppId = id || null;
+  _initCrmData();
+  _populateCrmAccountSelects();
+  switchOppTab('summary');
+  const titleEl = document.getElementById('opp-modal-title');
+  // Reset sol checks
+  document.querySelectorAll('#cm-opp-sol-checks .sol-check').forEach(el => el.classList.remove('on'));
+
+  if (id) {
+    const o = _crmOpps().find(x => x.id === id);
+    if (!o) return;
+    titleEl.textContent = 'Edit Opportunity';
+    document.getElementById('cm-opp-account').value       = o.customerId || '';
+    document.getElementById('cm-opp-name').value          = o.name || '';
+    document.getElementById('cm-opp-stage').value         = o.stage || 'identify';
+    document.getElementById('cm-opp-motion').value        = o.motionType || 'new-business';
+    document.getElementById('cm-opp-arr').value           = o.dealSizeArr || '';
+    document.getElementById('cm-opp-closedate').value     = o.closeDate || '';
+    document.getElementById('cm-opp-prob').value          = o.probability || '';
+    document.getElementById('cm-opp-partner').value       = o.partnerId || '';
+    document.getElementById('cm-opp-nextaction').value    = o.nextAction || '';
+    document.getElementById('cm-opp-notes').value         = o.notes || '';
+    document.getElementById('cm-opp-m').value             = o.metrics || '';
+    document.getElementById('cm-opp-e').value             = o.economicBuyer || '';
+    document.getElementById('cm-opp-d').value             = o.decisionCriteria || '';
+    document.getElementById('cm-opp-dp').value            = o.decisionProcess || '';
+    document.getElementById('cm-opp-p').value             = o.paperProcess || '';
+    document.getElementById('cm-opp-i').value             = o.impliedPain || '';
+    document.getElementById('cm-opp-c').value             = o.champion || '';
+    document.getElementById('cm-opp-c2').value            = o.competition || '';
+    document.getElementById('cm-opp-competitors').value   = (o.competitorNames||[]).join(', ');
+    document.getElementById('cm-opp-comp-strategy').value = o.competitiveStrategy || 'differentiate';
+    document.getElementById('cm-opp-risk').value          = o.riskReason || '';
+    (o.solutionAreas||[]).forEach(s => {
+      const el = document.querySelector(`#cm-opp-sol-checks [data-sol="${s}"]`);
+      if (el) el.classList.add('on');
+    });
+  } else {
+    titleEl.textContent = 'New Opportunity';
+    ['cm-opp-name','cm-opp-arr','cm-opp-closedate','cm-opp-prob','cm-opp-partner','cm-opp-nextaction','cm-opp-notes','cm-opp-m','cm-opp-e','cm-opp-d','cm-opp-dp','cm-opp-p','cm-opp-i','cm-opp-c','cm-opp-c2','cm-opp-competitors','cm-opp-risk'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('cm-opp-stage').value = 'qualify';
+    document.getElementById('cm-opp-motion').value = 'new-business';
+    if (prefillCustomerId) document.getElementById('cm-opp-account').value = prefillCustomerId;
+  }
+  document.getElementById('opp-modal').hidden = false;
+}
+
+function closeOppModal() { document.getElementById('opp-modal').hidden = true; }
+
+function saveOpportunity() {
+  const name = document.getElementById('cm-opp-name').value.trim();
+  if (!name) { alert('Opportunity name is required.'); return; }
+  const customerId = document.getElementById('cm-opp-account').value;
+  if (!customerId) { alert('Please select an account.'); return; }
+
+  const solAreas = Array.from(document.querySelectorAll('#cm-opp-sol-checks .sol-check.on')).map(el => el.dataset.sol);
+  const compRaw  = document.getElementById('cm-opp-competitors').value;
+  const competitorNames = compRaw ? compRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  const riskReason = document.getElementById('cm-opp-risk').value.trim();
+
+  _initCrmData();
+  const rec = {
+    id:                 _editingOppId || ('opp-' + Date.now()),
+    customerId,
+    name,
+    stage:              document.getElementById('cm-opp-stage').value,
+    motionType:         document.getElementById('cm-opp-motion').value,
+    dealSizeArr:        parseFloat(document.getElementById('cm-opp-arr').value) || 0,
+    closeDate:          document.getElementById('cm-opp-closedate').value || null,
+    probability:        parseInt(document.getElementById('cm-opp-prob').value) || 50,
+    partnerId:          document.getElementById('cm-opp-partner').value.trim(),
+    nextAction:         document.getElementById('cm-opp-nextaction').value.trim(),
+    notes:              document.getElementById('cm-opp-notes').value.trim(),
+    solutionAreas:      solAreas,
+    metrics:            document.getElementById('cm-opp-m').value.trim(),
+    economicBuyer:      document.getElementById('cm-opp-e').value.trim(),
+    decisionCriteria:   document.getElementById('cm-opp-d').value.trim(),
+    decisionProcess:    document.getElementById('cm-opp-dp').value.trim(),
+    paperProcess:       document.getElementById('cm-opp-p').value.trim(),
+    impliedPain:        document.getElementById('cm-opp-i').value.trim(),
+    champion:           document.getElementById('cm-opp-c').value.trim(),
+    competition:        document.getElementById('cm-opp-c2').value.trim(),
+    competitorNames,
+    competitiveStrategy: document.getElementById('cm-opp-comp-strategy').value,
+    isAtRisk:           !!riskReason,
+    riskReason,
+    contactIds:         (_editingOppId ? (_crmOpps().find(o=>o.id===_editingOppId)?.contactIds||[]) : []),
+    updatedAt:          new Date().toISOString().slice(0,10),
+  };
+  if (!_editingOppId) rec.createdAt = rec.updatedAt;
+
+  const arr = RAW_DATA.opportunities;
+  const idx = arr.findIndex(o => o.id === rec.id);
+  if (idx >= 0) arr[idx] = rec;
+  else arr.push(rec);
+
+  saveData();
+  closeOppModal();
+  buildCrmOpps();
+}
+
+/* ─── ACTIVITY MODAL ─── */
+let _editingActivityId = null;
+
+function populateActOpps() {
+  const customerId = document.getElementById('cm-act-account')?.value;
+  const sel = document.getElementById('cm-act-opp');
+  if (!sel) return;
+  const opps = customerId ? _crmOpps().filter(o => o.customerId === customerId && !['won','lost'].includes(o.stage)) : [];
+  sel.innerHTML = '<option value="">— None —</option>' + opps.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+}
+
+function openActivityModal(prefillCustomerId) {
+  _editingActivityId = null;
+  _initCrmData();
+  _populateCrmAccountSelects();
+  // Set today as default date
+  document.getElementById('cm-act-date').value = new Date().toISOString().slice(0,10);
+  ['cm-act-title','cm-act-outcome','cm-act-nextsteps','cm-act-duration'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('cm-act-type').value = 'meeting';
+  document.getElementById('cm-act-sentiment').value = 'neutral';
+  if (prefillCustomerId) {
+    document.getElementById('cm-act-account').value = prefillCustomerId;
+    populateActOpps();
+  } else {
+    populateActOpps();
+  }
+  document.getElementById('activity-modal').hidden = false;
+}
+
+function closeActivityModal() { document.getElementById('activity-modal').hidden = true; }
+
+function saveActivity() {
+  const title = document.getElementById('cm-act-title').value.trim();
+  if (!title) { alert('Activity title is required.'); return; }
+  const customerId = document.getElementById('cm-act-account').value;
+  if (!customerId) { alert('Please select an account.'); return; }
+
+  _initCrmData();
+  const rec = {
+    id:           'act-' + Date.now(),
+    customerId,
+    opportunityId: document.getElementById('cm-act-opp').value || null,
+    contactIds:    [],
+    type:          document.getElementById('cm-act-type').value,
+    date:          document.getElementById('cm-act-date').value,
+    duration:      parseInt(document.getElementById('cm-act-duration').value) || null,
+    title,
+    outcome:       document.getElementById('cm-act-outcome').value.trim(),
+    nextSteps:     document.getElementById('cm-act-nextsteps').value.trim(),
+    sentiment:     document.getElementById('cm-act-sentiment').value,
+    createdAt:     new Date().toISOString().slice(0,10),
+  };
+
+  RAW_DATA.activities.push(rec);
+  saveData();
+  closeActivityModal();
+  if (currentView === 'crm-activities') buildCrmActivities();
+}
+
+/* ─── DELETE helper ─── */
+function deleteCrmRecord(type, id) {
+  if (!confirm('Delete this record?')) return;
+  _initCrmData();
+  RAW_DATA[type] = RAW_DATA[type].filter(r => r.id !== id);
+  saveData();
+  if (type === 'contacts')      buildCrmContacts();
+  if (type === 'opportunities') buildCrmOpps();
+  if (type === 'activities')    buildCrmActivities();
+}
+
+/* ─── Patch goToDetail to show CRM panels ─── */
+(function _patchGoToDetail() {
+  const _orig = goToDetail;
+  goToDetail = function(id) {
+    _orig(id);
+    setTimeout(() => _injectCrmCustomerPanels(id), 0);
+  };
+})();
+
+function _injectCrmCustomerPanels(customerId) {
+  const body = document.getElementById('d-body');
+  if (!body) return;
+  _initCrmData();
+
+  const contacts = _crmContacts().filter(c => c.customerId === customerId);
+  const opps     = _crmOpps().filter(o => o.customerId === customerId && !['won','lost'].includes(o.stage));
+
+  // Contacts panel
+  const topGrid = body.querySelector('.detail-body-top');
+  if (!topGrid) return;
+
+  // Remove old CRM panels if any
+  body.querySelectorAll('.crm-injected-panel').forEach(el => el.remove());
+
+  const contactsHtml = contacts.slice(0,4).map(c => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);">
+      <div style="width:28px;height:28px;border-radius:50%;background:${_gradForContact(c)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${_avatarInitials(c.name)}</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${c.name}</div>
+        <div style="font-size:10px;color:var(--muted);">${c.title||''}</div>
+      </div>
+      <span class="persona-pill persona-${c.personaType}" style="margin-left:auto;">${CRM_PERSONA_LABELS[c.personaType]||c.personaType}</span>
+      <span class="sentiment-dot sentiment-${c.sentiment||'neutral'}"></span>
+    </div>`).join('');
+
+  const oppsHtml = opps.slice(0,4).map(o => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);">
+      <span class="stage-pill stage-${o.stage||'identify'}">${CRM_STAGE_LABELS[o.stage]||o.stage}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.name}</div>
+        ${_meddpiccBar(o)}
+      </div>
+      ${o.dealSizeArr ? `<span style="font-size:12px;font-weight:700;color:var(--mint);">$${Number(o.dealSizeArr).toLocaleString()}</span>` : ''}
+    </div>`).join('');
+
+  const panel = document.createElement('div');
+  panel.className = 'detail-body-top crm-injected-panel';
+  panel.style.marginTop = '16px';
+  panel.innerHTML = `
+    <div class="detail-panel crm-detail-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="crm-panel-title">Key Contacts (${contacts.length})</div>
+        <button class="settings-btn" style="padding:0 10px;height:26px;font-size:11px;" onclick="openContactModal(null,'${customerId}')">+ Add</button>
+      </div>
+      ${contactsHtml || '<div style="font-size:12px;color:var(--muted);">No contacts yet.</div>'}
+      ${contacts.length > 4 ? `<div style="font-size:11px;color:var(--cyan);margin-top:6px;cursor:pointer;" onclick="showView(\'crm-contacts\')">View all ${contacts.length} contacts →</div>` : ''}
+    </div>
+    <div class="detail-panel crm-detail-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="crm-panel-title">Active Opportunities (${opps.length})</div>
+        <button class="settings-btn" style="padding:0 10px;height:26px;font-size:11px;" onclick="openOppModal(null,'${customerId}')">+ Add</button>
+      </div>
+      ${oppsHtml || '<div style="font-size:12px;color:var(--muted);">No open opportunities.</div>'}
+      ${opps.length > 4 ? `<div style="font-size:11px;color:var(--cyan);margin-top:6px;cursor:pointer;" onclick="showView(\'crm-opps\')">View all →</div>` : ''}
+    </div>`;
+  body.appendChild(panel);
+}
+
+/* ─── Init CRM data on startup ─── */
+_initCrmData();
+// Refresh follow-up badges on page load
+(function _crmBadgesOnLoad() {
+  const contacts = _crmContacts();
+  const today = new Date().toISOString().slice(0,10);
+  const followupDue = contacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today).length;
+  const badge = document.getElementById('crm-contacts-badge');
+  if (badge && followupDue > 0) { badge.textContent = followupDue; badge.style.display = ''; }
+  const openOpps = _crmOpps().filter(o => !['won','lost'].includes(o.stage));
+  const thisMonth = today.slice(0,7);
+  const closingMonth = openOpps.filter(o => o.closeDate && o.closeDate.startsWith(thisMonth)).length;
+  const oppBadge = document.getElementById('crm-opps-badge');
+  if (oppBadge && closingMonth > 0) { oppBadge.textContent = closingMonth; oppBadge.style.display = ''; }
+})();
 </script>
 </body>
 </html>
