@@ -4257,22 +4257,50 @@ function _autoLayoutDepts(org) {
   roots.forEach((r, i) => place(r, 0, i));
 }
 
+function _buildPersonTree(people) {
+  // Returns [{person, depth}] in pre-order DFS for display
+  const ids = new Set(people.map(p => p.id));
+  const roots = people.filter(p => !p.reportsTo || !ids.has(p.reportsTo));
+  const result = [];
+  const visited = new Set();
+  function visit(p, depth) {
+    if (visited.has(p.id)) return;
+    visited.add(p.id);
+    result.push({ person: p, depth });
+    people.filter(c => c.reportsTo === p.id).forEach(c => visit(c, depth + 1));
+  }
+  roots.forEach(p => visit(p, 0));
+  // Catch any orphans (circular or dangling refs)
+  people.filter(p => !visited.has(p.id)).forEach(p => result.push({ person: p, depth: 0 }));
+  return result;
+}
+
 function _renderDeptCard(dept, org, canvas) {
   const risk      = _deptRisk(dept);
   const hdrClass  = `dept-header-${risk}`;
   const dotClass  = `risk-dot-${risk}`;
 
-  const peopleHtml = (dept.people||[]).slice(0,4).map(p => {
-    const chips = (p.competeItems||[]).slice(0,3).map(ci =>
+  const tree = _buildPersonTree(dept.people || []);
+  const MAX_SHOWN = 6;
+  const shown = tree.slice(0, MAX_SHOWN);
+  const peopleHtml = shown.map(({ person: p, depth }) => {
+    const chips = (p.competeItems||[]).slice(0,2).map(ci =>
       `<span class="dept-compete-chip compete-chip-${ci.risk}" title="${_esc(ci.competitor)} — ${ci.workload}">${_esc(ci.competitor.slice(0,10))}</span>`
     ).join('');
-    return `<div class="dept-person-row">
+    const indent = depth * 14;
+    const connector = depth > 0
+      ? `<span style="color:var(--dim);font-size:10px;line-height:1;flex-shrink:0;">└</span>` : '';
+    const titleBadge = p.title
+      ? `<span style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;" title="${_esc(p.title)}">${_esc(p.title)}</span>` : '';
+    return `<div class="dept-person-row" style="padding-left:${indent}px;gap:4px;">
+      ${connector}
       <span class="dept-person-name" title="${_esc(p.name)}">${_esc(p.name)}</span>
+      ${titleBadge}
       <div style="display:flex;gap:3px;flex-wrap:wrap;">${chips}</div>
     </div>`;
   }).join('');
-  const moreLabel  = (dept.people||[]).length > 4
-    ? `<div style="font-size:10px;color:var(--muted);padding-bottom:4px;">+${(dept.people||[]).length - 4} more</div>` : '';
+  const moreLabel = tree.length > MAX_SHOWN
+    ? `<div style="font-size:10px;color:var(--muted);padding-bottom:2px;padding-left:4px;">+${tree.length - MAX_SHOWN} more</div>` : '';
 
   const card = document.createElement('div');
   card.className = 'dept-card';
@@ -4476,6 +4504,15 @@ function openDeptModal(deptId) {
     document.getElementById('cm-dept-name').value = dept.name;
     if (dept.parentId) parentSel.value = dept.parentId;
     (dept.people || []).forEach(p => _addPersonRowData(container, p));
+    // Populate reports-to dropdowns, then restore saved values
+    _refreshReportsToDropdowns();
+    Array.from(container.querySelectorAll('.compete-person-item')).forEach(item => {
+      const reportsTo = item.dataset.reportsTo;
+      if (reportsTo) {
+        const sel = item.querySelector('.person-reports-to-select');
+        if (sel) sel.value = reportsTo;
+      }
+    });
   } else {
     document.getElementById('cm-dept-name').value = '';
   }
@@ -4486,17 +4523,48 @@ function closeDeptModal() { document.getElementById('dept-modal').hidden = true;
 
 function addPersonRow() {
   _addPersonRowData(document.getElementById('dept-people-container'), null);
+  _refreshReportsToDropdowns();
+}
+
+function _refreshReportsToDropdowns() {
+  const container = document.getElementById('dept-people-container');
+  if (!container) return;
+  const items = Array.from(container.querySelectorAll('.compete-person-item'));
+  items.forEach(item => {
+    const sel = item.querySelector('.person-reports-to-select');
+    if (!sel) return;
+    const myPid  = item.dataset.pid;
+    const curVal = sel.value;
+    sel.innerHTML = '<option value="">— No manager (root) —</option>' +
+      items
+        .filter(other => other.dataset.pid !== myPid)
+        .map(other => {
+          const nm = other.querySelector('.person-name-input')?.value.trim() || '(unnamed)';
+          return `<option value="${other.dataset.pid}">${_esc(nm)}</option>`;
+        }).join('');
+    if (curVal) sel.value = curVal;
+  });
 }
 
 function _addPersonRowData(container, person) {
+  // Use existing ID as pid for existing people, generate temp id for new
+  const pid = (person && person.id) ? person.id : ('tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,6));
   const div = document.createElement('div');
   div.className = 'compete-person-item';
+  div.dataset.pid = pid;
   div.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
-      <input class="modal-input person-name-input" placeholder="Name *" value="${_esc(person ? person.name : '')}" style="flex:1;">
+    <div style="display:flex;gap:8px;margin-bottom:4px;align-items:center;">
+      <input class="modal-input person-name-input" placeholder="Name *" value="${_esc(person ? person.name : '')}"
+        style="flex:1;" oninput="_refreshReportsToDropdowns()">
       <input class="modal-input person-title-input" placeholder="Title / Role" value="${_esc(person ? (person.title||'') : '')}" style="flex:1;">
       <button class="dept-action-btn" style="color:#f87171;border-color:rgba(239,68,68,.3);flex-shrink:0;"
-        onclick="this.closest('.compete-person-item').remove()">✕</button>
+        onclick="this.closest('.compete-person-item').remove();_refreshReportsToDropdowns()">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Reports to:</span>
+      <select class="modal-input person-reports-to-select" style="flex:1;height:28px;font-size:11px;">
+        <option value="">— No manager (root) —</option>
+      </select>
     </div>
     <div class="compete-item-rows"></div>
     <button class="dept-action-btn" style="margin-top:6px;border-color:rgba(103,232,249,.35);color:var(--cyan);"
@@ -4504,6 +4572,8 @@ function _addPersonRowData(container, person) {
   const rowsContainer = div.querySelector('.compete-item-rows');
   (person ? (person.competeItems || []) : []).forEach(ci => _addCompeteItemRowData(rowsContainer, ci));
   container.appendChild(div);
+  // Store reportsTo to restore after dropdown is populated
+  if (person && person.reportsTo) div.dataset.reportsTo = person.reportsTo;
 }
 
 function addCompeteItemRow(btn) {
@@ -4536,23 +4606,37 @@ function saveDept() {
   const org = _currentCompeteOrg();
   if (!org) return;
 
-  const people = Array.from(document.querySelectorAll('#dept-people-container .compete-person-item'))
-    .map(item => {
-      const pName = item.querySelector('.person-name-input')?.value.trim();
-      if (!pName) return null;
-      const competeItems = Array.from(item.querySelectorAll('.compete-item-row'))
-        .map(row => ({
-          competitor: row.querySelector('.compete-competitor-input')?.value.trim() || '',
-          workload:   row.querySelector('.compete-workload-select')?.value || 'm365',
-          risk:       row.querySelector('.compete-risk-select')?.value || 'medium',
-        })).filter(ci => ci.competitor);
-      return {
-        id:          'person-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
-        name:        pName,
-        title:       item.querySelector('.person-title-input')?.value.trim() || '',
-        competeItems,
-      };
-    }).filter(Boolean);
+  const personItems = Array.from(document.querySelectorAll('#dept-people-container .compete-person-item'));
+
+  // First pass: build pid → final ID map (existing IDs are kept; tmp- IDs get fresh IDs)
+  const pidToId = {};
+  personItems.forEach(item => {
+    const pid = item.dataset.pid || '';
+    pidToId[pid] = pid.startsWith('tmp-')
+      ? ('person-' + Date.now() + '-' + Math.random().toString(36).slice(2,6))
+      : pid;
+  });
+
+  const people = personItems.map(item => {
+    const pName = item.querySelector('.person-name-input')?.value.trim();
+    if (!pName) return null;
+    const competeItems = Array.from(item.querySelectorAll('.compete-item-row'))
+      .map(row => ({
+        competitor: row.querySelector('.compete-competitor-input')?.value.trim() || '',
+        workload:   row.querySelector('.compete-workload-select')?.value || 'm365',
+        risk:       row.querySelector('.compete-risk-select')?.value || 'medium',
+      })).filter(ci => ci.competitor);
+    const reportsToRaw = item.querySelector('.person-reports-to-select')?.value || '';
+    // Resolve: could be a tmp- pid or an existing person ID
+    const reportsTo = reportsToRaw ? (pidToId[reportsToRaw] || reportsToRaw) : null;
+    return {
+      id:    pidToId[item.dataset.pid],
+      name:  pName,
+      title: item.querySelector('.person-title-input')?.value.trim() || '',
+      reportsTo,
+      competeItems,
+    };
+  }).filter(Boolean);
 
   const parentId = document.getElementById('cm-dept-parent').value || null;
   const existing = _editingDeptId ? org.departments.find(d => d.id === _editingDeptId) : null;
