@@ -659,21 +659,33 @@ html, body {
     position:fixed;top:0;left:0;bottom:0;z-index:200;
     width:240px !important;
     transform:translateX(-100%);
-    transition:transform .25s cubic-bezier(.4,0,.2,1);
+    will-change:transform;
+    /* delay visibility:hidden until after slide-out finishes */
+    transition:transform .25s cubic-bezier(.4,0,.2,1), visibility 0s linear .25s;
     backdrop-filter:none !important;
     -webkit-backdrop-filter:none !important;
     background:var(--bg-c) !important;
     border-right:1px solid var(--border);
     overflow:hidden;
-    pointer-events:auto;
+    /* hidden+no-pointer when drawer is closed — fixes iOS hit-test bug */
+    visibility:hidden;
+    pointer-events:none;
   }
-  .sidebar.mob-open { transform:translateX(0); }
+  /* when open: show immediately, pointer events on */
+  .sidebar.mob-open {
+    transform:translateX(0);
+    visibility:visible;
+    pointer-events:auto;
+    transition:transform .25s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s;
+  }
 
   /* ensure nav items are always tappable on mobile */
   .sidebar .nav-item {
-    -webkit-tap-highlight-color:rgba(103,232,249,.12);
+    -webkit-tap-highlight-color:rgba(103,232,249,.15);
     touch-action:manipulation;
     cursor:pointer;
+    user-select:none;
+    -webkit-user-select:none;
   }
 
   /* shell no longer reserves sidebar space */
@@ -1961,6 +1973,26 @@ document.addEventListener('click', function(e) {
   if (navItem && window.innerWidth <= 767) closeMobSidebar();
 });
 
+/* iOS Safari touchend fallback — fires nav action even if click event is swallowed */
+(function() {
+  var didTouch = false;
+  document.querySelector('.sidebar').addEventListener('touchend', function(e) {
+    var link = e.target.closest('.nav-item');
+    if (!link) return;
+    e.preventDefault();
+    didTouch = true;
+    // run the inline onclick
+    var fn = link.getAttribute('onclick');
+    if (fn) { try { (new Function(fn)).call(link); } catch(_){} }
+    closeMobSidebar();
+    setTimeout(function(){ didTouch = false; }, 600);
+  }, {passive:false});
+  // suppress the ghost click that fires ~300ms later
+  document.querySelector('.sidebar').addEventListener('click', function(e) {
+    if (didTouch) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}());
+
 /* ─── theme toggle ─── */
 function toggleTheme() {
   const html = document.documentElement;
@@ -2173,7 +2205,72 @@ function loadRealData() {
   } catch(e) {}
   return false;
 }
+function loadDemoData() {
+  const demo = { customers: [
+    { id:'demo-1', name:'Contoso Corp', users:500, copilotUsers:300, logo:null,
+      csamName:'Alex Morgan', aeName:'Sara Kim',
+      renewalDate:'2026-09-30', aopDate:'2025-12-01',
+      categories:[
+        { title:'Adoption', items:[
+          {label:'Teams Chat',status:'done'},{label:'Word & Docs',status:'done'},
+          {label:'Excel Summaries',status:'done'},{label:'PowerPoint',status:'pending'},
+          {label:'Outlook Email',status:'unblock'}]},
+        { title:'Training', items:[
+          {label:'Kickoff Workshop',status:'done'},{label:'Advanced Users',status:'done'},
+          {label:'Manager Briefing',status:'pending'}]},
+        { title:'Governance', items:[
+          {label:'Data Policy',status:'done'},{label:'Usage Reports',status:'pending'}]}
+      ]},
+    { id:'demo-2', name:'Fabrikam Inc', users:500, copilotUsers:120, logo:null,
+      csamName:'James Lee', aeName:'Maria R.',
+      renewalDate:'2026-06-15', aopDate:'2025-11-01',
+      categories:[
+        { title:'Adoption', items:[
+          {label:'Teams Chat',status:'done'},{label:'Word',status:'pending'},
+          {label:'Excel',status:'pending'},{label:'Outlook',status:'pending'}]},
+        { title:'Training', items:[
+          {label:'Kickoff Workshop',status:'done'},{label:'Dept Leads',status:'blocked'},
+          {label:'End-User Training',status:'pending'}]},
+        { title:'Compete', items:[
+          {label:'Google Workspace risk',status:'blocked'},{label:'Renewal at risk',status:'missed'}]}
+      ]},
+    { id:'demo-3', name:'Northwind Traders', users:300, copilotUsers:25, logo:null,
+      csamName:'Priya S.', aeName:'Tom B.',
+      renewalDate:'2026-03-31', aopDate:'2025-10-15',
+      categories:[
+        { title:'Adoption', items:[
+          {label:'Teams Chat',status:'done'},{label:'Word',status:'pending'},
+          {label:'Excel',status:'pending'}]},
+        { title:'Blockers', items:[
+          {label:'IT Security Review',status:'blocked'},{label:'License Approval',status:'blocked'},
+          {label:'Exec Buy-in',status:'missed'}]}
+      ]},
+    { id:'demo-4', name:'Adventure Works', users:400, copilotUsers:210, logo:null,
+      csamName:'Chris N.', aeName:'Lisa T.',
+      renewalDate:'2026-12-31', aopDate:'2026-01-15',
+      categories:[
+        { title:'Adoption', items:[
+          {label:'Teams Chat',status:'done'},{label:'Word',status:'done'},
+          {label:'Excel',status:'done'},{label:'PowerPoint',status:'done'},
+          {label:'Outlook',status:'done'}]},
+        { title:'Training', items:[
+          {label:'All Hands Workshop',status:'done'},{label:'Champions Program',status:'done'},
+          {label:'Advanced Features',status:'unblock'}]},
+        { title:'Governance', items:[
+          {label:'Data Policy',status:'done'},{label:'Usage Dashboard',status:'done'},
+          {label:'Quarterly Review',status:'pending'}]}
+      ]}
+  ]};
+  RAW_DATA = demo;
+  demo.customers.forEach(function(raw, idx) {
+    var mapped = mapCustomer(raw, idx);
+    CUSTOMERS[mapped.id] = mapped;
+  });
+  localStorage.setItem(STORE_KEY, JSON.stringify(demo));
+}
+
 loadRealData();
+if (Object.keys(CUSTOMERS).length === 0) loadDemoData();
 
 const STATUS_STYLES = {
   'blocked':     'background:rgba(249,168,212,.12);color:#db2777;border:1px solid rgba(219,39,119,.2)',
