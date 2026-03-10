@@ -230,7 +230,7 @@ html, body {
 .cust-bar-track { height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:5px; }
 .cust-bar-fill { height:100%;border-radius:99px; }
 .cust-pct { font-size:28px;font-weight:800;letter-spacing:-1.5px;line-height:1;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex-shrink:0;min-width:72px;text-align:right; }
-.cust-pill { padding:3px 11px;border-radius:99px;font-size:11px;font-weight:500;flex-shrink:0; }
+.cust-pill { padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;flex-shrink:0;letter-spacing:.4px;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px; }
 .cust-arrow { font-size:18px;color:var(--dim);flex-shrink:0;transition:color .15s,transform .15s; }
 .cust-card:hover .cust-arrow { color:var(--cyan);transform:translateX(4px); }
 
@@ -2025,10 +2025,10 @@ function buildList() {
       </div>
       <div class="cust-bar-col">
         <div class="cust-bar-label-text">Adoption</div>
-        <div class="cust-bar-track"><div class="cust-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>
+        <div class="cust-bar-track"><div class="cust-bar-fill" style="width:${c.adoption}%;background:${c.status==='on-track'?'#16a34a':c.status==='at-risk'?'#dc2626':'#f87171'};"></div></div>
       </div>
-      <div class="cust-pct" style="background:${c.gradient};">${c.adoption}%</div>
-      <div class="cust-pill" style="${c.status==='on-track'?'background:rgba(22,163,74,.13);color:#16a34a;border:1px solid rgba(22,163,74,.3)':c.status==='at-risk'?'background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)':'background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)'};">${c.status}</div>
+      <div class="cust-pct" style="background:${c.status==='on-track'?'linear-gradient(135deg,#16a34a,#4ade80)':c.status==='at-risk'?'linear-gradient(135deg,#dc2626,#f87171)':'linear-gradient(135deg,#f87171,#fca5a5)'};">${c.adoption}%</div>
+      <div class="cust-pill" style="${c.status==='on-track'?'background:#16a34a;color:#fff;':'background:#dc2626;color:#fff;'}">${c.status==='on-track'?'● ON TRACK':c.status==='at-risk'?'● AT RISK':'● NEEDS ATTN'}</div>
       <div class="cust-arrow">›</div>
     </div>`).join('');
 }
@@ -2087,7 +2087,7 @@ function openSidecar(id) {
       <div>
         <div class="sc-name">${c.name}</div>
         ${c.csm ? `<div class="sc-industry">CSAM: ${c.csm}</div>` : ''}
-        <div class="sc-pill" style="${c.status==='on-track'?'background:rgba(22,163,74,.13);color:#16a34a;border:1px solid rgba(22,163,74,.3)':c.status==='at-risk'?'background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)':'background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)'};">${c.status}</div>
+        <div class="sc-pill" style="padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;${c.status==='on-track'?'background:#16a34a;color:#fff;':c.status==='at-risk'?'background:#dc2626;color:#fff;':'background:#f87171;color:#fff;'}">${c.status==='on-track'?'● On Track':c.status==='at-risk'?'● At Risk':'● Needs Attn'}</div>
       </div>
     </div>`;
 
@@ -2167,7 +2167,7 @@ function goToDetail(id) {
         ${detailLogoHtml}
         <div>
           <div class="detail-name">${c.name}</div>
-          <div class="detail-hero-pill" style="${c.status==='on-track'?'background:rgba(22,163,74,.13);color:#16a34a;border:1px solid rgba(22,163,74,.3)':c.status==='at-risk'?'background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)':'background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)'};">${c.status}</div>
+          <div class="detail-hero-pill" style="border-radius:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;${c.status==='on-track'?'background:#16a34a;color:#fff;':c.status==='at-risk'?'background:#dc2626;color:#fff;':'background:#f87171;color:#fff;'}">${c.status==='on-track'?'● On Track':c.status==='at-risk'?'● At Risk':'● Needs Attn'}</div>
         </div>
       </div>
       <div class="detail-hero-info">${heroInfoItems}</div>
@@ -3068,7 +3068,7 @@ function renderExceleratePlan(id, plan) {
           <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--text);">${c.name}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:3px;">✦ Excelerate Plan &nbsp;·&nbsp; Generated ${now}</div>
           <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${c.status==='on-track'?'rgba(22,163,74,.13)':c.status==='at-risk'?'rgba(220,38,38,.12)':'rgba(248,113,113,.12)'};color:${statusColor};border:1px solid ${statusColor}33;">${c.status.replace('-',' ').toUpperCase()}</span>
+            <span style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px;letter-spacing:.4px;text-transform:uppercase;${c.status==='on-track'?'background:#16a34a;color:#fff;':c.status==='at-risk'?'background:#dc2626;color:#fff;':'background:#f87171;color:#fff;'}">${c.status==='on-track'?'● On Track':c.status==='at-risk'?'● At Risk':'● Needs Attn'}</span>
             ${c.csm ? `<span style="font-size:11px;color:var(--muted);">CSAM: <strong style="color:var(--text);">${c.csm}</strong></span>` : ''}
             ${c.ae ? `<span style="font-size:11px;color:var(--muted);">AE: <strong style="color:var(--text);">${c.ae}</strong></span>` : ''}
             ${c.contractEnd && c.contractEnd !== 'N/A' ? `<span style="font-size:11px;color:var(--muted);">Renewal: <strong style="color:var(--text);">${c.contractEnd}</strong></span>` : ''}
