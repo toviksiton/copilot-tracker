@@ -815,6 +815,95 @@ html, body {
 .comp-risk-high   { color:#f87171; font-weight:700; }
 .comp-risk-medium { color:#fbbf24; font-weight:700; }
 .comp-risk-low    { color:var(--muted); }
+
+/* ═══════════════════════════════════════════════
+   COMPETE MAP MODULE STYLES
+   ═══════════════════════════════════════════════ */
+#view-crm-compete { overflow:hidden; padding:0; gap:0; display:flex; flex-direction:column; }
+
+.compete-toolbar {
+  display:flex;align-items:center;gap:10px;padding:12px 20px;
+  background:var(--glass);border-bottom:1px solid var(--border);
+  flex-shrink:0;flex-wrap:wrap;
+}
+.compete-toolbar-title { font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--text);flex:1; }
+
+/* ── Canvas ── */
+.compete-canvas-wrap {
+  flex:1;position:relative;overflow:hidden;min-height:400px;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 39px,var(--border2) 39px,var(--border2) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,var(--border2) 39px,var(--border2) 40px);
+}
+.compete-bg-img {
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;opacity:0.2;pointer-events:none;user-select:none;
+}
+.compete-svg {
+  position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;overflow:visible;
+}
+
+/* ── Department cards ── */
+.dept-card {
+  position:absolute;width:230px;
+  background:var(--surface);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:14px;
+  cursor:grab;user-select:none;
+  box-shadow:0 4px 20px rgba(0,0,0,.18);
+  transition:box-shadow .15s;
+}
+.dept-card:active { cursor:grabbing; }
+.dept-card.dragging { opacity:.75;box-shadow:0 10px 36px rgba(0,0,0,.4);z-index:200; }
+
+.dept-card-header {
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-radius:14px 14px 0 0;
+  border-bottom:1px solid var(--border);
+}
+.dept-header-red    { background:rgba(248,113,113,.18); }
+.dept-header-amber  { background:rgba(251,191,36,.15); }
+.dept-header-green  { background:rgba(110,231,183,.12); }
+.dept-header-none   { background:var(--glass); }
+
+.dept-card-name { flex:1;font-size:13px;font-weight:700;color:var(--text); }
+.dept-card-risk-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.risk-dot-red   { background:#f87171;box-shadow:0 0 6px rgba(248,113,113,.6); }
+.risk-dot-amber { background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5); }
+.risk-dot-green { background:#6ee7b7;box-shadow:0 0 6px rgba(110,231,183,.4); }
+.risk-dot-none  { background:var(--dim); }
+
+.dept-card-body  { padding:8px 12px 6px;display:flex;flex-direction:column;gap:5px; }
+.dept-person-row { display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap; }
+.dept-person-name { font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis; }
+.dept-compete-chip {
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;border:1px solid;
+}
+.compete-chip-high   { background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.35); }
+.compete-chip-medium { background:rgba(251,191,36,.12);color:#fbbf24;border-color:rgba(251,191,36,.3); }
+.compete-chip-low    { background:rgba(110,231,183,.1);color:#6ee7b7;border-color:rgba(110,231,183,.28); }
+
+.dept-card-actions {
+  display:flex;gap:5px;padding:4px 12px 10px;justify-content:flex-end;
+}
+.dept-action-btn {
+  height:22px;padding:0 8px;border-radius:6px;font-size:10px;font-weight:600;
+  cursor:pointer;border:1px solid var(--border);background:var(--glass);color:var(--muted);
+  transition:background .12s,color .12s;
+}
+.dept-action-btn:hover { background:var(--surface-hover);color:var(--text); }
+.dept-connect-btn.active { border-color:var(--cyan);color:var(--cyan); }
+
+/* ── Dept modal person list ── */
+.compete-modal { width:580px; }
+.compete-person-list { display:flex;flex-direction:column;gap:8px;margin-top:8px; }
+.compete-person-item { background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:10px 12px; }
+.compete-item-row { display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap; }
+
+/* ── Risk legend ── */
+.compete-legend { display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
+.compete-legend-item { display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted); }
 </style>
 </head>
 <body>
@@ -840,6 +929,7 @@ html, body {
       <a class="nav-item" id="nav-crm-contacts" href="#" onclick="showView('crm-contacts');return false;"><span class="nav-icon">👤</span> Contacts<span class="nav-badge" id="crm-contacts-badge" style="display:none;"></span></a>
       <a class="nav-item" id="nav-crm-opps"     href="#" onclick="showView('crm-opps');return false;"><span class="nav-icon">◆</span> Pipeline<span class="nav-badge" id="crm-opps-badge" style="display:none;"></span></a>
       <a class="nav-item" id="nav-crm-activities" href="#" onclick="showView('crm-activities');return false;"><span class="nav-icon">◷</span> Activities</a>
+      <a class="nav-item" id="nav-crm-compete"    href="#" onclick="showView('crm-compete');return false;"><span class="nav-icon">⚔</span> Compete Map</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
@@ -1087,6 +1177,43 @@ html, body {
         </div>
         <div class="crm-stats" id="crm-activities-kpis"></div>
         <div class="activity-feed" id="crm-activity-feed"></div>
+      </div>
+
+      <!-- CRM: COMPETE MAP VIEW -->
+      <div class="view" id="view-crm-compete" hidden style="padding:0;gap:0;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Toolbar -->
+        <div class="compete-toolbar">
+          <div class="compete-toolbar-title">⚔ Compete Map</div>
+          <select id="compete-account-select" class="modal-input" style="max-width:190px;" onchange="onCompeteAccountChange()">
+            <option value="">Select Account…</option>
+          </select>
+          <select id="compete-org-select" class="modal-input" style="max-width:190px;" onchange="onCompeteOrgChange()">
+            <option value="">Select Map…</option>
+          </select>
+          <button class="settings-btn settings-btn-primary" onclick="openCompeteOrgModal()">+ New Map</button>
+          <button class="settings-btn" id="compete-upload-bg-btn" onclick="document.getElementById('compete-bg-file').click()" style="display:none;">🖼 Import Org Chart</button>
+          <input type="file" id="compete-bg-file" accept="image/*" style="display:none" onchange="onCompeteBgUpload(this)">
+          <button class="settings-btn settings-btn-primary" id="compete-add-dept-btn" onclick="openDeptModal()" style="display:none;">+ Department</button>
+          <button class="settings-btn" id="compete-clear-bg-btn" onclick="clearCompeteBg()" style="display:none;background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2);">✕ Remove BG</button>
+        </div>
+        <!-- Risk legend -->
+        <div class="compete-legend">
+          <div class="compete-legend-item"><span class="dept-card-risk-dot risk-dot-red"></span> High Risk — competitor deeply entrenched</div>
+          <div class="compete-legend-item"><span class="dept-card-risk-dot risk-dot-amber"></span> Medium Risk</div>
+          <div class="compete-legend-item"><span class="dept-card-risk-dot risk-dot-green"></span> Low Risk</div>
+          <div class="compete-legend-item"><span class="dept-card-risk-dot risk-dot-none"></span> No compete data</div>
+          <div style="margin-left:auto;font-size:10px;color:var(--dim);">Drag cards to reposition · Click ⤷ to connect hierarchy · Click ✎ to edit</div>
+        </div>
+        <!-- Canvas -->
+        <div class="compete-canvas-wrap" id="compete-canvas" style="flex:1;">
+          <img id="compete-bg-img" class="compete-bg-img" style="display:none;" alt="org chart">
+          <svg class="compete-svg" id="compete-svg"></svg>
+          <div id="compete-empty-state" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--dim);pointer-events:none;">
+            <div style="font-size:32px;">⚔</div>
+            <div style="font-size:15px;font-weight:700;">No map selected</div>
+            <div style="font-size:12px;">Select an account and map above, or create a new one</div>
+          </div>
+        </div>
       </div>
 
       <!-- DETAIL VIEW -->
@@ -1461,6 +1588,58 @@ html, body {
   </div>
 </div>
 
+<!-- ══════ COMPETE: ORG MAP MODAL ══════ -->
+<div class="modal-overlay" id="compete-org-modal" hidden onclick="if(event.target===this)closeCompeteOrgModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title" id="compete-org-modal-title">New Compete Map</div>
+    <div class="modal-grid">
+      <div class="modal-grid-full">
+        <div class="modal-label">Account *</div>
+        <select class="modal-input" id="cm-corg-account"></select>
+      </div>
+      <div class="modal-grid-full">
+        <div class="modal-label">Map Name *</div>
+        <input class="modal-input" id="cm-corg-name" placeholder="e.g. Contoso Org Map Q2 2026">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeCompeteOrgModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save" onclick="saveCompeteOrg()">Create Map</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ COMPETE: DEPARTMENT MODAL ══════ -->
+<div class="modal-overlay" id="dept-modal" hidden onclick="if(event.target===this)closeDeptModal()">
+  <div class="modal-box compete-modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="dept-modal-title">Add Department</div>
+    <div class="modal-grid">
+      <div>
+        <div class="modal-label">Department / LOB Name *</div>
+        <input class="modal-input" id="cm-dept-name" placeholder="e.g. Engineering, Finance, HR">
+      </div>
+      <div>
+        <div class="modal-label">Parent Department (hierarchy)</div>
+        <select class="modal-input" id="cm-dept-parent">
+          <option value="">— None (root level) —</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="modal-label" style="margin-bottom:0;">People &amp; Competitor Coverage</div>
+        <button class="dept-action-btn" onclick="addPersonRow()" style="height:26px;padding:0 10px;font-size:11px;border-color:rgba(103,232,249,.4);color:var(--cyan);">+ Add Person</button>
+      </div>
+      <div id="dept-people-container" class="compete-person-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-danger" id="dept-modal-delete-btn" onclick="deleteDept()" style="display:none;margin-right:auto;">Delete Dept</button>
+      <button class="modal-btn modal-btn-cancel" onclick="closeDeptModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save" onclick="saveDept()">Save Department</button>
+    </div>
+  </div>
+</div>
+
 <!-- AI CHAT -->
 <div id="ai-chat-panel" style="display:none;position:fixed;bottom:80px;right:24px;width:360px;max-height:520px;z-index:2000;
   background:var(--bg-c);border:1px solid var(--border);border-radius:18px;
@@ -1512,7 +1691,7 @@ const NAV_MAP = {
 function showView(name) {
   // hide all except detail which is managed separately
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities'].forEach(id => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = true;
   });
@@ -1869,7 +2048,7 @@ function goToDetail(id) {
   clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities'].forEach(v => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.hidden = true;
   });
@@ -3313,6 +3492,7 @@ function _initCrmData() {
   if (!RAW_DATA.contacts)      RAW_DATA.contacts      = [];
   if (!RAW_DATA.opportunities) RAW_DATA.opportunities = [];
   if (!RAW_DATA.activities)    RAW_DATA.activities    = [];
+  if (!RAW_DATA.competeOrgs)   RAW_DATA.competeOrgs   = [];
 }
 
 // Call immediately if RAW_DATA already loaded
@@ -3953,6 +4133,528 @@ _initCrmData();
   const closingMonth = openOpps.filter(o => o.closeDate && o.closeDate.startsWith(thisMonth)).length;
   const oppBadge = document.getElementById('crm-opps-badge');
   if (oppBadge && closingMonth > 0) { oppBadge.textContent = closingMonth; oppBadge.style.display = ''; }
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   COMPETE MAP MODULE
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── A: Data helpers ── */
+function _competeOrgs()      { return (RAW_DATA && RAW_DATA.competeOrgs) || []; }
+function _currentCompeteOrg() {
+  const id = document.getElementById('compete-org-select')?.value;
+  return id ? _competeOrgs().find(o => o.id === id) : null;
+}
+
+// Aggregate risk across all people in a dept
+function _deptRisk(dept) {
+  const risks = (dept.people||[]).flatMap(p => (p.competeItems||[]).map(ci => ci.risk));
+  if (risks.includes('high'))   return 'red';
+  if (risks.includes('medium')) return 'amber';
+  if (risks.length)             return 'green';
+  return 'none';
+}
+
+function _esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function _isDescendant(org, potentialDescId, nodeId) {
+  const children = org.departments.filter(d => d.parentId === nodeId);
+  return children.some(c => c.id === potentialDescId || _isDescendant(org, potentialDescId, c.id));
+}
+
+/* ── B: Account / Map selectors ── */
+function _populateCompeteAccountSelect() {
+  const custs = (RAW_DATA && RAW_DATA.customers) || [];
+  const sel = document.getElementById('compete-account-select');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Select Account…</option>' +
+    custs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function onCompeteAccountChange() {
+  const accountId = document.getElementById('compete-account-select')?.value;
+  const orgSel    = document.getElementById('compete-org-select');
+  if (!orgSel) return;
+  const maps = _competeOrgs().filter(o => o.customerId === accountId);
+  orgSel.innerHTML = '<option value="">Select Map…</option>' +
+    maps.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+  ['compete-add-dept-btn','compete-upload-bg-btn','compete-clear-bg-btn'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  _renderCompeteCanvas(null);
+}
+
+function onCompeteOrgChange() {
+  const org = _currentCompeteOrg();
+  const show = org ? '' : 'none';
+  ['compete-add-dept-btn','compete-upload-bg-btn'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = show;
+  });
+  const clrBtn = document.getElementById('compete-clear-bg-btn');
+  if (clrBtn) clrBtn.style.display = (org && org.bgImage) ? '' : 'none';
+  _renderCompeteCanvas(org);
+}
+
+/* ── C: Canvas rendering ── */
+let _cdDragging = null;   // { deptId, offsetX, offsetY }
+let _connectMode = null;  // deptId currently armed for connection
+
+function _renderCompeteCanvas(org) {
+  const canvas = document.getElementById('compete-canvas');
+  const svg    = document.getElementById('compete-svg');
+  const empty  = document.getElementById('compete-empty-state');
+  const bgImg  = document.getElementById('compete-bg-img');
+  if (!canvas || !svg) return;
+
+  // Remove existing dept cards
+  canvas.querySelectorAll('.dept-card').forEach(el => el.remove());
+  svg.innerHTML = '';
+
+  if (!org) {
+    if (empty)  empty.style.display = '';
+    if (bgImg)  bgImg.style.display = 'none';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  // Background image
+  if (org.bgImage) {
+    bgImg.src = org.bgImage;
+    bgImg.style.display = '';
+    const clrBtn = document.getElementById('compete-clear-bg-btn');
+    if (clrBtn) clrBtn.style.display = '';
+  } else {
+    bgImg.style.display = 'none';
+  }
+
+  _autoLayoutDepts(org);
+  org.departments.forEach(dept => _renderDeptCard(dept, org, canvas));
+  _redrawSvgLines(org);
+}
+
+function _autoLayoutDepts(org) {
+  const needsLayout = org.departments.filter(d => !d.x && !d.y);
+  if (!needsLayout.length) return;
+  const byParent = {};
+  org.departments.forEach(d => {
+    if (d.parentId) (byParent[d.parentId] = byParent[d.parentId] || []).push(d);
+  });
+  const roots = org.departments.filter(d => !d.parentId);
+  const COL_W = 260, ROW_H = 200;
+
+  function place(node, row, col) {
+    if (!node.x && !node.y) {
+      node.x = 40 + col * COL_W;
+      node.y = 40 + row * ROW_H;
+    }
+    const children = byParent[node.id] || [];
+    children.forEach((ch, i) => place(ch, row + 1, col * Math.max(children.length, 1) + i));
+  }
+  roots.forEach((r, i) => place(r, 0, i));
+}
+
+function _renderDeptCard(dept, org, canvas) {
+  const risk      = _deptRisk(dept);
+  const hdrClass  = `dept-header-${risk}`;
+  const dotClass  = `risk-dot-${risk}`;
+
+  const peopleHtml = (dept.people||[]).slice(0,4).map(p => {
+    const chips = (p.competeItems||[]).slice(0,3).map(ci =>
+      `<span class="dept-compete-chip compete-chip-${ci.risk}" title="${_esc(ci.competitor)} — ${ci.workload}">${_esc(ci.competitor.slice(0,10))}</span>`
+    ).join('');
+    return `<div class="dept-person-row">
+      <span class="dept-person-name" title="${_esc(p.name)}">${_esc(p.name)}</span>
+      <div style="display:flex;gap:3px;flex-wrap:wrap;">${chips}</div>
+    </div>`;
+  }).join('');
+  const moreLabel  = (dept.people||[]).length > 4
+    ? `<div style="font-size:10px;color:var(--muted);padding-bottom:4px;">+${(dept.people||[]).length - 4} more</div>` : '';
+
+  const card = document.createElement('div');
+  card.className = 'dept-card';
+  card.id = `dept-card-${dept.id}`;
+  card.style.left = (dept.x || 40) + 'px';
+  card.style.top  = (dept.y || 40) + 'px';
+  card.innerHTML = `
+    <div class="dept-card-header ${hdrClass}">
+      <span class="dept-card-name">${_esc(dept.name)}</span>
+      <span class="dept-card-risk-dot ${dotClass}" title="Risk: ${risk}"></span>
+    </div>
+    <div class="dept-card-body">${peopleHtml}${moreLabel}</div>
+    <div class="dept-card-actions">
+      <button class="dept-action-btn dept-connect-btn" title="Click then click target to connect hierarchy"
+        onclick="toggleConnectMode('${dept.id}',this);event.stopPropagation();">⤷ Link</button>
+      <button class="dept-action-btn" onclick="openDeptModal('${dept.id}');event.stopPropagation();">✎ Edit</button>
+    </div>`;
+
+  // Drag with mouse events
+  card.addEventListener('mousedown', e => {
+    if (e.target.closest('button')) return;
+    e.preventDefault();
+    const rect = card.getBoundingClientRect();
+    _cdDragging = {
+      deptId: dept.id,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+    };
+    card.classList.add('dragging');
+  });
+
+  canvas.appendChild(card);
+}
+
+// Live drag tracking
+document.addEventListener('mousemove', e => {
+  if (!_cdDragging) return;
+  const canvas = document.getElementById('compete-canvas');
+  if (!canvas) return;
+  const org = _currentCompeteOrg();
+  if (!org) return;
+  const dept = org.departments.find(d => d.id === _cdDragging.deptId);
+  if (!dept) return;
+  const canvasRect = canvas.getBoundingClientRect();
+  dept.x = Math.max(0, e.clientX - canvasRect.left - _cdDragging.offsetX);
+  dept.y = Math.max(0, e.clientY - canvasRect.top  - _cdDragging.offsetY);
+  const card = document.getElementById(`dept-card-${dept.id}`);
+  if (card) { card.style.left = dept.x + 'px'; card.style.top = dept.y + 'px'; }
+  _redrawSvgLines(org);
+});
+
+document.addEventListener('mouseup', () => {
+  if (!_cdDragging) return;
+  const org = _currentCompeteOrg();
+  if (org) saveData();
+  const card = document.getElementById(`dept-card-${_cdDragging.deptId}`);
+  if (card) card.classList.remove('dragging');
+  _cdDragging = null;
+});
+
+// SVG bezier lines for hierarchy
+function _redrawSvgLines(org) {
+  const svg = document.getElementById('compete-svg');
+  if (!svg) return;
+  svg.innerHTML = '';
+  const CARD_W = 230;
+  org.departments.forEach(dept => {
+    if (!dept.parentId) return;
+    const parent = org.departments.find(d => d.id === dept.parentId);
+    if (!parent) return;
+    const estimatedH = 46 + Math.min((parent.people||[]).length, 4) * 26;
+    const x1 = (parent.x || 40) + CARD_W / 2;
+    const y1 = (parent.y || 40) + estimatedH;
+    const x2 = (dept.x   || 40) + CARD_W / 2;
+    const y2 = (dept.y   || 40);
+    const midY = (y1 + y2) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`);
+    path.setAttribute('stroke', 'var(--border)');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-dasharray', '5 4');
+    svg.appendChild(path);
+    // Arrow tip
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    arrow.setAttribute('points', `${x2-5},${y2-8} ${x2+5},${y2-8} ${x2},${y2}`);
+    arrow.setAttribute('fill', 'var(--border)');
+    svg.appendChild(arrow);
+  });
+}
+
+// Connection mode (link hierarchy)
+function toggleConnectMode(deptId, btn) {
+  if (_connectMode === deptId) {
+    _connectMode = null;
+    document.querySelectorAll('.dept-connect-btn').forEach(b => b.classList.remove('active'));
+    return;
+  }
+  _connectMode = deptId;
+  document.querySelectorAll('.dept-connect-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Click on another card to complete the link
+document.addEventListener('click', e => {
+  if (!_connectMode) return;
+  const card = e.target.closest('.dept-card');
+  if (!card) return;
+  const targetId = card.id.replace('dept-card-', '');
+  if (targetId === _connectMode) return;
+  const org = _currentCompeteOrg();
+  if (!org) return;
+  if (_isDescendant(org, targetId, _connectMode)) {
+    alert('Cannot connect: circular hierarchy detected.');
+    return;
+  }
+  const child = org.departments.find(d => d.id === _connectMode);
+  if (child) child.parentId = targetId;
+  _connectMode = null;
+  document.querySelectorAll('.dept-connect-btn').forEach(b => b.classList.remove('active'));
+  saveData();
+  _renderCompeteCanvas(org);
+});
+
+/* ── D: Compete Org Modal ── */
+let _editingCompeteOrgId = null;
+
+function openCompeteOrgModal(id) {
+  _editingCompeteOrgId = id || null;
+  _initCrmData();
+  const custs = (RAW_DATA && RAW_DATA.customers) || [];
+  document.getElementById('cm-corg-account').innerHTML =
+    custs.map(c => `<option value="${c.id}">${_esc(c.name)}</option>`).join('');
+  const curAccount = document.getElementById('compete-account-select')?.value;
+  if (curAccount) document.getElementById('cm-corg-account').value = curAccount;
+  const nameEl = document.getElementById('cm-corg-name');
+  if (id) {
+    const org = _competeOrgs().find(o => o.id === id);
+    nameEl.value = org ? org.name : '';
+    document.getElementById('compete-org-modal-title').textContent = 'Edit Map';
+  } else {
+    nameEl.value = '';
+    document.getElementById('compete-org-modal-title').textContent = 'New Compete Map';
+  }
+  document.getElementById('compete-org-modal').hidden = false;
+}
+function closeCompeteOrgModal() { document.getElementById('compete-org-modal').hidden = true; }
+
+function saveCompeteOrg() {
+  const name = document.getElementById('cm-corg-name').value.trim();
+  if (!name) { alert('Map name is required.'); return; }
+  const customerId = document.getElementById('cm-corg-account').value;
+  if (!customerId) { alert('Select an account.'); return; }
+  _initCrmData();
+
+  const existing = _editingCompeteOrgId ? _competeOrgs().find(o => o.id === _editingCompeteOrgId) : null;
+  const rec = {
+    id:          _editingCompeteOrgId || ('corg-' + Date.now()),
+    customerId,  name,
+    bgImage:     existing ? (existing.bgImage || null) : null,
+    departments: existing ? (existing.departments || []) : [],
+    updatedAt:   new Date().toISOString().slice(0,10),
+  };
+  if (!_editingCompeteOrgId) rec.createdAt = rec.updatedAt;
+  const arr = RAW_DATA.competeOrgs;
+  const idx = arr.findIndex(o => o.id === rec.id);
+  if (idx >= 0) arr[idx] = rec; else arr.push(rec);
+  saveData();
+  closeCompeteOrgModal();
+  // Switch to new map
+  document.getElementById('compete-account-select').value = customerId;
+  onCompeteAccountChange();
+  document.getElementById('compete-org-select').value = rec.id;
+  onCompeteOrgChange();
+}
+
+/* ── E: Department Modal ── */
+let _editingDeptId = null;
+
+function openDeptModal(deptId) {
+  _editingDeptId = deptId || null;
+  const org = _currentCompeteOrg();
+  if (!org) return;
+
+  document.getElementById('dept-modal-delete-btn').style.display = deptId ? '' : 'none';
+
+  // Parent dropdown (exclude self + descendants)
+  const parentSel = document.getElementById('cm-dept-parent');
+  const eligible  = org.departments.filter(d =>
+    d.id !== deptId && (!deptId || !_isDescendant(org, d.id, deptId))
+  );
+  parentSel.innerHTML = '<option value="">— None (root level) —</option>' +
+    eligible.map(d => `<option value="${d.id}">${_esc(d.name)}</option>`).join('');
+
+  const container = document.getElementById('dept-people-container');
+  container.innerHTML = '';
+
+  if (deptId) {
+    const dept = org.departments.find(d => d.id === deptId);
+    if (!dept) return;
+    document.getElementById('cm-dept-name').value = dept.name;
+    if (dept.parentId) parentSel.value = dept.parentId;
+    (dept.people || []).forEach(p => _addPersonRowData(container, p));
+  } else {
+    document.getElementById('cm-dept-name').value = '';
+  }
+  document.getElementById('dept-modal-title').textContent = deptId ? 'Edit Department' : 'Add Department';
+  document.getElementById('dept-modal').hidden = false;
+}
+function closeDeptModal() { document.getElementById('dept-modal').hidden = true; }
+
+function addPersonRow() {
+  _addPersonRowData(document.getElementById('dept-people-container'), null);
+}
+
+function _addPersonRowData(container, person) {
+  const div = document.createElement('div');
+  div.className = 'compete-person-item';
+  div.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+      <input class="modal-input person-name-input" placeholder="Name *" value="${_esc(person ? person.name : '')}" style="flex:1;">
+      <input class="modal-input person-title-input" placeholder="Title / Role" value="${_esc(person ? (person.title||'') : '')}" style="flex:1;">
+      <button class="dept-action-btn" style="color:#f87171;border-color:rgba(239,68,68,.3);flex-shrink:0;"
+        onclick="this.closest('.compete-person-item').remove()">✕</button>
+    </div>
+    <div class="compete-item-rows"></div>
+    <button class="dept-action-btn" style="margin-top:6px;border-color:rgba(103,232,249,.35);color:var(--cyan);"
+      onclick="addCompeteItemRow(this)">+ Competitor</button>`;
+  const rowsContainer = div.querySelector('.compete-item-rows');
+  (person ? (person.competeItems || []) : []).forEach(ci => _addCompeteItemRowData(rowsContainer, ci));
+  container.appendChild(div);
+}
+
+function addCompeteItemRow(btn) {
+  _addCompeteItemRowData(btn.previousElementSibling, null);
+}
+
+function _addCompeteItemRowData(container, ci) {
+  const wloads = {m365:'M365',security:'Security',azure:'Azure',copilot:'Copilot Studio',
+    devices:'Devices',analytics:'Analytics',communications:'Communications'};
+  const wOpts = Object.entries(wloads)
+    .map(([k,v]) => `<option value="${k}" ${ci && ci.workload===k ? 'selected' : ''}>${v}</option>`).join('');
+  const div = document.createElement('div');
+  div.className = 'compete-item-row';
+  div.innerHTML = `
+    <input class="modal-input compete-competitor-input" placeholder="Competitor (e.g. Google Workspace)"
+      value="${_esc(ci ? ci.competitor : '')}" style="flex:2;min-width:100px;">
+    <select class="modal-input compete-workload-select" style="flex:1;min-width:80px;">${wOpts}</select>
+    <select class="modal-input compete-risk-select" style="width:80px;">
+      <option value="high"   ${ci && ci.risk==='high'   ? 'selected' : ''}>High</option>
+      <option value="medium" ${ci && ci.risk==='medium' ? 'selected' : ''}>Medium</option>
+      <option value="low"    ${ci && ci.risk==='low'    ? 'selected' : ''}>Low</option>
+    </select>
+    <button class="dept-action-btn" style="color:#f87171;" onclick="this.closest('.compete-item-row').remove()">✕</button>`;
+  container.appendChild(div);
+}
+
+function saveDept() {
+  const name = document.getElementById('cm-dept-name').value.trim();
+  if (!name) { alert('Department name is required.'); return; }
+  const org = _currentCompeteOrg();
+  if (!org) return;
+
+  const people = Array.from(document.querySelectorAll('#dept-people-container .compete-person-item'))
+    .map(item => {
+      const pName = item.querySelector('.person-name-input')?.value.trim();
+      if (!pName) return null;
+      const competeItems = Array.from(item.querySelectorAll('.compete-item-row'))
+        .map(row => ({
+          competitor: row.querySelector('.compete-competitor-input')?.value.trim() || '',
+          workload:   row.querySelector('.compete-workload-select')?.value || 'm365',
+          risk:       row.querySelector('.compete-risk-select')?.value || 'medium',
+        })).filter(ci => ci.competitor);
+      return {
+        id:          'person-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
+        name:        pName,
+        title:       item.querySelector('.person-title-input')?.value.trim() || '',
+        competeItems,
+      };
+    }).filter(Boolean);
+
+  const parentId = document.getElementById('cm-dept-parent').value || null;
+  const existing = _editingDeptId ? org.departments.find(d => d.id === _editingDeptId) : null;
+  const rec = {
+    id:       _editingDeptId || ('dept-' + Date.now()),
+    name, parentId,
+    x: existing ? (existing.x || 0) : 0,
+    y: existing ? (existing.y || 0) : 0,
+    people,
+  };
+
+  const idx = org.departments.findIndex(d => d.id === rec.id);
+  if (idx >= 0) org.departments[idx] = rec; else org.departments.push(rec);
+  saveData();
+  closeDeptModal();
+  _renderCompeteCanvas(org);
+}
+
+function deleteDept() {
+  if (!_editingDeptId || !confirm('Delete this department and all its people?')) return;
+  const org = _currentCompeteOrg();
+  if (!org) return;
+  org.departments.forEach(d => { if (d.parentId === _editingDeptId) d.parentId = null; });
+  org.departments = org.departments.filter(d => d.id !== _editingDeptId);
+  saveData();
+  closeDeptModal();
+  _renderCompeteCanvas(org);
+}
+
+/* ── F: Background image import (with resize) ── */
+function onCompeteBgUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // Resize to max 1400px wide to keep localStorage manageable
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 1400;
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      const cvs = document.createElement('canvas');
+      cvs.width = w; cvs.height = h;
+      cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = cvs.toDataURL('image/jpeg', 0.82);
+      const org = _currentCompeteOrg();
+      if (!org) return;
+      org.bgImage = dataUrl;
+      saveData();
+      _renderCompeteCanvas(org);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function clearCompeteBg() {
+  const org = _currentCompeteOrg();
+  if (!org) return;
+  org.bgImage = null;
+  saveData();
+  _renderCompeteCanvas(org);
+}
+
+/* ── G: showView patch for crm-compete ── */
+(function _patchShowViewCompete() {
+  const _prev = showView;
+  showView = function(name) {
+    const competeView = document.getElementById('view-crm-compete');
+    if (competeView && name !== 'crm-compete') competeView.hidden = true;
+
+    if (name === 'crm-compete') {
+      ['view-list','view-kanban','view-backlog','view-settings','view-reports',
+       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.hidden = true;
+      });
+      document.getElementById('view-detail').hidden = true;
+      document.getElementById('tb-list').hidden   = false;
+      document.getElementById('tb-detail').hidden = true;
+      document.getElementById('kpi-row').hidden   = true;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const nav = document.getElementById('nav-crm-compete');
+      if (nav) nav.classList.add('active');
+      currentView = name;
+      if (competeView) competeView.hidden = false;
+      _initCrmData();
+      _populateCompeteAccountSelect();
+    } else {
+      _prev(name);
+    }
+  };
+})();
+
+// Also hide compete view when goToDetail navigates away
+(function _patchGoToDetailCompete() {
+  const _prev = goToDetail;
+  goToDetail = function(id) {
+    const competeView = document.getElementById('view-crm-compete');
+    if (competeView) competeView.hidden = true;
+    _prev(id);
+  };
 })();
 </script>
 </body>
