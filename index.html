@@ -1191,7 +1191,7 @@ html, body {
             <option value="">Select Map…</option>
           </select>
           <button class="settings-btn settings-btn-primary" onclick="openCompeteOrgModal()">+ New Map</button>
-          <button class="settings-btn" id="compete-upload-bg-btn" onclick="document.getElementById('compete-bg-file').click()" style="display:none;">🖼 Import Org Chart</button>
+          <button class="settings-btn" id="compete-upload-bg-btn" onclick="document.getElementById('compete-bg-file').click()" style="display:none;">🤖 AI Import Org Chart</button>
           <input type="file" id="compete-bg-file" accept="image/*" style="display:none" onchange="onCompeteBgUpload(this)">
           <button class="settings-btn settings-btn-primary" id="compete-add-dept-btn" onclick="openDeptModal()" style="display:none;">+ Department</button>
           <button class="settings-btn" id="compete-clear-bg-btn" onclick="clearCompeteBg()" style="display:none;background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2);">✕ Remove BG</button>
@@ -4672,9 +4672,9 @@ function onCompeteBgUpload(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    // Resize to max 1400px wide to keep localStorage manageable
     const img = new Image();
     img.onload = () => {
+      // Resize for storage (max 1400px)
       const maxW = 1400;
       let w = img.width, h = img.height;
       if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
@@ -4684,14 +4684,228 @@ function onCompeteBgUpload(input) {
       const dataUrl = cvs.toDataURL('image/jpeg', 0.82);
       const org = _currentCompeteOrg();
       if (!org) return;
+      // Store as background reference
       org.bgImage = dataUrl;
       saveData();
       _renderCompeteCanvas(org);
+      // Kick off AI analysis
+      _analyzeOrgChartWithAI(dataUrl, org);
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
   input.value = '';
+}
+
+/* ── AI Org Chart Analysis ── */
+
+function _showCompeteAiLoading(show, msg) {
+  const canvas = document.getElementById('compete-canvas');
+  if (!canvas) return;
+  let overlay = document.getElementById('compete-ai-loading');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'compete-ai-loading';
+    overlay.style.cssText = [
+      'position:absolute;inset:0;z-index:500;',
+      'background:rgba(0,0,0,.55);backdrop-filter:blur(4px);',
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;',
+    ].join('');
+    overlay.innerHTML = `
+      <div style="font-size:36px;animation:spin 1.2s linear infinite;">🤖</div>
+      <div id="compete-ai-loading-msg" style="color:#fff;font-size:15px;font-weight:700;text-align:center;max-width:340px;"></div>
+      <div style="color:rgba(255,255,255,.5);font-size:11px;">Claude is reading the org chart…</div>`;
+    canvas.appendChild(overlay);
+    // Add spin keyframe once
+    if (!document.getElementById('compete-spin-style')) {
+      const s = document.createElement('style');
+      s.id = 'compete-spin-style';
+      s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(s);
+    }
+  }
+  overlay.style.display = show ? 'flex' : 'none';
+  const msgEl = overlay.querySelector('#compete-ai-loading-msg');
+  if (msgEl) msgEl.textContent = msg || 'Analysing org chart with AI…';
+}
+
+async function _analyzeOrgChartWithAI(dataUrl, org) {
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) {
+    // No worker configured — silent, just keep the background image
+    console.warn('Compete Map: AI Worker URL not configured; skipping AI analysis.');
+    return;
+  }
+
+  _showCompeteAiLoading(true, 'Sending org chart to Claude…');
+
+  try {
+    const base64    = dataUrl.split(',')[1];
+    const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+
+    const systemPrompt = `You are an expert org-chart parser. Extract the full organizational hierarchy from the image and return ONLY a valid JSON object — no markdown fences, no explanation, just the raw JSON.`;
+
+    const userText = `Analyse this org chart image and return JSON in exactly this structure:
+
+{
+  "departments": [
+    {
+      "name": "Department or team name (if no explicit name, derive from function/area)",
+      "parentDept": "Parent department name, or null if top-level",
+      "people": [
+        {
+          "name": "Full name as shown",
+          "title": "Job title / role as shown",
+          "reportsTo": "Full name of direct manager WITHIN THE SAME DEPARTMENT, or null if top of dept"
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Include every person visible in the chart.
+- Group people by department/team box if shown, or create logical departments by reporting level.
+- reportsTo = name of immediate manager within same department (null for dept heads).
+- parentDept links department nodes (null for the top department).
+- Use the exact names and titles as written in the image.
+- Return ONLY the JSON object.`;
+
+    const res = await fetch(`${workerBase}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text',  text: userText },
+          ],
+        }],
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => res.status);
+      throw new Error(`Worker responded ${res.status}: ${errText}`);
+    }
+
+    _showCompeteAiLoading(true, 'Parsing response…');
+    const data = await res.json();
+    const text = data.content?.[0]?.text || data.error?.message || '';
+    if (!text) throw new Error('Empty response from AI');
+
+    // Extract JSON — handle cases where model wraps in backticks despite instructions
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in AI response');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    _showCompeteAiLoading(true, 'Building map…');
+    _applyParsedOrgChart(parsed, org);
+
+  } catch (err) {
+    _showCompeteAiLoading(false);
+    // Show error as a non-blocking banner on the canvas
+    _showCompeteAiBanner(`⚠ AI analysis failed: ${err.message}`, 'error');
+  } finally {
+    _showCompeteAiLoading(false);
+  }
+}
+
+function _applyParsedOrgChart(parsed, org) {
+  const depts = parsed.departments || parsed.nodes || [];
+  if (!depts.length) {
+    _showCompeteAiBanner('AI found no departments in this image. The background has been set — add departments manually.', 'warn');
+    return;
+  }
+
+  // If existing departments, ask before overwriting
+  if (org.departments.length > 0) {
+    if (!confirm(`AI detected ${depts.length} department(s).\n\nReplace the ${org.departments.length} existing department(s) with the AI result?`)) return;
+  }
+
+  // First pass: assign IDs to departments
+  const deptNameToId = {};
+  const newDepts = depts.map(d => {
+    const id = 'dept-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+    deptNameToId[d.name] = id;
+    return {
+      id, name: d.name || 'Unnamed',
+      parentId: null,       // resolved below
+      _rawParent: d.parentDept || d.parentDepartment || null,
+      x: 0, y: 0,
+      people: [],
+      _rawPeople: d.people || [],
+    };
+  });
+
+  // Resolve department parentId
+  newDepts.forEach(dept => {
+    if (dept._rawParent && deptNameToId[dept._rawParent]) {
+      dept.parentId = deptNameToId[dept._rawParent];
+    }
+    delete dept._rawParent;
+  });
+
+  // Second pass: build people with IDs, then resolve reportsTo by name
+  newDepts.forEach(dept => {
+    const nameToId = {};
+    // Assign IDs first
+    dept.people = dept._rawPeople.map(p => {
+      const id = 'person-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+      nameToId[p.name] = id;
+      return {
+        id,
+        name: p.name || 'Unknown',
+        title: p.title || p.role || '',
+        reportsTo: null,       // resolved next
+        _rawReportsTo: p.reportsTo || null,
+        competeItems: [],
+      };
+    });
+    // Resolve reportsTo
+    dept.people.forEach(p => {
+      if (p._rawReportsTo && nameToId[p._rawReportsTo]) {
+        p.reportsTo = nameToId[p._rawReportsTo];
+      }
+      delete p._rawReportsTo;
+    });
+    delete dept._rawPeople;
+  });
+
+  org.departments = newDepts;
+  saveData();
+  _renderCompeteCanvas(org);
+
+  const total = newDepts.reduce((n, d) => n + d.people.length, 0);
+  _showCompeteAiBanner(`✓ AI imported ${newDepts.length} department(s) and ${total} people. Drag to reposition, or click ✎ to add competitor data.`, 'success');
+}
+
+function _showCompeteAiBanner(msg, type) {
+  const canvas = document.getElementById('compete-canvas');
+  if (!canvas) return;
+  const old = document.getElementById('compete-ai-banner');
+  if (old) old.remove();
+  const colors = {
+    success: { bg:'rgba(16,185,129,.15)', border:'rgba(16,185,129,.4)', color:'#6ee7b7' },
+    warn:    { bg:'rgba(251,191,36,.12)', border:'rgba(251,191,36,.35)', color:'#fbbf24' },
+    error:   { bg:'rgba(239,68,68,.12)',  border:'rgba(239,68,68,.3)',   color:'#f87171' },
+  };
+  const c = colors[type] || colors.warn;
+  const banner = document.createElement('div');
+  banner.id = 'compete-ai-banner';
+  banner.style.cssText = `position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:400;
+    max-width:520px;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;line-height:1.4;
+    background:${c.bg};border:1px solid ${c.border};color:${c.color};
+    box-shadow:0 4px 20px rgba(0,0,0,.3);cursor:pointer;text-align:center;`;
+  banner.title = 'Click to dismiss';
+  banner.textContent = msg;
+  banner.onclick = () => banner.remove();
+  canvas.appendChild(banner);
+  if (type === 'success') setTimeout(() => banner.remove(), 8000);
 }
 
 function clearCompeteBg() {
