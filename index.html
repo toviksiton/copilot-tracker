@@ -3323,12 +3323,6 @@ function _initCrmData() {
   if (!RAW_DATA.activities)    RAW_DATA.activities    = [];
 }
 
-/* Extend loadRealData to initialise CRM arrays */
-const _origLoadRealData = loadRealData;
-(function() {
-  const orig = window.loadRealData;
-  // We call _initCrmData() once after app init
-})();
 // Call immediately if RAW_DATA already loaded
 _initCrmData();
 
