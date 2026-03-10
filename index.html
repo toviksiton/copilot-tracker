@@ -3071,11 +3071,12 @@ const GH_RAW_KEY  = 'copilot-tracker-gh-raw';
 const GH_FILE     = 'copilot-tracker-data.json';
 const GH_OWNER    = 'toviksiton';
 
-let _ghPat       = localStorage.getItem(GH_PAT_KEY)  || '';
-let _ghGistId    = localStorage.getItem(GH_GIST_KEY) || '';
-let _ghRawUrl    = localStorage.getItem(GH_RAW_KEY)  || '';
-let _ghTimer     = null;
-let _ghSaving    = false;
+let _ghPat          = localStorage.getItem(GH_PAT_KEY)  || '';
+let _ghGistId       = localStorage.getItem(GH_GIST_KEY) || '';
+let _ghRawUrl       = localStorage.getItem(GH_RAW_KEY)  || '';
+let _ghTimer        = null;
+let _ghSaving       = false;
+let _ghLastUpdatedAt = '';
 let _lastSyncTime = localStorage.getItem('copilot-tracker-last-sync') || null;
 
 function _recordSync() {
@@ -3115,7 +3116,7 @@ async function connectGist() {
   if (gist) { _ghGistId = gist; localStorage.setItem(GH_GIST_KEY, gist); _ghRawUrl = ''; localStorage.removeItem(GH_RAW_KEY); }
   ghStatus('Connecting…', 'var(--cyan)');
   const ok = await _ghLoad(false);
-  if (ok) { _recordSync(); ghStatus('✅ Connected and synced · ' + _lastSyncTime, '#6ee7b7'); ghUpdateUI(); }
+  if (ok) { _recordSync(); ghStatus('✅ Connected and synced · ' + _lastSyncTime, '#6ee7b7'); ghUpdateUI(); updateKPIs(); buildList(); }
   else if (!_ghGistId) ghStatus('⚠️ No Gist ID found. Enter a Gist ID or PAT to auto-discover.', '#f97316');
 }
 
@@ -3143,9 +3144,44 @@ function scheduleGhSave() {
   _ghTimer = setTimeout(_ghSave, 900);
 }
 
+// Poll for changes from teammates every 30 s
+async function _ghPoll() {
+  if (_ghSaving || !_ghGistId) return;
+  try {
+    const hdrs = { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+    if (_ghPat) hdrs['Authorization'] = 'token ' + _ghPat;
+    const res = await fetch('https://api.github.com/gists/'+_ghGistId, { headers:hdrs, cache:'no-store' });
+    if (!res.ok) return;
+    const gist = await res.json();
+    const prev = _ghLastUpdatedAt;
+    _ghLastUpdatedAt = gist.updated_at || '';
+    if (!prev || gist.updated_at === prev) return; // first run, or no remote change
+    // Remote changed — parse content from the already-fetched gist (saves a second request)
+    const file = gist.files && gist.files[GH_FILE];
+    if (!file) return;
+    _ghRawUrl = (file.raw_url||'').split('?')[0];
+    localStorage.setItem(GH_RAW_KEY, _ghRawUrl);
+    const content = file.truncated
+      ? await (await fetch(_ghRawUrl+'?t='+Date.now(), {cache:'no-store'})).text()
+      : file.content;
+    const payload = JSON.parse(content);
+    if (!payload.customers) return;
+    RAW_DATA = payload;
+    _initCrmData();
+    CUSTOMERS = {};
+    payload.customers.forEach((raw,i) => { const m=mapCustomer(raw,i); CUSTOMERS[m.id]=m; });
+    localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+    _recordSync();
+    ghStatus('🔄 Auto-synced · ' + _lastSyncTime, '#6ee7b7');
+    updateKPIs(); buildList();
+  } catch(e) { /* silent — poll failures are non-fatal */ }
+}
+setInterval(_ghPoll, 30_000);
+
 async function _ghSave() {
   _ghTimer = null;
   if (!_ghPat || !_ghGistId || !RAW_DATA) return;
+  if (_ghSaving) return;
   _ghSaving = true;
   try {
     const payload = { _version:1, _app:'Copilot Adoption Tracker by Tovik', _saved:new Date().toISOString(),
@@ -3164,6 +3200,7 @@ async function _ghSave() {
     const gist = await res.json();
     const f = gist.files && gist.files[GH_FILE];
     if (f && f.raw_url) { _ghRawUrl = f.raw_url.split('?')[0]; localStorage.setItem(GH_RAW_KEY, _ghRawUrl); }
+    if (gist.updated_at) _ghLastUpdatedAt = gist.updated_at; // don't re-trigger poll for our own save
     _recordSync(); ghStatus('✅ Saved to Gist · ' + _lastSyncTime, '#6ee7b7');
   } catch(e) { ghStatus('⚠️ Save failed: ' + e.message, '#f87171'); }
   finally { _ghSaving = false; }
@@ -3187,6 +3224,7 @@ async function _ghLoad(silent) {
     const res = await fetch('https://api.github.com/gists/'+_ghGistId, { headers:hdrs, cache:'no-store' });
     if (!res.ok) return false;
     const gist = await res.json();
+    if (gist.updated_at) _ghLastUpdatedAt = gist.updated_at; // track for polling
     const file = gist.files && gist.files[GH_FILE];
     if (!file) return false;
     _ghRawUrl = (file.raw_url||'').split('?')[0];
@@ -3197,6 +3235,7 @@ async function _ghLoad(silent) {
     const payload = JSON.parse(content);
     if (!payload.customers) return false;
     RAW_DATA = payload;
+    _initCrmData(); // ensure contacts/opportunities/activities/competeOrgs exist even on old payloads
     CUSTOMERS = {};
     payload.customers.forEach((raw,i) => { const m=mapCustomer(raw,i); CUSTOMERS[m.id]=m; });
     localStorage.setItem(STORE_KEY, JSON.stringify(payload));
@@ -3213,6 +3252,7 @@ async function _ghLoad(silent) {
   const loaded = await _ghLoad(true);
   if (loaded) { updateKPIs(); buildList(); }
   ghUpdateUI();
+  if (loaded && !_ghPat) ghStatus('👁 Read-only: enter a GitHub PAT in Settings to save changes.', '#f97316');
 })();
 
 /* ─── AI Chat ─── */
