@@ -2054,32 +2054,44 @@ Use your deep knowledge of:
 - Common blockers (security review, conditional access, tenant config, SSO, governance, etc.)
 - Microsoft adoption frameworks (FastTrack, Viva, CAF)
 
+WRITING STYLE — CRITICAL:
+- "category": short, plain-English title a non-technical manager instantly understands. Max 5 words. E.g. "Connect Business Tools", "Train & Onboard Teams", "Fix Security Blockers", "Expand AI Use Cases". NEVER use jargon acronyms as the title.
+- "context": 1-2 friendly sentences explaining WHY this matters to the business — no jargon opening. You MAY mention technical names inside the sentence.
+- "action" in each step: one clear imperative sentence a human can read at a glance, e.g. "Run a 2-day use-case discovery workshop with IT". Keep it under 20 words.
+- "detail" in each step: this IS the technical deep-dive. Be as specific and technical as needed — admin steps, API names, config details, timelines, success criteria.
+- "executiveSummary": write for a senior business executive. Plain language, business impact focus. No raw acronyms without explanation.
+- "currentHealthAssessment": honest, friendly, like a doctor giving a check-up. Start with what's going well, then what needs attention.
+- "expectedOutcome": one sentence describing the business benefit, not the technical state.
+- "quickWins": action phrased as something you can do TODAY or THIS WEEK, in plain language.
+- "successMetrics": measurable, human-readable, e.g. "50% of licensed users active within 6 weeks".
+- "riskFlags": written as a risk to the business, not a technical status. E.g. "Renewal at risk if adoption stays below 30% by Q3".
+
 IMPORTANT: Identify which tasks are TECHNICAL (involve admin config, dev work, API, tenant settings, security, deployment, integrations) vs non-technical (training, communication, governance, workshops).
 
 Respond ONLY with a valid JSON object in this exact structure (no markdown, no preamble):
 {
-  "executiveSummary": "3-4 sentence strategic summary",
-  "currentHealthAssessment": "honest 2-3 sentence assessment of where they are",
+  "executiveSummary": "3-4 sentence strategic summary in plain business language",
+  "currentHealthAssessment": "honest 2-3 sentence assessment starting with positives",
   "priorityActions": [
     {
-      "category": "category name",
+      "category": "Short plain-English title (max 5 words)",
       "icon": "relevant emoji",
       "isTechnical": true,
       "urgency": "critical|high|medium",
-      "context": "1-2 sentence explanation of why this matters",
+      "context": "1-2 friendly sentences on business importance",
       "openItems": ["item label 1", "item label 2"],
       "steps": [
-        {"step": 1, "action": "specific action", "owner": "CSM|Technical|Customer|Microsoft", "effort": "Low|Medium|High", "detail": "how to do it concretely"}
+        {"step": 1, "action": "Clear imperative sentence under 20 words", "owner": "CSM|Technical|Customer|Microsoft", "effort": "Low|Medium|High", "detail": "concrete technical how-to with specifics"}
       ],
       "timeline": "e.g. 1-2 weeks",
-      "expectedOutcome": "what success looks like"
+      "expectedOutcome": "business benefit in one sentence"
     }
   ],
   "quickWins": [
-    {"action": "action text", "impact": "why it matters", "timeline": "days|1 week"}
+    {"action": "Plain-language action doable this week", "impact": "business benefit", "timeline": "days|1 week"}
   ],
-  "successMetrics": ["metric 1", "metric 2"],
-  "riskFlags": ["risk 1", "risk 2"],
+  "successMetrics": ["measurable human-readable metric"],
+  "riskFlags": ["business-level risk description"],
   "nextCheckpoint": "recommended next review cadence and focus"
 }`;
 
@@ -2138,10 +2150,10 @@ function renderExceleratePlan(id, plan) {
     const urgClass = `urg-${a.urgency || 'medium'}`;
     const urgLabel = { critical:'🔴 Critical', high:'🟠 High', medium:'🟡 Medium' }[a.urgency] || '🟡 Medium';
     const techBadge = a.isTechnical
-      ? `<span class="xp-tech-badge">⚙️ technical process</span>`
+      ? `<span class="xp-tech-badge">⚙️ involves IT</span>`
       : '';
     const openItemsHtml = (a.openItems || []).length
-      ? `<div style="margin:10px 0 12px;display:flex;flex-wrap:wrap;gap:6px;">${(a.openItems||[]).map(i=>`<span style="background:var(--glass);border:1px solid var(--border);border-radius:7px;padding:2px 8px;font-size:11px;color:var(--muted);">${i}</span>`).join('')}</div>`
+      ? `<div style="margin:10px 0 12px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:5px;">Open items in this area</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${(a.openItems||[]).map(i=>`<span style="background:var(--glass);border:1px solid var(--border);border-radius:7px;padding:2px 8px;font-size:11px;color:var(--muted);">${i}</span>`).join('')}</div></div>`
       : '';
     const stepsHtml = (a.steps || []).map(s => {
       const ownerClass = s.owner?.toLowerCase().includes('tech') ? 'xp-tag-tech' : s.owner?.toLowerCase().includes('customer') ? 'xp-tag-customer' : 'xp-tag-csm';
@@ -2149,27 +2161,32 @@ function renderExceleratePlan(id, plan) {
       return `<div class="xp-step">
         <div class="xp-step-num">${s.step}</div>
         <div style="flex:1;">
-          <div style="font-weight:600;margin-bottom:3px;">${s.action}
+          <div style="font-weight:700;font-size:13.5px;margin-bottom:5px;line-height:1.4;color:var(--text);">${s.action}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:${s.detail?'6px':'0'};">
             <span class="xp-tag ${ownerClass}">${s.owner||'CSM'}</span>
             <span class="xp-tag ${effortClass}">${s.effort||'Medium'} effort</span>
           </div>
-          ${s.detail ? `<div style="font-size:11.5px;color:var(--muted);line-height:1.5;">${s.detail}</div>` : ''}
+          ${s.detail ? `<div style="font-size:11.5px;color:var(--muted);line-height:1.6;background:var(--glass);border-radius:6px;padding:7px 10px;border-left:2px solid var(--border2);">${s.detail}</div>` : ''}
         </div>
       </div>`;
     }).join('');
     return `<div class="xp-action-card ${urgClass}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <span style="font-size:18px;">${a.icon||'📌'}</span>
-        <span style="font-weight:700;font-size:14px;color:var(--text);">${a.category}${techBadge}</span>
-        <span style="margin-left:auto;font-size:11px;font-weight:600;color:var(--muted);">${urgLabel}</span>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="font-size:22px;line-height:1;">${a.icon||'📌'}</span>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:15.5px;color:var(--text);line-height:1.2;">${a.category}</div>
+          <div style="margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            ${techBadge}<span style="font-size:11px;font-weight:600;color:var(--muted);">${urgLabel}</span>
+          </div>
+        </div>
       </div>
-      ${a.context ? `<div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;line-height:1.5;">${a.context}</div>` : ''}
+      ${a.context ? `<div style="font-size:13px;color:var(--text);opacity:.85;margin-bottom:10px;line-height:1.65;padding:10px 12px;background:var(--glass);border-radius:8px;border-left:3px solid rgba(103,232,249,.35);">${a.context}</div>` : ''}
       ${openItemsHtml}
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:6px;">Action Steps</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:8px;">What we'll do</div>
       ${stepsHtml}
       <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
-        ${a.timeline ? `<div style="font-size:11px;color:var(--muted);">⏱ <strong style="color:var(--text);">${a.timeline}</strong></div>` : ''}
-        ${a.expectedOutcome ? `<div style="font-size:11px;color:var(--muted);">🎯 ${a.expectedOutcome}</div>` : ''}
+        ${a.timeline ? `<div style="font-size:11px;color:var(--muted);">⏱ Target: <strong style="color:var(--text);">${a.timeline}</strong></div>` : ''}
+        ${a.expectedOutcome ? `<div style="font-size:11px;color:var(--muted);">🎯 Goal: ${a.expectedOutcome}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -2229,15 +2246,15 @@ function renderExceleratePlan(id, plan) {
     <!-- EXECUTIVE SUMMARY -->
     ${plan.executiveSummary ? `
     <div class="xp-section">
-      <div class="xp-section-label">Executive Summary</div>
-      <div style="font-size:13.5px;line-height:1.7;color:var(--text);">${plan.executiveSummary}</div>
-      ${plan.currentHealthAssessment ? `<div style="font-size:12.5px;line-height:1.6;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);">${plan.currentHealthAssessment}</div>` : ''}
+      <div class="xp-section-label">Where We Stand & Where We're Going</div>
+      <div style="font-size:13.5px;line-height:1.75;color:var(--text);">${plan.executiveSummary}</div>
+      ${plan.currentHealthAssessment ? `<div style="font-size:12.5px;line-height:1.65;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);">📋 <em>${plan.currentHealthAssessment}</em></div>` : ''}
     </div>` : ''}
 
     <!-- PRIORITY ACTION PLAN -->
     ${actionsHtml ? `
     <div class="xp-section">
-      <div class="xp-section-label">Priority Action Plan</div>
+      <div class="xp-section-label">Action Plan — Top Priorities</div>
       ${actionsHtml}
     </div>` : ''}
 
@@ -2245,12 +2262,12 @@ function renderExceleratePlan(id, plan) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
       ${quickWinsHtml ? `
       <div class="xp-section" style="margin-bottom:0;">
-        <div class="xp-section-label">Quick Wins</div>
+        <div class="xp-section-label">Easy Wins This Week</div>
         ${quickWinsHtml}
       </div>` : '<div></div>'}
       ${metricsHtml ? `
       <div class="xp-section" style="margin-bottom:0;">
-        <div class="xp-section-label">Success Metrics</div>
+        <div class="xp-section-label">How We'll Measure Success</div>
         ${metricsHtml}
       </div>` : '<div></div>'}
     </div>
@@ -2258,14 +2275,14 @@ function renderExceleratePlan(id, plan) {
     <!-- RISKS -->
     ${risksHtml ? `
     <div class="xp-section">
-      <div class="xp-section-label">Risk Flags</div>
+      <div class="xp-section-label">Watch Out For</div>
       ${risksHtml}
     </div>` : ''}
 
     <!-- NEXT CHECKPOINT -->
     ${plan.nextCheckpoint ? `
     <div class="xp-section" style="background:linear-gradient(135deg,rgba(103,232,249,.08),rgba(196,181,253,.08));border-color:rgba(103,232,249,.2);">
-      <div class="xp-section-label">Next Checkpoint</div>
+      <div class="xp-section-label">Next Review & Follow-up</div>
       <div style="font-size:13px;line-height:1.6;color:var(--text);">📅 ${plan.nextCheckpoint}</div>
     </div>` : ''}
 
