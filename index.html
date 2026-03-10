@@ -3148,7 +3148,13 @@ async function _ghSave() {
   if (!_ghPat || !_ghGistId || !RAW_DATA) return;
   _ghSaving = true;
   try {
-    const payload = { _version:1, _app:'Copilot Adoption Tracker by Tovik', _saved:new Date().toISOString(), customers: RAW_DATA.customers };
+    const payload = { _version:1, _app:'Copilot Adoption Tracker by Tovik', _saved:new Date().toISOString(),
+      customers: RAW_DATA.customers,
+      contacts: RAW_DATA.contacts,
+      opportunities: RAW_DATA.opportunities,
+      activities: RAW_DATA.activities,
+      competeOrgs: RAW_DATA.competeOrgs,
+    };
     const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
       method: 'PATCH',
       headers: { 'Authorization':'token '+_ghPat, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' },
