@@ -2191,70 +2191,60 @@ function startVoiceInput() {
 
   const btn   = document.getElementById('ai-mic-btn');
   const input = document.getElementById('ai-input');
-  let _netRetried = false;
-
   function _resetBtn() {
     if (btn)  { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
     if (input) input.placeholder = 'Ask in English or עברית…';
   }
 
-  function _start(continuous) {
-    const rec = new SR();
-    rec.continuous      = continuous;
-    rec.interimResults  = continuous;
-    rec.maxAlternatives = 1;
-    rec.lang            = 'en-US';   // explicit — empty string breaks Chrome speech endpoint
-    let _handled = false;            // prevents onend from stomping on error-path cleanup
+  // Use single-shot (continuous:false) only — continuous mode needs a persistent
+  // WebSocket to Google's servers which fails in many environments.
+  const rec = new SR();
+  rec.continuous      = false;
+  rec.interimResults  = false;
+  rec.maxAlternatives = 1;
+  rec.lang            = 'en-US';
+  let _handled = false;
 
-    rec.onstart = () => {
-      if (btn)  { btn.textContent = '⏹'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
-      if (input){ input.placeholder = '🎙 Listening — click ⏹ when done…'; input.value = ''; }
-    };
+  rec.onstart = () => {
+    if (btn)  { btn.textContent = '⏹'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
+    if (input){ input.placeholder = '🎙 Listening…'; input.value = ''; }
+  };
 
-    rec.onresult = (e) => {
-      let text = '';
-      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-      if (input) input.value = text;
-    };
+  rec.onresult = (e) => {
+    let text = '';
+    for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+    if (input) input.value = text;
+  };
 
-    rec.onerror = (e) => {
-      _handled = true;
-      _recognition = null;
-      if (e.error === 'network') {
-        if (!_netRetried) {
-          _netRetried = true;
-          _showMicStatus('Connection hiccup — retrying…', 'var(--cyan)');
-          setTimeout(() => _start(false), 600);
-        } else {
-          _resetBtn();
-          _showMicStatus('⚠ Voice unavailable — please type instead', '#f97316');
-          if (input) { input.placeholder = '⚠ Voice unavailable — type here'; setTimeout(() => { if (input) input.placeholder = 'Ask in English or עברית…'; }, 5000); }
-        }
-        return;
-      }
-      const msgs = {
-        'not-allowed'  : 'Mic access denied — allow in browser settings.',
-        'no-speech'    : null,
-        'audio-capture': 'No microphone found.',
-        'language-not-supported': 'Language not supported.',
-      };
-      const msg = msgs[e.error];
-      if (msg) _showMicStatus('⚠ ' + msg, '#f87171');
+  rec.onerror = (e) => {
+    _handled = true;
+    _recognition = null;
+    if (e.error === 'network') {
       _resetBtn();
+      _showMicStatus('⚠ Speech recognition blocked — check network or use Chrome', '#f97316');
+      if (input) { input.placeholder = '⚠ Voice blocked — type instead'; setTimeout(() => { if (input) input.placeholder = 'Ask in English or עברית…'; }, 5000); }
+      return;
+    }
+    const msgs = {
+      'not-allowed'  : 'Mic access denied — allow in browser settings.',
+      'no-speech'    : null,
+      'audio-capture': 'No microphone found.',
+      'language-not-supported': 'Language not supported.',
     };
+    const msg = msgs[e.error];
+    if (msg) _showMicStatus('⚠ ' + msg, '#f87171');
+    _resetBtn();
+  };
 
-    rec.onend = () => {
-      if (_handled) return;   // onerror already cleaned up — don't reset mid-retry
-      _recognition = null;
-      _resetBtn();
-    };
+  rec.onend = () => {
+    if (_handled) return;
+    _recognition = null;
+    _resetBtn();
+  };
 
-    _recognition = rec;
-    try { rec.start(); }
-    catch (err) { _recognition = null; _handled = true; _resetBtn(); _showMicStatus('⚠ ' + err.message, '#f87171'); }
-  }
-
-  _start(true);
+  _recognition = rec;
+  try { rec.start(); }
+  catch (err) { _recognition = null; _resetBtn(); _showMicStatus('⚠ ' + err.message, '#f87171'); }
 }
 
 function saveWorkerUrl() {
