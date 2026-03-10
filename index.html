@@ -389,6 +389,7 @@ html, body {
 .kanban-col-accent-done       { border-top:2px solid rgba(110,231,183,.5); }
 .kanban-col-header:hover .k-edit-btn { opacity:1; }
 .k-edit-btn { opacity:0; transition:opacity .15s; background:none; border:none; cursor:pointer; color:var(--muted); font-size:13px; padding:2px 5px; border-radius:5px; }
+.items-list.drag-over { background: rgba(103,232,249,.06); border-radius:8px; outline:2px dashed var(--cyan); }
 
 /* settings view */
 .settings-section { display:flex;flex-direction:column;gap:8px; }
@@ -638,6 +639,11 @@ html, body {
               <button class="settings-btn settings-btn-primary" onclick="toggleTheme()">Toggle Light / Dark Mode</button>
             </div>
             <div class="settings-divider"></div>
+            <div class="settings-section-title">AI Assistant</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Anthropic API key for the AI chat assistant. Get one at console.anthropic.com.</div>
+            <input class="modal-input" id="ai-key-input" type="password" placeholder="sk-ant-…" style="margin-bottom:8px;">
+            <button class="settings-btn settings-btn-primary" onclick="saveAiKey()">Save Key</button>
+            <div class="settings-divider"></div>
             <div class="settings-section-title">Danger Zone</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Clear all customer data from this browser. This cannot be undone.</div>
             <button class="settings-btn settings-btn-danger" onclick="clearAllData()">⚠ Clear All Data</button>
@@ -745,6 +751,28 @@ html, body {
 
   </div>
 </div>
+
+<!-- AI CHAT -->
+<div id="ai-chat-panel" style="display:none;position:fixed;bottom:80px;right:24px;width:360px;max-height:520px;z-index:2000;
+  background:var(--bg-c);border:1px solid var(--border);border-radius:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,.4);flex-direction:column;overflow:hidden;">
+  <div style="padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:14px;font-weight:700;color:var(--text);">✦ AI Assistant</div>
+    <button onclick="toggleAiChat()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;">✕</button>
+  </div>
+  <div id="ai-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:340px;"></div>
+  <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;">
+    <input id="ai-input" class="modal-input" placeholder="Ask about your customers…" style="flex:1;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMsg();}">
+    <button onclick="sendAiMsg()" style="height:36px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25));color:var(--cyan);border:1px solid rgba(103,232,249,.3);">Send</button>
+  </div>
+</div>
+<button id="ai-fab" onclick="toggleAiChat()" style="position:fixed;bottom:24px;right:24px;z-index:2000;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#67e8f9,#c4b5fd);
+  color:#0f0c29;font-size:22px;font-weight:700;
+  box-shadow:0 4px 20px rgba(103,232,249,.4);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,box-shadow .15s;">✦</button>
 
 <script>
 /* ─── theme toggle ─── */
@@ -1186,26 +1214,51 @@ function goToDetail(id) {
       const rowsHtml = cat.items.map((item, itemIdx) => {
         const dispStatus = statusMap[item.status] || 'open';
         const color = ITEM_COLORS[(catIdx + itemIdx) % ITEM_COLORS.length];
-        return `<div class="item-row" onclick="showStatusPicker(event,'${id}',${catIdx},${itemIdx})">
+        return `<div class="item-row"
+          draggable="true"
+          data-cust="${id}" data-cat="${catIdx}" data-item="${itemIdx}"
+          ondragstart="itemDragStart(event,'${id}',${catIdx},${itemIdx})"
+          ondragend="itemDragEnd(event)"
+          onclick="showStatusPicker(event,'${id}',${catIdx},${itemIdx})">
           <div class="item-dot" style="background:${color};"></div>
-          <div class="item-title" style="font-size:11px;">${item.label}</div>
+          <span class="item-title" style="font-size:11px;outline:none;border-bottom:1px dashed transparent;cursor:text;"
+            contenteditable="true"
+            onblur="renameItem('${id}',${catIdx},${itemIdx},this.textContent.trim())"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+            onclick="event.stopPropagation();">${item.label}</span>
           <div class="item-pill ${STATUS_CLASS[dispStatus]}" style="${STATUS_STYLES[dispStatus]};font-size:9px;padding:1px 7px;">${item.status}</div>
           <button class="item-del-btn" onclick="deleteItem(event,'${id}',${catIdx},${itemIdx})" title="Delete">✕</button>
         </div>`;
       }).join('');
       return `<div class="detail-panel" style="margin:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="detail-panel-label" style="margin-bottom:0;font-size:11px;">${icon}${catLabel}</div>
-          <span style="font-size:10px;color:var(--muted);">${cat.items.filter(i=>i.status==='done').length}/${cat.items.length} done</span>
+          <div class="detail-panel-label" style="margin-bottom:0;font-size:11px;">${icon}<span
+            contenteditable="true"
+            style="outline:none;border-bottom:1px dashed transparent;cursor:text;"
+            onblur="renameCat('${id}',${catIdx},this.textContent.trim());this.style.borderBottomColor='transparent';"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+            onfocus="this.style.borderBottomColor='var(--cyan)'">${catLabel}</span></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:var(--muted);">${cat.items.filter(i=>i.status==='done').length}/${cat.items.length} done</span>
+            <button class="item-del-btn" style="font-size:12px;" onclick="deleteSection(event,'${id}',${catIdx})" title="Delete section">🗑</button>
+          </div>
         </div>
-        <div class="items-list" style="max-height:180px;overflow-y:auto;">${rowsHtml}</div>
+        <div class="items-list" style="max-height:180px;overflow-y:auto;"
+          data-target-cat="${catIdx}"
+          ondragover="itemDragOver(event)"
+          ondragleave="itemDragLeave(event)"
+          ondrop="itemDrop(event,'${id}',${catIdx})">${rowsHtml}</div>
         <div class="add-item-row" id="add-row-${catIdx}">
           <input class="add-item-input" id="add-input-${catIdx}" placeholder="Add item…" onkeydown="if(event.key==='Enter')commitAddItem('${id}',${catIdx})">
           <button class="add-item-btn" onclick="commitAddItem('${id}',${catIdx})">Add</button>
         </div>
       </div>`;
     }).join('')
-  }</div>` : '';
+  }
+  <div style="display:flex;align-items:center;justify-content:center;min-height:120px;border:2px dashed var(--border2);border-radius:16px;cursor:pointer;" onclick="addSection('${id}')">
+    <span style="color:var(--muted);font-size:13px;">+ Add Section</span>
+  </div>
+  </div>` : '';
 
   document.getElementById('d-body').innerHTML = `
     <div class="detail-body-top">
@@ -1346,16 +1399,89 @@ buildList();
 showView('list');
 
 /* ─── kanban board ─── */
-const KANBAN_COLS = [
-  { key: 'pending',            label: 'Open',        accent: 'kanban-col-accent-open',     dispKey: 'open' },
-  { key: 'unblock',            label: 'In Progress', accent: 'kanban-col-accent-progress', dispKey: 'in-progress' },
-  { key: 'blocked|missed',     label: 'Blocked',     accent: 'kanban-col-accent-blocked',  dispKey: 'blocked' },
-  { key: 'done',               label: 'Done',        accent: 'kanban-col-accent-done',     dispKey: 'done' },
+const KCOLS_KEY = 'copilot-tracker-kanban-cols';
+let KANBAN_COLS = JSON.parse(localStorage.getItem(KCOLS_KEY) || 'null') || [
+  { id: 'pending', label: 'Open',        color: '#67e8f9' },
+  { id: 'unblock', label: 'In Progress', color: '#6ee7b7' },
+  { id: 'blocked', label: 'Blocked',     color: '#f9a8d4' },
+  { id: 'done',    label: 'Done',        color: '#a78bfa' },
 ];
+function saveKanbanCols() { localStorage.setItem(KCOLS_KEY, JSON.stringify(KANBAN_COLS)); }
 
-function kanbanMatchesCol(status, colKey) {
-  if (colKey === 'blocked|missed') return status === 'blocked' || status === 'missed';
-  return status === colKey;
+function kanbanMatchesCol(status, colId) {
+  if (colId === 'blocked') return status === 'blocked' || status === 'missed';
+  return status === colId;
+}
+
+function addKanbanCol() {
+  const name = prompt('Column name:');
+  if (!name || !name.trim()) return;
+  KANBAN_COLS.push({ id: 'col-' + Date.now(), label: name.trim(), color: '#67e8f9' });
+  saveKanbanCols();
+  buildKanban();
+}
+
+let _kEditPopover = null;
+function closeKEditPopover() {
+  if (_kEditPopover) { _kEditPopover.remove(); _kEditPopover = null; }
+}
+
+function editKanbanCol(idx) {
+  closeKEditPopover();
+  const col = KANBAN_COLS[idx];
+  if (!col) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;z-index:3000;background:var(--bg-c);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:8px;min-width:200px;';
+  div.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Edit Column</div>
+    <input id="k-edit-label" class="modal-input" value="${col.label.replace(/"/g,'&quot;')}" placeholder="Label" style="font-size:12px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <label style="font-size:11px;color:var(--muted);">Color</label>
+      <input type="color" id="k-edit-color" value="${col.color}" style="width:36px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:none;padding:2px;">
+    </div>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button onclick="saveKanbanColEdit(${idx})" style="flex:1;height:30px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,rgba(103,232,249,.2),rgba(196,181,253,.2));color:var(--cyan);border:1px solid rgba(103,232,249,.25);">Save</button>
+      <button onclick="deleteKanbanCol(${idx})" style="height:30px;padding:0 10px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);">🗑</button>
+    </div>`;
+  document.body.appendChild(div);
+  _kEditPopover = div;
+  // Position near header
+  const headerEls = document.querySelectorAll('.kanban-col-header');
+  const headerEl = headerEls[idx];
+  if (headerEl) {
+    const rect = headerEl.getBoundingClientRect();
+    div.style.top  = (rect.bottom + 6) + 'px';
+    div.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+  } else {
+    div.style.top = '100px'; div.style.left = '200px';
+  }
+  setTimeout(() => {
+    document.addEventListener('click', function outsideClick(e) {
+      if (_kEditPopover && !_kEditPopover.contains(e.target)) {
+        closeKEditPopover();
+        document.removeEventListener('click', outsideClick);
+      }
+    });
+  }, 0);
+}
+
+function saveKanbanColEdit(idx) {
+  const label = document.getElementById('k-edit-label')?.value.trim();
+  const color = document.getElementById('k-edit-color')?.value;
+  if (!label) return;
+  KANBAN_COLS[idx].label = label;
+  KANBAN_COLS[idx].color = color || KANBAN_COLS[idx].color;
+  saveKanbanCols();
+  closeKEditPopover();
+  buildKanban();
+}
+
+function deleteKanbanCol(idx) {
+  if (!confirm(`Delete column "${KANBAN_COLS[idx].label}"?`)) return;
+  KANBAN_COLS.splice(idx, 1);
+  saveKanbanCols();
+  closeKEditPopover();
+  buildKanban();
 }
 
 /* kanban drag state */
@@ -1377,8 +1503,8 @@ function buildKanban() {
     });
   });
 
-  document.getElementById('kanban-board').innerHTML = KANBAN_COLS.map(col => {
-    const cards = allItems.filter(it => kanbanMatchesCol(it.status, col.key));
+  const colsHtml = KANBAN_COLS.map((col, colIdx) => {
+    const cards = allItems.filter(it => kanbanMatchesCol(it.status, col.id));
     const cardsHtml = cards.length === 0
       ? `<div class="kanban-empty">Drop items here</div>`
       : cards.map(it => `<div class="kanban-card"
@@ -1391,19 +1517,24 @@ function buildKanban() {
           <div class="kanban-card-title">${it.title}</div>
           <div class="kanban-card-cat">${it.catLabel}</div>
         </div>`).join('');
-    // drop target key: first raw status in column
-    const dropKey = col.key === 'blocked|missed' ? 'blocked' : col.key;
     return `<div class="kanban-col">
-      <div class="kanban-col-header ${col.accent}">
+      <div class="kanban-col-header" style="border-top:3px solid ${col.color};">
         <span class="kanban-col-title">${col.label}</span>
         <span class="kanban-col-count">${cards.length}</span>
+        <button class="k-edit-btn" onclick="event.stopPropagation();editKanbanCol(${colIdx})" title="Edit column">✎</button>
       </div>
-      <div class="kanban-cards" data-col-key="${dropKey}"
+      <div class="kanban-cards" data-col-key="${col.id}"
            ondragover="kColDragOver(event)"
            ondragleave="kColDragLeave(event)"
-           ondrop="kColDrop(event,'${dropKey}')">${cardsHtml}</div>
+           ondrop="kColDrop(event,'${col.id}')">${cardsHtml}</div>
     </div>`;
   }).join('');
+  const addColHtml = `<div class="kanban-col" style="flex:0 0 auto;">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:120px;border:2px dashed var(--border2);border-radius:10px;cursor:pointer;padding:20px;" onclick="addKanbanCol()">
+      <span style="color:var(--muted);font-size:13px;">+ Add Column</span>
+    </div>
+  </div>`;
+  document.getElementById('kanban-board').innerHTML = colsHtml + addColHtml;
 }
 
 function kDragStart(e, custId, catIdx, itemIdx) {
@@ -1600,6 +1731,93 @@ function deleteItem(event, custId, catIdx, itemIdx) {
   goToDetail(custId);
 }
 
+function renameCat(custId, catIdx, newTitle) {
+  if (!newTitle) return;
+  const raw = RAW_DATA.customers.find(c => c.id === custId);
+  if (!raw) return;
+  raw.categories[catIdx].title = newTitle;
+  saveData();
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+}
+
+function renameItem(custId, catIdx, itemIdx, newLabel) {
+  if (!newLabel) return;
+  const raw = RAW_DATA.customers.find(c => c.id === custId);
+  if (!raw) return;
+  raw.categories[catIdx].items[itemIdx].label = newLabel;
+  saveData();
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+}
+
+function addSection(custId) {
+  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(c => c.id === custId) : null;
+  if (!raw) return;
+  raw.categories.push({ title: 'New Section', icon: '', items: [] });
+  saveData();
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+  goToDetail(custId);
+}
+
+function deleteSection(e, custId, catIdx) {
+  e.stopPropagation();
+  const raw = RAW_DATA.customers.find(c => c.id === custId);
+  if (!raw || !confirm(`Delete section "${raw.categories[catIdx].title}"?`)) return;
+  raw.categories.splice(catIdx, 1);
+  saveData();
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+  goToDetail(custId);
+}
+
+/* ─── item drag between sections ─── */
+let _itemDragCustId, _itemDragCatIdx, _itemDragItemIdx;
+
+function itemDragStart(event, custId, catIdx, itemIdx) {
+  _itemDragCustId = custId;
+  _itemDragCatIdx = catIdx;
+  _itemDragItemIdx = itemIdx;
+  event.dataTransfer.effectAllowed = 'move';
+  event.stopPropagation();
+}
+
+function itemDragEnd(event) {
+  event.stopPropagation();
+  document.querySelectorAll('.items-list').forEach(el => el.classList.remove('drag-over'));
+}
+
+function itemDragOver(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.dataTransfer.dropEffect = 'move';
+  event.currentTarget.classList.add('drag-over');
+}
+
+function itemDragLeave(event) {
+  event.stopPropagation();
+  if (!event.currentTarget.contains(event.relatedTarget))
+    event.currentTarget.classList.remove('drag-over');
+}
+
+function itemDrop(event, custId, targetCatIdx) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget.classList.remove('drag-over');
+  if (_itemDragCustId === null || _itemDragCustId !== custId) return;
+  if (_itemDragCatIdx === targetCatIdx) return;
+  const raw = RAW_DATA.customers.find(c => c.id === custId);
+  if (!raw) return;
+  const item = raw.categories[_itemDragCatIdx].items.splice(_itemDragItemIdx, 1)[0];
+  raw.categories[targetCatIdx].items.push(item);
+  saveData();
+  const idx = RAW_DATA.customers.indexOf(raw);
+  CUSTOMERS[custId] = mapCustomer(raw, idx);
+  _itemDragCustId = null;
+  goToDetail(custId);
+}
+
 /* ─── Reports ─── */
 function populateReportSelect() {
   const sel = document.getElementById('report-customer-select');
@@ -1658,6 +1876,9 @@ function renderReport() {
   `;
 }
 
+/* ─── AI Chat key (declared early for ghUpdateUI) ─── */
+const AI_KEY_STORE = 'copilot-tracker-ai-key';
+
 /* ─── GitHub Gist sync ─── */
 const GH_PAT_KEY  = 'copilot-tracker-gh-pat';
 const GH_GIST_KEY = 'copilot-tracker-gh-gist';
@@ -1687,6 +1908,11 @@ function ghUpdateUI() {
   const gistInput = document.getElementById('gh-gist-input');
   if (patInput) patInput.value = _ghPat;
   if (gistInput) gistInput.value = _ghGistId;
+  const aiKeyInput = document.getElementById('ai-key-input');
+  if (aiKeyInput) {
+    const storedKey = localStorage.getItem(AI_KEY_STORE) || '';
+    aiKeyInput.value = storedKey;
+  }
 }
 
 async function connectGist() {
@@ -1789,6 +2015,95 @@ async function _ghLoad(silent) {
   if (loaded) { updateKPIs(); buildList(); }
   ghUpdateUI();
 })();
+
+/* ─── AI Chat ─── */
+let _aiHistory = [];
+let _aiPanelOpen = false;
+
+function toggleAiChat() {
+  _aiPanelOpen = !_aiPanelOpen;
+  const panel = document.getElementById('ai-chat-panel');
+  panel.style.display = _aiPanelOpen ? 'flex' : 'none';
+  if (_aiPanelOpen && _aiHistory.length === 0) {
+    appendAiMsg('assistant', 'Hi! I can help you analyze your customer data. Ask me anything about adoption rates, blockers, or what to focus on.');
+    document.getElementById('ai-input').focus();
+  }
+}
+
+function appendAiMsg(role, text) {
+  const el = document.getElementById('ai-messages');
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;${isUser ? 'justify-content:flex-end;' : ''}margin-bottom:2px;`;
+  div.innerHTML = `<div style="max-width:88%;padding:9px 13px;border-radius:${isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px'};
+    background:${isUser ? 'linear-gradient(135deg,rgba(103,232,249,.2),rgba(196,181,253,.2))' : 'var(--surface)'};
+    border:1px solid ${isUser ? 'rgba(103,232,249,.25)' : 'var(--border)'};
+    color:var(--text);font-size:13px;line-height:1.5;white-space:pre-wrap;">${text}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendAiMsg() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const apiKey = localStorage.getItem(AI_KEY_STORE) || '';
+  if (!apiKey) {
+    appendAiMsg('assistant', '⚠ No API key set. Please add your Anthropic API key in Settings → AI Assistant.');
+    return;
+  }
+
+  input.value = '';
+  appendAiMsg('user', text);
+  _aiHistory.push({ role: 'user', content: text });
+
+  // Build context from current data
+  const custs = Object.values(CUSTOMERS);
+  const context = custs.map(c => `${c.name}: ${c.adoption}% adoption, ${c.done} done, ${c.blocked} blocked, ${c.items} total items, status: ${c.status}`).join('\n');
+  const systemPrompt = `You are an AI assistant for a GitHub Copilot adoption tracking tool. Here is the current customer data:\n\n${context}\n\nHelp the CSM understand trends, flag risks, and suggest actions. Be concise.`;
+
+  // Show typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.id = 'ai-typing';
+  typingDiv.style.cssText = 'color:var(--muted);font-size:12px;padding:4px 0;';
+  typingDiv.textContent = '✦ Thinking…';
+  document.getElementById('ai-messages').appendChild(typingDiv);
+  document.getElementById('ai-messages').scrollTop = 99999;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: _aiHistory,
+      }),
+    });
+    const data = await res.json();
+    typingDiv.remove();
+    const reply = data.content?.[0]?.text || data.error?.message || 'Sorry, something went wrong.';
+    appendAiMsg('assistant', reply);
+    _aiHistory.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    typingDiv.remove();
+    appendAiMsg('assistant', '⚠ Network error: ' + err.message);
+  }
+}
+
+function saveAiKey() {
+  const k = document.getElementById('ai-key-input')?.value.trim();
+  if (k) localStorage.setItem(AI_KEY_STORE, k);
+  else localStorage.removeItem(AI_KEY_STORE);
+  ghStatus('AI key saved.', 'var(--mint)');
+}
 </script>
 </body>
 </html>
