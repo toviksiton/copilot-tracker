@@ -2028,7 +2028,7 @@ function buildList() {
         <div class="cust-bar-track"><div class="cust-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>
       </div>
       <div class="cust-pct" style="background:${c.gradient};">${c.adoption}%</div>
-      <div class="cust-pill" style="${c.pillStyle};">${c.status}</div>
+      <div class="cust-pill" style="${c.status==='on-track'?'background:rgba(22,163,74,.13);color:#16a34a;border:1px solid rgba(22,163,74,.3)':c.status==='at-risk'?'background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)':'background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)'};">${c.status}</div>
       <div class="cust-arrow">›</div>
     </div>`).join('');
 }
@@ -2087,7 +2087,7 @@ function openSidecar(id) {
       <div>
         <div class="sc-name">${c.name}</div>
         ${c.csm ? `<div class="sc-industry">CSAM: ${c.csm}</div>` : ''}
-        <div class="sc-pill" style="${c.pillStyle};">${c.status}</div>
+        <div class="sc-pill" style="${c.status==='on-track'?'background:rgba(22,163,74,.13);color:#16a34a;border:1px solid rgba(22,163,74,.3)':c.status==='at-risk'?'background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)':'background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)'};">${c.status}</div>
       </div>
     </div>`;
 
@@ -2167,7 +2167,7 @@ function goToDetail(id) {
         ${detailLogoHtml}
         <div>
           <div class="detail-name">${c.name}</div>
-          <div class="detail-hero-pill" style="${c.pillStyle};">${c.status}</div>
+          <div class="detail-hero-pill" style="${c.status==='on-track'?'background:rgba(22,163,74,.13);color:#16a34a;border:1px solid rgba(22,163,74,.3)':c.status==='at-risk'?'background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)':'background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)'};">${c.status}</div>
         </div>
       </div>
       <div class="detail-hero-info">${heroInfoItems}</div>
