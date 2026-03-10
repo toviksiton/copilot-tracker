@@ -654,38 +654,31 @@ html, body {
   /* show hamburger */
   .mob-menu-btn { display:flex; }
 
-  /* sidebar becomes a fixed overlay drawer — solid background, no glass blur */
+  /* sidebar: fixed drawer hidden via left (no transform = no iOS hit-test bug) */
   .sidebar {
-    position:fixed;top:0;left:0;bottom:0;z-index:200;
+    position:fixed !important;
+    top:0 !important; left:-260px !important; bottom:0 !important;
+    z-index:200;
     width:240px !important;
-    transform:translateX(-100%);
-    will-change:transform;
-    /* delay visibility:hidden until after slide-out finishes */
-    transition:transform .25s cubic-bezier(.4,0,.2,1), visibility 0s linear .25s;
+    transition:left .25s cubic-bezier(.4,0,.2,1);
     backdrop-filter:none !important;
     -webkit-backdrop-filter:none !important;
     background:var(--bg-c) !important;
-    border-right:1px solid var(--border);
-    overflow:hidden;
-    /* hidden+no-pointer when drawer is closed — fixes iOS hit-test bug */
-    visibility:hidden;
-    pointer-events:none;
+    border-right:1px solid var(--border) !important;
+    overflow-y:auto !important;
+    display:flex !important;
+    flex-direction:column !important;
   }
-  /* when open: show immediately, pointer events on */
-  .sidebar.mob-open {
-    transform:translateX(0);
-    visibility:visible;
-    pointer-events:auto;
-    transition:transform .25s cubic-bezier(.4,0,.2,1), visibility 0s linear 0s;
-  }
+  .sidebar.mob-open { left:0 !important; }
 
-  /* ensure nav items are always tappable on mobile */
+  /* nav items: ensure tappable on iOS */
   .sidebar .nav-item {
     -webkit-tap-highlight-color:rgba(103,232,249,.15);
     touch-action:manipulation;
     cursor:pointer;
     user-select:none;
     -webkit-user-select:none;
+    min-height:44px;
   }
 
   /* shell no longer reserves sidebar space */
@@ -1956,9 +1949,9 @@ html, body {
 <script>
 /* ─── mobile sidebar ─── */
 function toggleMobSidebar() {
-  const sb = document.querySelector('.sidebar');
-  const bd = document.getElementById('sidebar-backdrop');
-  const open = sb.classList.toggle('mob-open');
+  var sb = document.querySelector('.sidebar');
+  var bd = document.getElementById('sidebar-backdrop');
+  var open = sb.classList.toggle('mob-open');
   bd.classList.toggle('visible', open);
   document.body.style.overflow = open ? 'hidden' : '';
 }
@@ -1967,31 +1960,28 @@ function closeMobSidebar() {
   document.getElementById('sidebar-backdrop').classList.remove('visible');
   document.body.style.overflow = '';
 }
-/* close sidebar when a nav item is clicked on mobile */
-document.addEventListener('click', function(e) {
-  const navItem = e.target.closest('.nav-item');
-  if (navItem && window.innerWidth <= 767) closeMobSidebar();
-});
 
-/* iOS Safari touchend fallback — fires nav action even if click event is swallowed */
-(function() {
-  var didTouch = false;
-  document.querySelector('.sidebar').addEventListener('touchend', function(e) {
-    var link = e.target.closest('.nav-item');
-    if (!link) return;
-    e.preventDefault();
-    didTouch = true;
-    // run the inline onclick
-    var fn = link.getAttribute('onclick');
-    if (fn) { try { (new Function(fn)).call(link); } catch(_){} }
-    closeMobSidebar();
-    setTimeout(function(){ didTouch = false; }, 600);
+/* Wire every nav item: touchstart for instant response on iOS */
+document.querySelectorAll('.sidebar .nav-item').forEach(function(link) {
+  link.addEventListener('touchstart', function(e) {
+    /* visual feedback */
+    this.style.background = 'var(--surface-hover)';
+  }, {passive:true});
+
+  link.addEventListener('touchend', function(e) {
+    this.style.background = '';
+    e.preventDefault();           /* prevent ghost click */
+    /* read and run the view function from the onclick attribute */
+    var attr = this.getAttribute('onclick') || '';
+    var m = attr.match(/showView\(['"](\w[\w-]*)['"]/) ;
+    if (m) { try { showView(m[1]); } catch(err){} }
+    if (window.innerWidth <= 767) closeMobSidebar();
   }, {passive:false});
-  // suppress the ghost click that fires ~300ms later
-  document.querySelector('.sidebar').addEventListener('click', function(e) {
-    if (didTouch) { e.stopPropagation(); e.preventDefault(); }
-  }, true);
-}());
+
+  link.addEventListener('touchcancel', function() {
+    this.style.background = '';
+  }, {passive:true});
+});
 
 /* ─── theme toggle ─── */
 function toggleTheme() {
