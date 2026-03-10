@@ -324,6 +324,55 @@ html, body {
 [data-theme="light"] .pill-in-review  { background:rgba(109,40,217,.10)!important;color:#6d28d9!important;border:1px solid rgba(109,40,217,.2)!important; }
 [data-theme="light"] .pill-in-progress{ background:rgba(8,145,178,.10)!important;color:#0891b2!important;border:1px solid rgba(8,145,178,.2)!important; }
 [data-theme="light"] .pill-done       { background:rgba(5,150,105,.10)!important;color:#059669!important;border:1px solid rgba(5,150,105,.2)!important; }
+
+/* clickable item rows */
+.item-row { cursor:pointer; transition:background .15s,border-color .15s; }
+.item-row:hover { background:var(--surface-hover)!important;border-color:var(--border)!important; }
+.item-pill { cursor:pointer; user-select:none; }
+
+/* status picker popup */
+.status-picker {
+  position:fixed;z-index:999;
+  background:var(--glass);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:12px;
+  padding:6px;display:flex;flex-direction:column;gap:4px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);min-width:140px;
+}
+.status-picker-opt {
+  padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;
+  transition:background .12s;
+}
+.status-picker-opt:hover { background:var(--surface-hover); }
+
+/* settings view */
+.settings-section { display:flex;flex-direction:column;gap:8px; }
+.settings-section-title { font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px; }
+.settings-field { display:flex;flex-direction:column;gap:6px; }
+.settings-label { font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px; }
+.settings-input {
+  background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;
+  outline:none;transition:border-color .15s;
+}
+.settings-input:focus { border-color:var(--cyan); }
+.settings-btn {
+  height:36px;padding:0 18px;border-radius:9px;font-size:13px;font-weight:600;
+  cursor:pointer;border:none;display:inline-flex;align-items:center;gap:7px;
+  transition:background .15s,color .15s;margin-top:4px;
+}
+.settings-btn-primary { background:linear-gradient(135deg,rgba(103,232,249,.2),rgba(196,181,253,.2));color:var(--cyan);border:1px solid rgba(103,232,249,.25); }
+.settings-btn-danger  { background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25); }
+.settings-divider { height:1px;background:var(--border);margin:8px 0; }
+
+/* backlog view */
+.backlog-item {
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:background .15s;
+}
+.backlog-item:hover { background:var(--surface-hover); }
+.backlog-customer { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px; }
+.backlog-title { font-size:13px;color:var(--text);margin-top:2px; }
 </style>
 </head>
 <body>
@@ -342,20 +391,20 @@ html, body {
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
-      <a class="nav-item active" href="#"><span class="nav-icon">◈</span> Dashboard</a>
-      <a class="nav-item" href="#"><span class="nav-icon">◎</span> Customers</a>
-      <a class="nav-item" href="#"><span class="nav-icon">⬡</span> Adoption</a>
+      <a class="nav-item active" id="nav-dashboard" href="#" onclick="showView('list');return false;"><span class="nav-icon">◈</span> Dashboard</a>
+      <a class="nav-item" id="nav-customers" href="#" onclick="showView('list');return false;"><span class="nav-icon">◎</span> Customers</a>
+      <a class="nav-item" id="nav-adoption" href="#" onclick="showView('list');return false;"><span class="nav-icon">⬡</span> Adoption</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
-      <a class="nav-item" href="#"><span class="nav-icon">◷</span> Backlog<span class="nav-badge">5</span></a>
-      <a class="nav-item" href="#"><span class="nav-icon">◈</span> Milestones</a>
-      <a class="nav-item" href="#"><span class="nav-icon">⊞</span> Reports</a>
+      <a class="nav-item" id="nav-backlog" href="#" onclick="showView('backlog');return false;"><span class="nav-icon">◷</span> Backlog<span class="nav-badge" id="backlog-badge">5</span></a>
+      <a class="nav-item" id="nav-milestones" href="#" onclick="showView('list');return false;"><span class="nav-icon">◈</span> Milestones</a>
+      <a class="nav-item" id="nav-reports" href="#" onclick="showView('list');return false;"><span class="nav-icon">⊞</span> Reports</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">System</div>
-      <a class="nav-item" href="#"><span class="nav-icon">⚙</span> Settings</a>
-      <a class="nav-item" href="#"><span class="nav-icon">⊕</span> Integrations</a>
+      <a class="nav-item" id="nav-settings" href="#" onclick="showView('settings');return false;"><span class="nav-icon">⚙</span> Settings</a>
+      <a class="nav-item" id="nav-integrations" href="#" onclick="showView('settings');return false;"><span class="nav-icon">⊕</span> Integrations</a>
     </div>
     <div class="sidebar-footer">
       <div class="user-row">
@@ -419,6 +468,37 @@ html, body {
         <div class="customer-list" id="cust-list"></div>
       </div>
 
+      <!-- BACKLOG VIEW -->
+      <div class="view" id="view-backlog" hidden>
+        <div class="section-label">All Blocked &amp; Missed Items</div>
+        <div id="backlog-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div class="view" id="view-settings" hidden>
+        <div class="section-label">Settings</div>
+        <div class="detail-panel" style="max-width:520px;">
+          <div class="settings-section">
+            <div class="settings-section-title">Data Management</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Import or export all customer data as JSON. Data is stored locally in your browser.</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="settings-btn settings-btn-primary" onclick="exportData()">⬇ Export JSON</button>
+              <button class="settings-btn settings-btn-primary" onclick="document.getElementById('import-input').click()">⬆ Import JSON</button>
+              <input id="import-input" type="file" accept=".json" style="display:none" onchange="importData(this)">
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-section-title">Appearance</div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <button class="settings-btn settings-btn-primary" onclick="toggleTheme()">Toggle Light / Dark Mode</button>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-section-title">Danger Zone</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Clear all customer data from this browser. This cannot be undone.</div>
+            <button class="settings-btn settings-btn-danger" onclick="clearAllData()">⚠ Clear All Data</button>
+          </div>
+        </div>
+      </div>
+
       <!-- DETAIL VIEW -->
       <div id="view-detail" hidden style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
         <div class="detail-hero" id="d-hero"></div>
@@ -452,6 +532,45 @@ function toggleTheme() {
   const icon = isDark ? '☀️' : '🌙';
   document.getElementById('toggle-btn').textContent  = icon;
   document.getElementById('toggle-btn2').textContent = icon;
+}
+
+/* ─── view routing ─── */
+let currentView = 'list';
+const NAV_MAP = {
+  'list':     ['nav-dashboard','nav-customers','nav-adoption','nav-milestones','nav-reports'],
+  'backlog':  ['nav-backlog'],
+  'settings': ['nav-settings','nav-integrations'],
+};
+
+function showView(name) {
+  // hide all except detail which is managed separately
+  ['view-list','view-backlog','view-settings'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = true;
+  });
+  document.getElementById('view-detail').hidden = true;
+  document.getElementById('tb-list').hidden   = false;
+  document.getElementById('tb-detail').hidden = true;
+  document.getElementById('kpi-row').hidden   = false;
+  closeSidecar();
+
+  // update nav active state
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  (NAV_MAP[name] || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  });
+
+  currentView = name;
+
+  if (name === 'list') {
+    document.getElementById('view-list').hidden = false;
+  } else if (name === 'backlog') {
+    document.getElementById('view-backlog').hidden = false;
+    buildBacklog();
+  } else if (name === 'settings') {
+    document.getElementById('view-settings').hidden = false;
+  }
 }
 
 /* ─── real data from localStorage ─── */
@@ -501,16 +620,26 @@ function mapCustomer(raw, idx) {
     color: BAR_COLORS[ci % BAR_COLORS.length]
   }));
   const statusMap = {done:'done', missed:'blocked', blocked:'blocked', unblock:'in-progress', pending:'open'};
+  // Build recentItems with indices for editing
+  const indexedItems = [];
+  raw.categories.forEach((cat, catIdx) => {
+    cat.items.forEach((item, itemIdx) => {
+      indexedItems.push({ ...item, catIdx, itemIdx });
+    });
+  });
   const recentItems = [
-    ...allItems.filter(i=>i.status==='blocked'),
-    ...allItems.filter(i=>i.status==='missed'),
-    ...allItems.filter(i=>i.status==='unblock'),
-    ...allItems.filter(i=>i.status==='done'),
-    ...allItems.filter(i=>i.status==='pending'),
+    ...indexedItems.filter(i=>i.status==='blocked'),
+    ...indexedItems.filter(i=>i.status==='missed'),
+    ...indexedItems.filter(i=>i.status==='unblock'),
+    ...indexedItems.filter(i=>i.status==='done'),
+    ...indexedItems.filter(i=>i.status==='pending'),
   ].slice(0,5).map((item, ii) => ({
     title: item.label,
     status: statusMap[item.status] || 'open',
-    color: ITEM_COLORS[ii % ITEM_COLORS.length]
+    rawStatus: item.status,
+    color: ITEM_COLORS[ii % ITEM_COLORS.length],
+    catIdx: item.catIdx,
+    itemIdx: item.itemIdx,
   }));
   return {
     id: raw.id, name: raw.name, letter: initials, logo: raw.logo || null,
@@ -527,11 +656,63 @@ function mapCustomer(raw, idx) {
 }
 
 let CUSTOMERS = {};
+let RAW_DATA = null; // the full parsed localStorage object
+
+function saveData() {
+  if (!RAW_DATA) return;
+  localStorage.setItem(STORE_KEY, JSON.stringify(RAW_DATA));
+}
+
+function exportData() {
+  const saved = localStorage.getItem(STORE_KEY);
+  if (!saved) { alert('No data to export.'); return; }
+  const blob = new Blob([saved], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'copilot-tracker-export.json';
+  a.click();
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.customers) throw new Error('Invalid format');
+      localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
+      RAW_DATA = parsed;
+      CUSTOMERS = {};
+      parsed.customers.forEach((raw, idx) => {
+        const mapped = mapCustomer(raw, idx);
+        CUSTOMERS[mapped.id] = mapped;
+      });
+      updateKPIs();
+      buildList();
+      alert('Data imported successfully.');
+    } catch(err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('Clear ALL customer data from this browser? This cannot be undone.')) return;
+  localStorage.removeItem(STORE_KEY);
+  CUSTOMERS = {};
+  RAW_DATA = null;
+  updateKPIs();
+  buildList();
+}
 
 function loadRealData() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
     if (saved && saved.customers && saved.customers.length > 0) {
+      RAW_DATA = saved;
       saved.customers.forEach((raw, idx) => {
         const mapped = mapCustomer(raw, idx);
         CUSTOMERS[mapped.id] = mapped;
@@ -709,7 +890,7 @@ function goToDetail(id) {
   }).join('');
 
   const itemsHtml = c.recentItems.map(it => `
-    <div class="item-row">
+    <div class="item-row" onclick="showStatusPicker(event,'${c.id}',${it.catIdx},${it.itemIdx})">
       <div class="item-dot" style="background:${it.color};"></div>
       <div class="item-title">${it.title}</div>
       <div class="item-pill ${STATUS_CLASS[it.status]}" style="${STATUS_STYLES[it.status]}">${it.status}</div>
@@ -748,6 +929,100 @@ function goBack() {
   document.getElementById('kpi-row').hidden   = false;
   document.getElementById('view-list').hidden   = false;
   document.getElementById('view-detail').hidden = true;
+  // restore active nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-dashboard').classList.add('active');
+}
+
+/* ─── status picker ─── */
+const RAW_STATUSES = ['pending','unblock','done','blocked','missed'];
+const DISPLAY_STATUS = {pending:'open',unblock:'in-progress',done:'done',blocked:'blocked',missed:'blocked'};
+let pickerEl = null;
+
+function removePicker() {
+  if (pickerEl) { pickerEl.remove(); pickerEl = null; }
+}
+document.addEventListener('click', e => {
+  if (pickerEl && !pickerEl.contains(e.target)) removePicker();
+});
+
+function showStatusPicker(event, custId, catIdx, itemIdx) {
+  event.stopPropagation();
+  removePicker();
+
+  const raw = RAW_DATA && RAW_DATA.customers
+    ? RAW_DATA.customers.find(c => c.id === custId)
+    : null;
+  if (!raw) return;
+
+  const currentRaw = raw.categories[catIdx].items[itemIdx].status;
+
+  const picker = document.createElement('div');
+  picker.className = 'status-picker';
+
+  RAW_STATUSES.forEach(s => {
+    const opt = document.createElement('div');
+    opt.className = 'status-picker-opt';
+    const dispKey = DISPLAY_STATUS[s] || 'open';
+    opt.style.cssText = STATUS_STYLES[dispKey] || '';
+    opt.textContent = (s === currentRaw ? '✓ ' : '') + s;
+    opt.onclick = (e2) => {
+      e2.stopPropagation();
+      raw.categories[catIdx].items[itemIdx].status = s;
+      saveData();
+      // remap this customer
+      const idx = RAW_DATA.customers.indexOf(raw);
+      CUSTOMERS[custId] = mapCustomer(raw, idx >= 0 ? idx : 0);
+      removePicker();
+      goToDetail(custId);
+    };
+    picker.appendChild(opt);
+  });
+
+  document.body.appendChild(picker);
+  pickerEl = picker;
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const top = Math.min(rect.bottom + 4, window.innerHeight - 200);
+  picker.style.top  = top + 'px';
+  picker.style.left = Math.min(rect.right - 160, window.innerWidth - 170) + 'px';
+}
+
+/* ─── backlog view ─── */
+function buildBacklog() {
+  const custs = Object.values(CUSTOMERS);
+  const allBlocked = [];
+  custs.forEach(c => {
+    if (!RAW_DATA) return;
+    const raw = RAW_DATA.customers.find(r => r.id === c.id);
+    if (!raw) return;
+    raw.categories.forEach((cat, catIdx) => {
+      cat.items.forEach((item, itemIdx) => {
+        if (item.status === 'blocked' || item.status === 'missed') {
+          allBlocked.push({ custId: c.id, custName: c.name, title: item.label,
+            rawStatus: item.status, catIdx, itemIdx });
+        }
+      });
+    });
+  });
+
+  const badge = document.getElementById('backlog-badge');
+  if (badge) badge.textContent = allBlocked.length;
+
+  document.getElementById('backlog-list').innerHTML = allBlocked.length === 0
+    ? `<div style="padding:40px;text-align:center;opacity:.5;">No blocked or missed items.</div>`
+    : allBlocked.map(it => {
+        const dispKey = DISPLAY_STATUS[it.rawStatus] || 'open';
+        const pillStyle = STATUS_STYLES[dispKey] || '';
+        const pillClass = STATUS_CLASS[dispKey] || '';
+        return `<div class="backlog-item" onclick="goToDetail('${it.custId}')">
+          <div style="flex:1;min-width:0;">
+            <div class="backlog-customer">${it.custName}</div>
+            <div class="backlog-title">${it.title}</div>
+          </div>
+          <div class="item-pill ${pillClass}" style="${pillStyle}">${it.rawStatus}</div>
+        </div>`;
+      }).join('');
 }
 
 buildList();
