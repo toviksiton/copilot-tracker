@@ -2189,10 +2189,11 @@ function openSidecar(id) {
       </div>
     </div>`;
 
+  const _scColor = c.status==='on-track'?'#6ee7b7':c.status==='at-risk'?'#fca5a5':'#fda4af';
   document.getElementById('sc-adoption').innerHTML = `
-    <div class="sc-adoption-num" style="background:${c.gradient};">${c.adoption}%</div>
+    <div class="sc-adoption-num" style="background:${c.status==='on-track'?'linear-gradient(135deg,#6ee7b7,#a7f3d0)':c.status==='at-risk'?'linear-gradient(135deg,#fca5a5,#fecdd3)':'linear-gradient(135deg,#fda4af,#fecdd3)'};">${c.adoption}%</div>
     <div class="sc-adoption-lbl">Copilot Adoption Rate</div>
-    <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${c.adoption}%;background:${c.barGradient};"></div></div>`;
+    <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${c.adoption}%;background:${_scColor};"></div></div>`;
 
   document.getElementById('sc-body').innerHTML = `
     ${c.seats ? `<div class="sc-metric"><span class="sc-metric-lbl">Total Users</span><span class="sc-metric-val">${c.seats.toLocaleString()}</span></div>` : ''}
