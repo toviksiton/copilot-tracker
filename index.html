@@ -373,6 +373,57 @@ html, body {
 .backlog-item:hover { background:var(--surface-hover); }
 .backlog-customer { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px; }
 .backlog-title { font-size:13px;color:var(--text);margin-top:2px; }
+
+/* modal overlay */
+.modal-overlay {
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-overlay[hidden] { display:none; }
+.modal-box {
+  background:var(--bg-c);border:1px solid var(--border);border-radius:18px;
+  padding:28px 28px 24px;width:480px;max-width:95vw;max-height:90vh;
+  overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5);
+}
+.modal-title { font-size:17px;font-weight:700;color:var(--text);margin-bottom:20px;letter-spacing:-.3px; }
+.modal-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.modal-grid-full { grid-column:1/-1; }
+.modal-label { font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px; }
+.modal-input {
+  width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;
+  outline:none;transition:border-color .15s;box-sizing:border-box;
+}
+.modal-input:focus { border-color:var(--cyan); }
+.modal-footer { display:flex;gap:10px;justify-content:flex-end;margin-top:20px; }
+.modal-btn {
+  height:36px;padding:0 20px;border-radius:9px;font-size:13px;font-weight:600;
+  cursor:pointer;border:none;transition:background .15s;
+}
+.modal-btn-cancel { background:var(--btn-ghost-bg);color:var(--muted);border:1px solid var(--border); }
+.modal-btn-save   { background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25));color:var(--cyan);border:1px solid rgba(103,232,249,.3); }
+.modal-btn-danger { background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25); }
+
+/* add-item inline */
+.add-item-row {
+  display:flex;gap:8px;padding:8px 12px;border:1px dashed var(--border2);
+  border-radius:10px;margin-top:8px;align-items:center;
+}
+.add-item-input {
+  flex:1;background:transparent;border:none;outline:none;
+  font-size:12px;color:var(--text);font-family:inherit;
+}
+.add-item-btn {
+  height:26px;padding:0 12px;border-radius:7px;font-size:11px;font-weight:600;
+  cursor:pointer;background:rgba(103,232,249,.15);color:var(--cyan);
+  border:1px solid rgba(103,232,249,.25);
+}
+.item-del-btn {
+  background:none;border:none;cursor:pointer;color:var(--dim);font-size:14px;
+  padding:0 3px;line-height:1;transition:color .12s;flex-shrink:0;
+}
+.item-del-btn:hover { color:#f87171; }
 </style>
 </head>
 <body>
@@ -425,7 +476,7 @@ html, body {
         <div class="topbar-actions">
           <button class="theme-toggle" id="toggle-btn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
           <button class="topbar-btn topbar-btn-ghost">⊞ Filter</button>
-          <button class="topbar-btn topbar-btn-primary">+ Add Customer</button>
+          <button class="topbar-btn topbar-btn-primary" onclick="openAddCustomer()">+ Add Customer</button>
         </div>
       </div>
 
@@ -437,8 +488,8 @@ html, body {
         </div>
         <div class="topbar-actions">
           <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">🌙</button>
-          <button class="topbar-btn topbar-btn-ghost">⊞ Edit</button>
-          <button class="topbar-btn topbar-btn-primary">Schedule Meeting</button>
+          <button class="topbar-btn topbar-btn-ghost" onclick="openEditCustomer()">⊞ Edit</button>
+          <button class="topbar-btn topbar-btn-danger modal-btn-danger" style="height:34px;padding:0 14px;font-size:12px;" onclick="deleteCurrentCustomer()">🗑 Delete</button>
         </div>
       </div>
 
@@ -507,6 +558,47 @@ html, body {
       </div>
 
     </main>
+
+    <!-- ══════ ADD / EDIT CUSTOMER MODAL ══════ -->
+    <div class="modal-overlay" id="customer-modal" hidden onclick="if(event.target===this)closeCustomerModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-title" id="customer-modal-title">Add Customer</div>
+        <div class="modal-grid">
+          <div class="modal-grid-full">
+            <div class="modal-label">Company Name *</div>
+            <input class="modal-input" id="cm-name" placeholder="e.g. AMDOCS">
+          </div>
+          <div>
+            <div class="modal-label">CSAM Name</div>
+            <input class="modal-input" id="cm-csam" placeholder="e.g. Maya Kuker">
+          </div>
+          <div>
+            <div class="modal-label">AE Name</div>
+            <input class="modal-input" id="cm-ae" placeholder="e.g. Shimrit Danino">
+          </div>
+          <div>
+            <div class="modal-label">Total Users</div>
+            <input class="modal-input" id="cm-users" type="number" placeholder="e.g. 29700">
+          </div>
+          <div>
+            <div class="modal-label">Copilot Users</div>
+            <input class="modal-input" id="cm-copilot" type="number" placeholder="e.g. 7500">
+          </div>
+          <div>
+            <div class="modal-label">Renewal Date</div>
+            <input class="modal-input" id="cm-renewal" type="date">
+          </div>
+          <div>
+            <div class="modal-label">AOP Date</div>
+            <input class="modal-input" id="cm-aop" type="date">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn modal-btn-cancel" onclick="closeCustomerModal()">Cancel</button>
+          <button class="modal-btn modal-btn-save" onclick="saveCustomer()">Save</button>
+        </div>
+      </div>
+    </div>
 
     <!-- RIGHT SIDECAR -->
     <div class="right-sidecar" id="sidecar">
@@ -768,7 +860,7 @@ function buildList() {
   updateKPIs();
   const custs = Object.values(CUSTOMERS);
   if (custs.length === 0) {
-    document.getElementById('cust-list').innerHTML = `<div style="padding:40px;text-align:center;opacity:.5;">No customers yet. Add customers in the main app.</div>`;
+    document.getElementById('cust-list').innerHTML = `<div style="padding:40px;text-align:center;opacity:.5;cursor:pointer;" onclick="openAddCustomer()">No customers yet. Click <strong>+ Add Customer</strong> to get started.</div>`;
     return;
   }
   document.getElementById('cust-list').innerHTML = custs.map(c => `
@@ -839,10 +931,17 @@ document.getElementById('sidecar').addEventListener('mouseenter', () => clearTim
 document.getElementById('sidecar').addEventListener('mouseleave', closeSidecar);
 
 /* ─── detail view ─── */
+let currentDetailId = null;
+
 function goToDetail(id) {
   const c = CUSTOMERS[id];
+  currentDetailId = id;
   clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
+  ['view-list','view-backlog','view-settings'].forEach(v => {
+    const el = document.getElementById(v);
+    if (el) el.hidden = true;
+  });
 
   document.getElementById('tb-list').hidden   = true;
   document.getElementById('tb-detail').hidden = false;
@@ -864,7 +963,7 @@ function goToDetail(id) {
         </div>
       </div>
       <div class="detail-hero-actions">
-        <button class="topbar-btn topbar-btn-ghost">Export</button>
+        <button class="topbar-btn topbar-btn-ghost" onclick="exportData()">Export</button>
       </div>
     </div>`;
 
@@ -889,12 +988,33 @@ function goToDetail(id) {
     </div>`;
   }).join('');
 
-  const itemsHtml = c.recentItems.map(it => `
-    <div class="item-row" onclick="showStatusPicker(event,'${c.id}',${it.catIdx},${it.itemIdx})">
-      <div class="item-dot" style="background:${it.color};"></div>
-      <div class="item-title">${it.title}</div>
-      <div class="item-pill ${STATUS_CLASS[it.status]}" style="${STATUS_STYLES[it.status]}">${it.status}</div>
-    </div>`).join('');
+  // All items by category
+  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(r => r.id === id) : null;
+  const statusMap = {done:'done', missed:'blocked', blocked:'blocked', unblock:'in-progress', pending:'open'};
+  const categoriesPanels = raw ? raw.categories.map((cat, catIdx) => {
+    const catLabel = cat.title || cat.name || `Pillar ${catIdx+1}`;
+    const rowsHtml = cat.items.map((item, itemIdx) => {
+      const dispStatus = statusMap[item.status] || 'open';
+      const color = ITEM_COLORS[(catIdx + itemIdx) % ITEM_COLORS.length];
+      return `<div class="item-row" onclick="showStatusPicker(event,'${id}',${catIdx},${itemIdx})">
+        <div class="item-dot" style="background:${color};"></div>
+        <div class="item-title">${item.label}</div>
+        <div class="item-pill ${STATUS_CLASS[dispStatus]}" style="${STATUS_STYLES[dispStatus]}">${item.status}</div>
+        <button class="item-del-btn" onclick="deleteItem(event,'${id}',${catIdx},${itemIdx})" title="Delete item">✕</button>
+      </div>`;
+    }).join('');
+    return `<div class="detail-panel detail-full">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="detail-panel-label" style="margin-bottom:0;">${catLabel}</div>
+        <span style="font-size:11px;color:var(--muted);">${cat.items.filter(i=>i.status==='done').length}/${cat.items.length} done</span>
+      </div>
+      <div class="items-list">${rowsHtml}</div>
+      <div class="add-item-row" id="add-row-${catIdx}">
+        <input class="add-item-input" id="add-input-${catIdx}" placeholder="Add item…" onkeydown="if(event.key==='Enter')commitAddItem('${id}',${catIdx})">
+        <button class="add-item-btn" onclick="commitAddItem('${id}',${catIdx})">Add</button>
+      </div>
+    </div>`;
+  }).join('') : '';
 
   document.getElementById('d-body').innerHTML = `
     <div class="detail-panel">
@@ -914,12 +1034,8 @@ function goToDetail(id) {
         <div class="info-item"><div class="info-item-lbl">Unblocking</div><div class="info-item-val">${c.unblock}</div></div>
       </div>
     </div>
-    <div class="detail-panel detail-full">
-      <div class="detail-panel-label">Recent Items</div>
-      <div class="items-list">${itemsHtml}</div>
-    </div>`;
+    ${categoriesPanels}`;
 
-  document.getElementById('view-list').hidden   = true;
   document.getElementById('view-detail').hidden = false;
 }
 
