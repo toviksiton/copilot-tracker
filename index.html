@@ -134,7 +134,8 @@ html, body {
   display:flex;flex-direction:column;padding:24px 0 20px;overflow:hidden;
   transition:background .3s,border-color .3s;
 }
-.sidebar-brand { padding:0 20px 24px;border-bottom:1px solid var(--border2); }
+.sidebar-brand { padding:0 20px 24px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px; }
+.sidebar-brand-logo { width:36px;height:36px;object-fit:contain;flex-shrink:0; }
 .sidebar-brand-name { font-size:15px;font-weight:700;letter-spacing:-.3px;color:var(--text); }
 .sidebar-brand-tag  { font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.8px; }
 .sidebar-section { padding:20px 12px 8px; }
@@ -941,8 +942,11 @@ html, body {
   <!-- ══════ SIDEBAR ══════ -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-brand-name">Copilot Compete</div>
-      <div class="sidebar-brand-tag">Microsoft Copilot 365 Compete Tracker</div>
+      <img src="CPT.png" alt="Copilot Compete logo" class="sidebar-brand-logo">
+      <div>
+        <div class="sidebar-brand-name">Copilot Compete</div>
+        <div class="sidebar-brand-tag">Microsoft Copilot 365 Compete Tracker</div>
+      </div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
