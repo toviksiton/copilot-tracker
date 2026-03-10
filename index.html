@@ -4504,14 +4504,18 @@ function openDeptModal(deptId) {
     document.getElementById('cm-dept-name').value = dept.name;
     if (dept.parentId) parentSel.value = dept.parentId;
     (dept.people || []).forEach(p => _addPersonRowData(container, p));
-    // Populate reports-to dropdowns, then restore saved values
+    // Populate dropdowns, then restore saved values
     _refreshReportsToDropdowns();
+    _refreshDeptSelects();
     Array.from(container.querySelectorAll('.compete-person-item')).forEach(item => {
       const reportsTo = item.dataset.reportsTo;
       if (reportsTo) {
         const sel = item.querySelector('.person-reports-to-select');
         if (sel) sel.value = reportsTo;
       }
+      // Default dept = the department this modal is editing
+      const deptSel = item.querySelector('.person-dept-select');
+      if (deptSel && deptId) deptSel.value = deptId;
     });
   } else {
     document.getElementById('cm-dept-name').value = '';
@@ -4524,6 +4528,14 @@ function closeDeptModal() { document.getElementById('dept-modal').hidden = true;
 function addPersonRow() {
   _addPersonRowData(document.getElementById('dept-people-container'), null);
   _refreshReportsToDropdowns();
+  _refreshDeptSelects();
+  // Default the new row's dept to the currently-editing dept
+  const container = document.getElementById('dept-people-container');
+  const newItem = container.lastElementChild;
+  if (newItem && _editingDeptId) {
+    const sel = newItem.querySelector('.person-dept-select');
+    if (sel) sel.value = _editingDeptId;
+  }
 }
 
 function _refreshReportsToDropdowns() {
@@ -4546,6 +4558,20 @@ function _refreshReportsToDropdowns() {
   });
 }
 
+function _refreshDeptSelects() {
+  const org = _currentCompeteOrg();
+  if (!org) return;
+  const container = document.getElementById('dept-people-container');
+  if (!container) return;
+  const opts = org.departments
+    .map(d => `<option value="${d.id}">${_esc(d.name)}</option>`).join('');
+  container.querySelectorAll('.person-dept-select').forEach(sel => {
+    const cur = sel.value || _editingDeptId || '';
+    sel.innerHTML = opts;
+    if (cur) sel.value = cur;
+  });
+}
+
 function _addPersonRowData(container, person) {
   // Use existing ID as pid for existing people, generate temp id for new
   const pid = (person && person.id) ? person.id : ('tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,6));
@@ -4559,6 +4585,10 @@ function _addPersonRowData(container, person) {
       <input class="modal-input person-title-input" placeholder="Title / Role" value="${_esc(person ? (person.title||'') : '')}" style="flex:1;">
       <button class="dept-action-btn" style="color:#f87171;border-color:rgba(239,68,68,.3);flex-shrink:0;"
         onclick="this.closest('.compete-person-item').remove();_refreshReportsToDropdowns()">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Department:</span>
+      <select class="modal-input person-dept-select" style="flex:1;height:28px;font-size:11px;"></select>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
       <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Reports to:</span>
@@ -4617,9 +4647,13 @@ function saveDept() {
       : pid;
   });
 
-  const people = personItems.map(item => {
+  // Build full person records; group by selected department
+  const byDept = {}; // deptId → [person record]
+  const thisDeptId = _editingDeptId || ('dept-' + Date.now());
+
+  personItems.forEach(item => {
     const pName = item.querySelector('.person-name-input')?.value.trim();
-    if (!pName) return null;
+    if (!pName) return;
     const competeItems = Array.from(item.querySelectorAll('.compete-item-row'))
       .map(row => ({
         competitor: row.querySelector('.compete-competitor-input')?.value.trim() || '',
@@ -4627,21 +4661,40 @@ function saveDept() {
         risk:       row.querySelector('.compete-risk-select')?.value || 'medium',
       })).filter(ci => ci.competitor);
     const reportsToRaw = item.querySelector('.person-reports-to-select')?.value || '';
-    // Resolve: could be a tmp- pid or an existing person ID
     const reportsTo = reportsToRaw ? (pidToId[reportsToRaw] || reportsToRaw) : null;
-    return {
+    const targetDept = item.querySelector('.person-dept-select')?.value || thisDeptId;
+    const rec = {
       id:    pidToId[item.dataset.pid],
       name:  pName,
       title: item.querySelector('.person-title-input')?.value.trim() || '',
       reportsTo,
       competeItems,
     };
-  }).filter(Boolean);
+    if (!byDept[targetDept]) byDept[targetDept] = [];
+    byDept[targetDept].push(rec);
+  });
+
+  const people = byDept[thisDeptId] || [];
+
+  // Apply cross-dept moves: for each other dept that received people, merge them in
+  Object.entries(byDept).forEach(([dId, movedPeople]) => {
+    if (dId === thisDeptId) return;
+    const target = org.departments.find(d => d.id === dId);
+    if (!target) return;
+    movedPeople.forEach(mp => {
+      // Remove old entry for this person if it existed elsewhere
+      org.departments.forEach(d => {
+        d.people = (d.people || []).filter(p => p.id !== mp.id);
+      });
+      target.people = target.people || [];
+      target.people.push({ ...mp, reportsTo: null }); // reportsTo clears on dept move
+    });
+  });
 
   const parentId = document.getElementById('cm-dept-parent').value || null;
   const existing = _editingDeptId ? org.departments.find(d => d.id === _editingDeptId) : null;
   const rec = {
-    id:       _editingDeptId || ('dept-' + Date.now()),
+    id:       thisDeptId,
     name, parentId,
     x: existing ? (existing.x || 0) : 0,
     y: existing ? (existing.y || 0) : 0,
@@ -4750,13 +4803,13 @@ async function _analyzeOrgChartWithAI(dataUrl, org) {
 {
   "departments": [
     {
-      "name": "Department or team name (if no explicit name, derive from function/area)",
-      "parentDept": "Parent department name, or null if top-level",
+      "name": "The person's job title or role (e.g. 'CEO', 'CFO', 'CTO')",
+      "parentDept": "The job title of this person's direct manager, or null if they have no manager",
       "people": [
         {
-          "name": "Full name as shown",
+          "name": "Full name as shown in this box",
           "title": "Job title / role as shown",
-          "reportsTo": "Full name of direct manager WITHIN THE SAME DEPARTMENT, or null if top of dept"
+          "reportsTo": null
         }
       ]
     }
@@ -4764,11 +4817,13 @@ async function _analyzeOrgChartWithAI(dataUrl, org) {
 }
 
 Rules:
-- Include every person visible in the chart.
-- Group people by department/team box if shown, or create logical departments by reporting level.
-- reportsTo = name of immediate manager within same department (null for dept heads).
-- parentDept links department nodes (null for the top department).
-- Use the exact names and titles as written in the image.
+- EACH BOX or NODE in the org chart = exactly ONE department.
+- Name the department after the ROLE/TITLE shown in that box (e.g. 'CEO', 'CFO', 'VP Sales').
+- Each department has exactly ONE person (the person shown in that box).
+- reportsTo is always null — hierarchy is expressed through parentDept between departments.
+- parentDept = the role/title of the direct manager's box (null for the top-level person).
+- Include every box/person visible in the chart.
+- Use exact names and titles as written in the image.
 - Return ONLY the JSON object.`;
 
     const res = await fetch(`${workerBase}/ai`, {
