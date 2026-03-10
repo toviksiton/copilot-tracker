@@ -197,7 +197,7 @@ html, body {
 .section-label { font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px; }
 
 /* stat cards */
-.stats-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px; }
+.stats-row { display:grid;grid-template-columns:repeat(5,1fr);gap:12px; }
 .stat-card {
   background:var(--stat-card-bg);backdrop-filter:var(--blur);
   border:1px solid var(--border);border-radius:14px;padding:16px 18px;
@@ -1105,6 +1105,8 @@ html, body {
         <div class="kpi-divider"></div>
         <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-p);">5</div><div class="kpi-label">Blocked</div></div></div>
         <div class="kpi-divider"></div>
+        <div class="kpi-item"><div><div class="kpi-num" style="color:#f59e0b;">0</div><div class="kpi-label">Compete Tickets</div></div></div>
+        <div class="kpi-divider"></div>
         <div class="kpi-item"><div><div class="kpi-num" style="color:#d97706;">89%</div><div class="kpi-label">Satisfaction</div></div></div>
       </div>
 
@@ -1116,6 +1118,7 @@ html, body {
           <div class="stat-card"><div class="stat-num" style="color:var(--mint);">37%</div><div class="stat-lbl">Avg Adoption</div></div>
           <div class="stat-card"><div class="stat-num" style="color:var(--lavender);">136</div><div class="stat-lbl">Open Items</div></div>
           <div class="stat-card"><div class="stat-num" style="color:var(--pink);">5</div><div class="stat-lbl">Blockers</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:#f59e0b;">0</div><div class="stat-lbl">Compete Tickets</div></div>
         </div>
         <div class="section-label">Customers</div>
         <div class="customer-list" id="cust-list"></div>
@@ -2066,6 +2069,7 @@ function updateKPIs() {
   const avgAdoption = n ? Math.round(custs.reduce((s,c)=>s+c.adoption,0)/n) : 0;
   const totalItems = custs.reduce((s,c)=>s+c.items,0);
   const totalBlocked = custs.reduce((s,c)=>s+(c.blocked||0),0);
+  const totalCompete = ((RAW_DATA && RAW_DATA.competePlans) || []).length;
   document.getElementById('kpi-row').innerHTML = `
     <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-c);">${n}</div><div class="kpi-label">Customers</div></div></div>
     <div class="kpi-divider"></div>
@@ -2073,12 +2077,15 @@ function updateKPIs() {
     <div class="kpi-divider"></div>
     <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-l);">${totalItems}</div><div class="kpi-label">Total Items</div></div></div>
     <div class="kpi-divider"></div>
-    <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-p);">${totalBlocked}</div><div class="kpi-label">Blocked</div></div></div>`;
+    <div class="kpi-item"><div><div class="kpi-num" style="color:var(--kpi-p);">${totalBlocked}</div><div class="kpi-label">Blocked</div></div></div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item"><div><div class="kpi-num" style="color:#f59e0b;">${totalCompete}</div><div class="kpi-label">Compete Tickets</div></div></div>`;
   document.querySelector('.stats-row').innerHTML = `
     <div class="stat-card"><div class="stat-num" style="color:var(--cyan);">${n}</div><div class="stat-lbl">Active Customers</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--mint);">${avgAdoption}%</div><div class="stat-lbl">Avg Adoption</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--lavender);">${totalItems}</div><div class="stat-lbl">Open Items</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--pink);">${totalBlocked}</div><div class="stat-lbl">Blockers</div></div>`;
+    <div class="stat-card"><div class="stat-num" style="color:var(--pink);">${totalBlocked}</div><div class="stat-lbl">Blockers</div></div>
+    <div class="stat-card" style="cursor:pointer;" onclick="showView('compete-plans')"><div class="stat-num" style="color:#f59e0b;">${totalCompete}</div><div class="stat-lbl">Compete Tickets</div></div>`;
 }
 
 /* ─── build list ─── */
