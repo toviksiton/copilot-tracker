@@ -465,6 +465,17 @@ html, body {
   cursor:pointer;border:none;transition:background .15s;
 }
 .modal-btn-cancel { background:var(--btn-ghost-bg);color:var(--muted);border:1px solid var(--border); }
+
+/* Light-theme: stronger modal contrast */
+[data-theme="light"] .modal-box,
+[data-theme="light"] .modal   { background:#faf9ff; border-color:rgba(100,80,200,.22); }
+[data-theme="light"] .modal-title  { color:#1a1235; }
+[data-theme="light"] .modal-label  { color:#3d3a6a; font-weight:700; }
+[data-theme="light"] .modal-input  { background:#fff; border-color:rgba(100,80,200,.35); color:#1a1235; }
+[data-theme="light"] .modal-input:focus { border-color:#0891b2; box-shadow:0 0 0 3px rgba(8,145,178,.12); }
+[data-theme="light"] .modal-input::placeholder { color:#9898b8; }
+[data-theme="light"] .modal-btn-cancel { background:rgba(0,0,0,.06); color:#4b4b75; border-color:rgba(100,80,200,.25); }
+[data-theme="light"] .modal-btn-cancel:hover { background:rgba(0,0,0,.10); }
 .modal-btn-save   { background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25));color:var(--cyan);border:1px solid rgba(103,232,249,.3); }
 .modal-btn-danger { background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25); }
 
@@ -1678,6 +1689,11 @@ html, body {
   <div class="modal compete-modal">
     <div class="modal-title" id="cp-modal-title">New Compete Plan</div>
     <div class="modal-body">
+      <!-- Existing competitors from the dept card (shown when opened from a card) -->
+      <div id="cp-context-section" style="display:none;margin-bottom:16px;padding:10px 13px;background:var(--glass);border:1px solid var(--border);border-radius:10px;">
+        <div class="modal-label" style="margin-bottom:7px;">Known Competitors in This Dept</div>
+        <div id="cp-context-chips" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
       <div class="modal-label">Customer Account *</div>
       <select class="modal-input" id="cm-cp-account"></select>
       <div class="modal-label" style="margin-top:12px;">Department</div>
@@ -5346,10 +5362,10 @@ function openCompetePlanModal(id, prefillDeptId, prefillDeptName, prefillCustome
     if (!p) return;
     titleEl.textContent = 'Edit Compete Plan';
     deleteBtn.style.display = '';
-    document.getElementById('cm-cp-account').value    = p.customerId    || '';
-    document.getElementById('cm-cp-dept').value       = p.deptName      || '';
-    document.getElementById('cm-cp-competitor').value = p.competitor    || '';
-    document.getElementById('cm-cp-text').value       = p.text          || '';
+    document.getElementById('cm-cp-account').value    = p.customerId || '';
+    document.getElementById('cm-cp-dept').value       = p.deptName   || '';
+    document.getElementById('cm-cp-competitor').value = p.competitor || '';
+    document.getElementById('cm-cp-text').value       = p.text       || '';
   } else {
     titleEl.textContent = 'New Compete Plan';
     deleteBtn.style.display = 'none';
@@ -5358,6 +5374,36 @@ function openCompetePlanModal(id, prefillDeptId, prefillDeptName, prefillCustome
     document.getElementById('cm-cp-dept').value       = prefillDeptName || '';
     if (prefillCustomerId) document.getElementById('cm-cp-account').value = prefillCustomerId;
   }
+
+  // Show existing compete items from the department as context
+  const ctxSection = document.getElementById('cp-context-section');
+  const ctxChips   = document.getElementById('cp-context-chips');
+  const deptIdToUse = prefillDeptId || (id ? (_competePlans().find(x=>x.id===id)||{}).deptId : null);
+  if (ctxSection && ctxChips && deptIdToUse) {
+    let foundDept = null;
+    for (const org of (RAW_DATA.competeOrgs || [])) {
+      foundDept = (org.departments || []).find(d => d.id === deptIdToUse);
+      if (foundDept) break;
+    }
+    if (foundDept) {
+      const allItems = (foundDept.people || []).flatMap(p => p.competeItems || []);
+      const seen = new Set();
+      const unique = allItems.filter(ci => {
+        const key = ci.competitor.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key); return true;
+      });
+      if (unique.length) {
+        ctxChips.innerHTML = unique.map(ci =>
+          `<span class="dept-compete-chip compete-chip-${ci.risk}" title="${_esc(ci.workload||'')} — ${ci.risk} risk">
+            ${_esc(ci.competitor)}
+          </span>`
+        ).join('');
+        ctxSection.style.display = '';
+      } else { ctxSection.style.display = 'none'; }
+    } else { ctxSection.style.display = 'none'; }
+  } else if (ctxSection) { ctxSection.style.display = 'none'; }
+
   document.getElementById('compete-plan-modal').hidden = false;
 }
 
