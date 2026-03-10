@@ -687,6 +687,18 @@ html, body {
 .opp-arr { font-size:16px;font-weight:800;color:var(--mint);white-space:nowrap; }
 .opp-meta { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
 
+/* ── Compete Plan tickets ── */
+.cp-ticket { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:background .15s,border-color .15s;cursor:pointer; }
+.cp-ticket:hover { background:var(--surface-hover);border-color:rgba(103,232,249,.3); }
+.cp-ticket-header { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
+.cp-ticket-competitor { font-size:14px;font-weight:700;color:var(--text);flex:1; }
+.cp-ticket-body { font-size:12px;color:var(--muted);line-height:1.55;white-space:pre-wrap;margin-bottom:8px; }
+.cp-ticket-meta { display:flex;gap:6px;flex-wrap:wrap;align-items:center; }
+.cp-tag { display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap; }
+.cp-tag-dept { background:rgba(196,181,253,.12);color:var(--lavender);border:1px solid rgba(196,181,253,.28); }
+.cp-tag-customer { background:rgba(103,232,249,.12);color:var(--cyan);border:1px solid rgba(103,232,249,.28); }
+.cp-tag-date { background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--border); }
+
 /* ── Stage pills ── */
 .stage-pill { font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px; }
 .stage-identify  { background:rgba(148,163,184,.12); color:#94a3b8; border:1px solid rgba(148,163,184,.25); }
@@ -931,6 +943,7 @@ html, body {
       <a class="nav-item" id="nav-crm-opps"     href="#" onclick="showView('crm-opps');return false;"><span class="nav-icon">◆</span> Pipeline<span class="nav-badge" id="crm-opps-badge" style="display:none;"></span></a>
       <a class="nav-item" id="nav-crm-activities" href="#" onclick="showView('crm-activities');return false;"><span class="nav-icon">◷</span> Activities</a>
       <a class="nav-item" id="nav-crm-compete"    href="#" onclick="showView('crm-compete');return false;"><span class="nav-icon">⚔</span> Compete Map</a>
+      <a class="nav-item" id="nav-compete-plans" href="#" onclick="showView('compete-plans');return false;"><span class="nav-icon">📋</span> Compete Plans<span class="nav-badge" id="compete-plans-badge" style="display:none;"></span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
@@ -1178,6 +1191,24 @@ html, body {
         </div>
         <div class="crm-stats" id="crm-activities-kpis"></div>
         <div class="activity-feed" id="crm-activity-feed"></div>
+      </div>
+
+      <!-- CRM: COMPETE PLANS VIEW -->
+      <div class="view" id="view-compete-plans" hidden>
+        <div class="crm-topbar">
+          <div class="crm-topbar-title">📋 Compete Plans</div>
+          <select id="cp-filter-account" onchange="buildCompetePlans()">
+            <option value="">All Customers</option>
+          </select>
+          <select id="cp-filter-sort" onchange="buildCompetePlans()">
+            <option value="competitor">Sort by Competitor</option>
+            <option value="customer">Sort by Customer</option>
+            <option value="dept">Sort by Department</option>
+            <option value="newest">Newest First</option>
+          </select>
+          <button class="settings-btn settings-btn-primary" onclick="openCompetePlanModal()">+ New Plan</button>
+        </div>
+        <div id="cp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
 
       <!-- CRM: COMPETE MAP VIEW -->
@@ -1638,6 +1669,28 @@ html, body {
       <button class="modal-btn modal-btn-danger" id="dept-modal-delete-btn" onclick="deleteDept()" style="display:none;margin-right:auto;">Delete Dept</button>
       <button class="modal-btn modal-btn-cancel" onclick="closeDeptModal()">Cancel</button>
       <button class="modal-btn modal-btn-save" onclick="saveDept()">Save Department</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPETE PLAN MODAL -->
+<div class="modal-overlay" id="compete-plan-modal" hidden onclick="if(event.target===this)closeCompetePlanModal()">
+  <div class="modal compete-modal">
+    <div class="modal-title" id="cp-modal-title">New Compete Plan</div>
+    <div class="modal-body">
+      <div class="modal-label">Customer Account *</div>
+      <select class="modal-input" id="cm-cp-account"></select>
+      <div class="modal-label" style="margin-top:12px;">Department</div>
+      <input class="modal-input" id="cm-cp-dept" placeholder="e.g. Engineering, Finance…">
+      <div class="modal-label" style="margin-top:12px;">Competitor *</div>
+      <input class="modal-input" id="cm-cp-competitor" placeholder="e.g. JetBrains, GitLab, Cursor…">
+      <div class="modal-label" style="margin-top:12px;">Compete Plan / Strategy *</div>
+      <textarea class="modal-input" id="cm-cp-text" rows="5" placeholder="Describe your compete plan or strategy for this department…" style="resize:vertical;min-height:100px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-danger" id="cp-modal-delete-btn" onclick="_deleteCompetePlan()" style="display:none;margin-right:auto;">Delete</button>
+      <button class="modal-btn modal-btn-cancel" onclick="closeCompetePlanModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save" onclick="saveCompetePlan()">Save Plan</button>
     </div>
   </div>
 </div>
@@ -3190,6 +3243,7 @@ async function _ghSave() {
       opportunities: RAW_DATA.opportunities,
       activities: RAW_DATA.activities,
       competeOrgs: RAW_DATA.competeOrgs,
+      competePlans: RAW_DATA.competePlans,
     };
     const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
       method: 'PATCH',
@@ -3541,6 +3595,7 @@ function _initCrmData() {
   if (!RAW_DATA.opportunities) RAW_DATA.opportunities = [];
   if (!RAW_DATA.activities)    RAW_DATA.activities    = [];
   if (!RAW_DATA.competeOrgs)   RAW_DATA.competeOrgs   = [];
+  if (!RAW_DATA.competePlans)  RAW_DATA.competePlans  = [];
 }
 
 // Call immediately if RAW_DATA already loaded
@@ -3551,7 +3606,7 @@ function _populateCrmAccountSelects() {
   const custs = (RAW_DATA && RAW_DATA.customers) || [];
   const opts  = custs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   ['crm-contact-filter-account','crm-opp-filter-account','crm-act-filter-account',
-   'cm-contact-account','cm-opp-account','cm-act-account'].forEach(id => {
+   'cm-contact-account','cm-opp-account','cm-act-account','cm-cp-account'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const isFilter = id.startsWith('crm-');
@@ -4367,6 +4422,8 @@ function _renderDeptCard(dept, org, canvas) {
       <button class="dept-action-btn dept-connect-btn" title="Click then click target to connect hierarchy"
         onclick="toggleConnectMode('${dept.id}',this);event.stopPropagation();">⤷ Link</button>
       <button class="dept-action-btn" onclick="openDeptModal('${dept.id}');event.stopPropagation();">✎ Edit</button>
+      <button class="dept-action-btn" style="border-color:rgba(103,232,249,.35);color:var(--cyan);"
+        onclick="openCompetePlanModal(null,'${dept.id}','${_esc(dept.name)}','${org.customerId||''}');event.stopPropagation();">📋 Plan</button>
     </div>`;
 
   // Drag with mouse events
@@ -5203,6 +5260,186 @@ function clearCompeteBg() {
     const competeView = document.getElementById('view-crm-compete');
     if (competeView) competeView.hidden = true;
     _prev(id);
+  };
+})();
+
+/* ══════════════════════════════════════════════════
+   COMPETE PLANS
+══════════════════════════════════════════════════ */
+function _competePlans() { return (RAW_DATA && RAW_DATA.competePlans) || []; }
+
+function _cpUpdateBadge() {
+  const badge = document.getElementById('compete-plans-badge');
+  if (!badge) return;
+  const n = _competePlans().length;
+  badge.textContent = n;
+  badge.style.display = n ? '' : 'none';
+}
+
+/* ── Build (render) the Compete Plans list ── */
+function buildCompetePlans() {
+  _initCrmData();
+  _populateCrmAccountSelects();
+
+  // Sync filter dropdown with customer list
+  const filterEl = document.getElementById('cp-filter-account');
+  if (filterEl) {
+    const custs = (RAW_DATA && RAW_DATA.customers) || [];
+    filterEl.innerHTML = '<option value="">All Customers</option>' +
+      custs.map(c => `<option value="${c.id}">${_esc(c.name)}</option>`).join('');
+  }
+
+  const filterAccount = document.getElementById('cp-filter-account')?.value || '';
+  const sortBy        = document.getElementById('cp-filter-sort')?.value    || 'competitor';
+  const list          = document.getElementById('cp-list');
+  if (!list) return;
+
+  let plans = _competePlans().slice();
+  if (filterAccount) plans = plans.filter(p => p.customerId === filterAccount);
+
+  // Sort
+  if (sortBy === 'competitor') plans.sort((a,b) => (a.competitor||'').localeCompare(b.competitor||''));
+  else if (sortBy === 'customer') plans.sort((a,b) => (a.customerName||'').localeCompare(b.customerName||''));
+  else if (sortBy === 'dept')  plans.sort((a,b) => (a.deptName||'').localeCompare(b.deptName||''));
+  else /* newest */            plans.sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+
+  if (!plans.length) {
+    list.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px;">
+      No compete plans yet. Click <strong>+ New Plan</strong> or use the<br><strong>📋 Plan</strong> button on any department card.
+    </div>`;
+    _cpUpdateBadge();
+    return;
+  }
+
+  list.innerHTML = plans.map(p => `
+    <div class="cp-ticket" onclick="openCompetePlanModal('${p.id}')">
+      <div class="cp-ticket-header">
+        <span style="font-size:16px;">⚔</span>
+        <span class="cp-ticket-competitor">${_esc(p.competitor)}</span>
+        <button class="dept-action-btn" style="color:#f87171;border-color:rgba(239,68,68,.3);flex-shrink:0;font-size:11px;padding:2px 8px;"
+          onclick="event.stopPropagation();_deleteCompetePlanById('${p.id}')">✕</button>
+      </div>
+      <div class="cp-ticket-body">${_esc(p.text)}</div>
+      <div class="cp-ticket-meta">
+        ${p.customerName ? `<span class="cp-tag cp-tag-customer">◎ ${_esc(p.customerName)}</span>` : ''}
+        ${p.deptName     ? `<span class="cp-tag cp-tag-dept">▣ ${_esc(p.deptName)}</span>`         : ''}
+        <span class="cp-tag cp-tag-date">${p.updatedAt || p.createdAt || ''}</span>
+      </div>
+    </div>`).join('');
+
+  _cpUpdateBadge();
+}
+
+/* ── Modal open/close ── */
+let _editingCpId = null;
+
+function openCompetePlanModal(id, prefillDeptId, prefillDeptName, prefillCustomerId) {
+  _editingCpId = id || null;
+  _initCrmData();
+  _populateCrmAccountSelects();
+
+  const titleEl   = document.getElementById('cp-modal-title');
+  const deleteBtn = document.getElementById('cp-modal-delete-btn');
+
+  if (id) {
+    const p = _competePlans().find(x => x.id === id);
+    if (!p) return;
+    titleEl.textContent = 'Edit Compete Plan';
+    deleteBtn.style.display = '';
+    document.getElementById('cm-cp-account').value    = p.customerId    || '';
+    document.getElementById('cm-cp-dept').value       = p.deptName      || '';
+    document.getElementById('cm-cp-competitor').value = p.competitor    || '';
+    document.getElementById('cm-cp-text').value       = p.text          || '';
+  } else {
+    titleEl.textContent = 'New Compete Plan';
+    deleteBtn.style.display = 'none';
+    document.getElementById('cm-cp-competitor').value = '';
+    document.getElementById('cm-cp-text').value       = '';
+    document.getElementById('cm-cp-dept').value       = prefillDeptName || '';
+    if (prefillCustomerId) document.getElementById('cm-cp-account').value = prefillCustomerId;
+  }
+  document.getElementById('compete-plan-modal').hidden = false;
+}
+
+function closeCompetePlanModal() { document.getElementById('compete-plan-modal').hidden = true; }
+
+/* ── Save ── */
+function saveCompetePlan() {
+  const customerId  = document.getElementById('cm-cp-account').value;
+  const competitor  = document.getElementById('cm-cp-competitor').value.trim();
+  const text        = document.getElementById('cm-cp-text').value.trim();
+  if (!customerId) { alert('Please select a customer account.'); return; }
+  if (!competitor)  { alert('Competitor name is required.'); return; }
+  if (!text)        { alert('Plan text is required.'); return; }
+
+  _initCrmData();
+  const customerName = ((RAW_DATA.customers||[]).find(c => c.id === customerId)||{}).name || '';
+  const deptName     = document.getElementById('cm-cp-dept').value.trim();
+  const now          = new Date().toISOString().slice(0,10);
+
+  if (_editingCpId) {
+    const p = RAW_DATA.competePlans.find(x => x.id === _editingCpId);
+    if (p) {
+      p.customerId   = customerId;
+      p.customerName = customerName;
+      p.deptName     = deptName;
+      p.competitor   = competitor;
+      p.text         = text;
+      p.updatedAt    = now;
+    }
+  } else {
+    RAW_DATA.competePlans.push({
+      id: 'cp-' + Date.now(),
+      customerId, customerName, deptName, competitor, text,
+      createdAt: now, updatedAt: now,
+    });
+  }
+
+  saveData();
+  closeCompetePlanModal();
+  if (currentView === 'compete-plans') buildCompetePlans();
+  _cpUpdateBadge();
+}
+
+/* ── Delete ── */
+function _deleteCompetePlan() {
+  if (_editingCpId) _deleteCompetePlanById(_editingCpId);
+}
+
+function _deleteCompetePlanById(id) {
+  if (!confirm('Delete this compete plan?')) return;
+  _initCrmData();
+  RAW_DATA.competePlans = RAW_DATA.competePlans.filter(p => p.id !== id);
+  saveData();
+  closeCompetePlanModal();
+  if (currentView === 'compete-plans') buildCompetePlans();
+  _cpUpdateBadge();
+}
+
+/* ── showView patch ── */
+(function _patchShowViewCompetePlans() {
+  const _prev = showView;
+  showView = function(name) {
+    const cpView = document.getElementById('view-compete-plans');
+    if (cpView && name !== 'compete-plans') cpView.hidden = true;
+    if (name === 'compete-plans') {
+      ['view-list','view-kanban','view-backlog','view-settings','view-reports',
+       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.hidden = true;
+      });
+      document.getElementById('view-detail').hidden = true;
+      document.getElementById('tb-list').hidden     = false;
+      document.getElementById('tb-detail').hidden   = true;
+      document.getElementById('kpi-row').hidden     = false;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const nav = document.getElementById('nav-compete-plans');
+      if (nav) nav.classList.add('active');
+      currentView = name;
+      if (cpView) cpView.hidden = false;
+      buildCompetePlans();
+    } else {
+      _prev(name);
+    }
   };
 })();
 </script>
