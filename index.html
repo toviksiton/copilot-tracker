@@ -2167,12 +2167,24 @@ function speakText(text) {
   speechSynthesis.speak(utter);
 }
 
+function _showMicStatus(msg, color) {
+  const btn = document.getElementById('ai-mic-btn');
+  if (!btn) return;
+  let tip = document.getElementById('mic-status-tip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'mic-status-tip';
+    tip.style.cssText = 'position:absolute;bottom:calc(100% + 8px);right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;white-space:nowrap;z-index:99;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.35);';
+    const wrap = btn.parentElement;
+    if (wrap) { const s = wrap.style; if (!s.position || s.position === 'static') s.position = 'relative'; wrap.appendChild(tip); }
+  }
+  tip.textContent = msg; tip.style.color = color || 'var(--text)'; tip.style.display = 'block';
+  clearTimeout(tip._t); tip._t = setTimeout(() => { tip.style.display = 'none'; }, 4500);
+}
+
 function startVoiceInput() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    appendAiMsg('assistant', '⚠ Speech recognition requires Chrome or Edge.');
-    return;
-  }
+  if (!SR) { _showMicStatus('⚠ Requires Chrome or Edge', '#f87171'); return; }
 
   // Second click → stop gracefully (keeps whatever was transcribed so far)
   if (_recognition) { _recognition.stop(); return; }
@@ -2180,44 +2192,61 @@ function startVoiceInput() {
   const btn   = document.getElementById('ai-mic-btn');
   const input = document.getElementById('ai-input');
 
-  _recognition = new SR();
-  _recognition.continuous     = true;  // keep listening until user clicks ⏹
-  _recognition.interimResults = true;  // show live text as you speak
-  _recognition.maxAlternatives = 1;
-  _recognition.lang = '';              // browser default → Google auto-detects Hebrew + English
+  function _build(continuous) {
+    const r = new SR();
+    r.continuous = continuous; r.interimResults = continuous; r.maxAlternatives = 1; r.lang = '';
+    return r;
+  }
 
-  _recognition.onstart = () => {
-    if (btn)  { btn.textContent = '⏹'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
-    if (input){ input.placeholder = '🎙 Listening — click ⏹ when done…'; input.value = ''; }
-  };
+  function _start(continuous) {
+    _recognition = _build(continuous);
 
-  _recognition.onresult = (e) => {
-    let text = '';
-    for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-    if (input) input.value = text;
-  };
+    _recognition.onstart = () => {
+      if (btn)  { btn.textContent = '⏹'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
+      if (input){ input.placeholder = '🎙 Listening — click ⏹ when done…'; input.value = ''; }
+    };
 
-  const _errMsgs = {
-    'not-allowed'            : 'Microphone access denied — allow mic in your browser settings.',
-    'no-speech'              : null,   // silence timeout — ignore, keep listening
-    'network'                : 'Network error — speech recognition needs internet.',
-    'language-not-supported' : 'Language not supported by your browser.',
-    'audio-capture'          : 'No microphone found.',
-  };
+    _recognition.onresult = (e) => {
+      let text = '';
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      if (input) input.value = text;
+    };
 
-  _recognition.onerror = (e) => {
-    const msg = _errMsgs[e.error];
-    if (msg) appendAiMsg('assistant', '⚠ ' + msg);
-  };
+    _recognition.onerror = (e) => {
+      if (e.error === 'network') {
+        _recognition = null;
+        if (continuous) {
+          // Retry once in single-shot mode — much lighter on the network
+          _showMicStatus('Connection hiccup — retrying…', 'var(--cyan)');
+          setTimeout(() => _start(false), 400);
+        } else {
+          _showMicStatus('⚠ Speech needs internet — tap mic to try again', '#f97316');
+          if (btn) { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
+          if (input) input.placeholder = 'Ask in English or עברית…';
+        }
+        return;
+      }
+      const msgs = {
+        'not-allowed' : 'Mic access denied — allow in browser settings.',
+        'no-speech'   : null,
+        'audio-capture': 'No microphone found.',
+        'language-not-supported': 'Language not supported.',
+      };
+      const msg = msgs[e.error];
+      if (msg) _showMicStatus('⚠ ' + msg, '#f87171');
+    };
 
-  _recognition.onend = () => {
-    _recognition = null;
-    if (btn)  { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
-    if (input) input.placeholder = 'Ask in English or עברית…';
-  };
+    _recognition.onend = () => {
+      _recognition = null;
+      if (btn)  { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
+      if (input) input.placeholder = 'Ask in English or עברית…';
+    };
 
-  try { _recognition.start(); }
-  catch (err) { _recognition = null; appendAiMsg('assistant', '⚠ Could not start mic: ' + err.message); }
+    try { _recognition.start(); }
+    catch (err) { _recognition = null; _showMicStatus('⚠ Could not start mic: ' + err.message, '#f87171'); }
+  }
+
+  _start(true);
 }
 
 function saveWorkerUrl() {
