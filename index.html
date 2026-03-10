@@ -2130,29 +2130,51 @@ function startVoiceInput() {
     appendAiMsg('assistant', '⚠ Speech recognition requires Chrome or Edge.');
     return;
   }
-  if (_recognition) { _recognition.abort(); _recognition = null; return; }
 
-  const btn = document.getElementById('ai-mic-btn');
+  // Second click → stop gracefully (keeps whatever was transcribed so far)
+  if (_recognition) { _recognition.stop(); return; }
+
+  const btn   = document.getElementById('ai-mic-btn');
+  const input = document.getElementById('ai-input');
+
   _recognition = new SR();
-  _recognition.continuous = false;
-  _recognition.interimResults = false;
-  // he-IL: Chrome's backend auto-detects English spoken by Hebrew-locale users too
-  _recognition.lang = 'he-IL';
+  _recognition.continuous     = true;  // keep listening until user clicks ⏹
+  _recognition.interimResults = true;  // show live text as you speak
+  _recognition.maxAlternatives = 1;
+  _recognition.lang = '';              // browser default → Google auto-detects Hebrew + English
 
   _recognition.onstart = () => {
-    if (btn) { btn.textContent = '🔴'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
+    if (btn)  { btn.textContent = '⏹'; btn.style.background = 'rgba(239,68,68,.2)'; btn.style.borderColor = 'rgba(239,68,68,.45)'; }
+    if (input){ input.placeholder = '🎙 Listening — click ⏹ when done…'; input.value = ''; }
   };
+
   _recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript.trim();
-    const input = document.getElementById('ai-input');
-    if (input) { input.value = transcript; input.focus(); }
+    let text = '';
+    for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+    if (input) input.value = text;
   };
-  _recognition.onerror = (e) => { console.warn('Voice error:', e.error); };
+
+  const _errMsgs = {
+    'not-allowed'            : 'Microphone access denied — allow mic in your browser settings.',
+    'no-speech'              : null,   // silence timeout — ignore, keep listening
+    'network'                : 'Network error — speech recognition needs internet.',
+    'language-not-supported' : 'Language not supported by your browser.',
+    'audio-capture'          : 'No microphone found.',
+  };
+
+  _recognition.onerror = (e) => {
+    const msg = _errMsgs[e.error];
+    if (msg) appendAiMsg('assistant', '⚠ ' + msg);
+  };
+
   _recognition.onend = () => {
     _recognition = null;
-    if (btn) { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
+    if (btn)  { btn.textContent = '🎤'; btn.style.background = 'rgba(103,232,249,.1)'; btn.style.borderColor = 'rgba(103,232,249,.25)'; }
+    if (input) input.placeholder = 'Ask in English or עברית…';
   };
-  _recognition.start();
+
+  try { _recognition.start(); }
+  catch (err) { _recognition = null; appendAiMsg('assistant', '⚠ Could not start mic: ' + err.message); }
 }
 
 function saveWorkerUrl() {
