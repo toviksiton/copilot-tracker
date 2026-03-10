@@ -518,6 +518,101 @@ html, body {
 }
 .logo-preview-circle:hover { border-color:var(--cyan); }
 .logo-preview-circle img { width:100%;height:100%;object-fit:cover; }
+
+/* ── Excelerate Plan ── */
+.xp-wrap { max-width:900px; }
+.xp-header {
+  background:linear-gradient(135deg,rgba(103,232,249,.12),rgba(196,181,253,.12),rgba(249,168,212,.08));
+  border:1px solid rgba(103,232,249,.2); border-radius:20px; padding:28px 32px;
+  margin-bottom:20px; position:relative; overflow:hidden;
+}
+.xp-header::before {
+  content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px;
+  background:radial-gradient(circle,rgba(103,232,249,.15),transparent 70%); pointer-events:none;
+}
+.xp-header::after {
+  content:''; position:absolute; bottom:-40px; left:30%; width:160px; height:160px;
+  background:radial-gradient(circle,rgba(196,181,253,.12),transparent 70%); pointer-events:none;
+}
+.xp-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.xp-kpi {
+  background:var(--surface); border:1px solid var(--border); border-radius:14px;
+  padding:16px 12px; text-align:center;
+}
+.xp-kpi-val { font-size:26px; font-weight:700; letter-spacing:-1px; line-height:1; }
+.xp-kpi-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:5px; }
+.xp-section {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:20px 24px; margin-bottom:14px;
+}
+.xp-section-label {
+  font-size:10px; text-transform:uppercase; letter-spacing:1px;
+  color:var(--muted); font-weight:600; margin-bottom:12px;
+}
+.xp-action-card {
+  background:var(--glass); border:1px solid var(--border); border-radius:13px;
+  padding:16px 18px; margin-bottom:11px;
+  border-left:3px solid var(--border);
+}
+.xp-action-card.urg-critical { border-left-color:#f87171; }
+.xp-action-card.urg-high     { border-left-color:#f97316; }
+.xp-action-card.urg-medium   { border-left-color:#fbbf24; }
+.xp-tech-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  background:rgba(103,232,249,.1); border:1px solid rgba(103,232,249,.22);
+  border-radius:20px; padding:2px 9px; font-size:10px; color:var(--cyan);
+  font-weight:600; margin-left:8px; vertical-align:middle;
+}
+.xp-step {
+  display:flex; gap:12px; align-items:flex-start;
+  padding:8px 0; border-bottom:1px solid var(--border2); font-size:12.5px;
+}
+.xp-step:last-child { border-bottom:none; }
+.xp-step-num {
+  width:22px; height:22px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,rgba(103,232,249,.25),rgba(196,181,253,.25));
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; color:var(--cyan);
+}
+.xp-tag {
+  display:inline-block; border-radius:6px; padding:1px 7px;
+  font-size:10px; font-weight:600; margin-left:6px; vertical-align:middle;
+}
+.xp-tag-csm      { background:rgba(103,232,249,.12); color:var(--cyan); }
+.xp-tag-tech     { background:rgba(196,181,253,.12); color:var(--lavender); }
+.xp-tag-customer { background:rgba(110,231,183,.12); color:var(--mint); }
+.xp-tag-high   { background:rgba(239,68,68,.12);  color:#f87171; }
+.xp-tag-medium { background:rgba(251,191,36,.12); color:#fbbf24; }
+.xp-tag-low    { background:rgba(110,231,183,.12);color:var(--mint); }
+.xp-quick-win {
+  display:flex; gap:10px; align-items:flex-start;
+  padding:9px 0; border-bottom:1px solid var(--border2); font-size:12.5px;
+}
+.xp-quick-win:last-child { border-bottom:none; }
+.xp-metric-chip {
+  display:flex; align-items:center; gap:8px; padding:8px 12px;
+  background:var(--glass); border:1px solid var(--border); border-radius:10px;
+  font-size:12px; margin-bottom:7px;
+}
+.xp-risk-item { display:flex; gap:8px; align-items:flex-start; padding:6px 0; font-size:12.5px; }
+.xp-loader {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:60px 0; color:var(--muted); font-size:13px;
+}
+.xp-spinner {
+  width:36px; height:36px; border-radius:50%;
+  border:3px solid var(--border); border-top-color:var(--cyan);
+  animation:xp-spin .8s linear infinite;
+}
+@keyframes xp-spin { to { transform:rotate(360deg); } }
+@media print {
+  .sidebar,.topbar,.kpi-row,#ai-fab,#ai-chat-panel,
+  .settings-btn,.nav-item,[onclick="window.print()"] { display:none !important; }
+  body { background:#fff !important; color:#111 !important; }
+  .xp-wrap,.xp-header,.xp-section,.xp-action-card { background:#fff !important; border-color:#e5e7eb !important; }
+  .xp-header { background:linear-gradient(135deg,#eff6ff,#f5f3ff) !important; }
+  :root { --text:#111; --muted:#6b7280; --border:#e5e7eb; --glass:#f9fafb; --surface:#fff; }
+}
 </style>
 </head>
 <body>
@@ -684,18 +779,19 @@ html, body {
       <!-- REPORTS VIEW -->
       <div class="view" id="view-reports" hidden>
         <div class="section-label">Customer Reports</div>
-        <div style="margin-bottom:16px;">
-          <select class="modal-input" id="report-customer-select" style="max-width:280px;" onchange="renderReport()">
+        <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select class="modal-input" id="report-customer-select" style="max-width:280px;" onchange="renderReport();document.getElementById('excelerate-output').style.display='none';">
             <option value="">Select a customer…</option>
           </select>
+          <button class="settings-btn settings-btn-primary" onclick="generateExceleratePlan()" style="background:linear-gradient(135deg,rgba(103,232,249,.2),rgba(196,181,253,.2));color:var(--cyan);border:1px solid rgba(103,232,249,.3);font-weight:700;white-space:nowrap;">✦ Excelerate Plan</button>
         </div>
         <div id="report-output" style="display:none;">
-          <div class="detail-panel" style="max-width:860px;" id="report-content">
-          </div>
+          <div class="detail-panel" style="max-width:860px;" id="report-content"></div>
           <div style="margin-top:12px;display:flex;gap:10px;">
             <button class="settings-btn settings-btn-primary" onclick="window.print()">🖨 Print / Save PDF</button>
           </div>
         </div>
+        <div id="excelerate-output" style="display:none;max-width:900px;"></div>
       </div>
 
       <!-- DETAIL VIEW -->
@@ -1898,6 +1994,267 @@ function renderReport() {
     <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text);">Pillar Breakdown</div>
     ${catRows}
   `;
+}
+
+/* ─── Excelerate Plan ─── */
+async function generateExceleratePlan() {
+  const id = document.getElementById('report-customer-select')?.value;
+  const out = document.getElementById('excelerate-output');
+  if (!id || !CUSTOMERS[id]) {
+    alert('Please select a customer first.');
+    return;
+  }
+  const workerBase = (localStorage.getItem('copilot-tracker-ai-worker-url') || '').replace(/\/$/, '');
+  if (!workerBase) {
+    alert('Please configure the AI Worker URL in Settings first.');
+    return;
+  }
+
+  // Show loader
+  document.getElementById('report-output').style.display = 'none';
+  out.style.display = '';
+  out.innerHTML = `<div class="xp-loader"><div class="xp-spinner"></div><div>✦ Generating Excelerate Plan — analysing customer data…</div></div>`;
+
+  const c = CUSTOMERS[id];
+  const raw = RAW_DATA?.customers?.find(r => r.id === id);
+
+  // Build full category detail for the prompt
+  const catDetail = (raw?.categories || c.rawCategories || []).map(cat => {
+    const open = cat.items.filter(i => i.status !== 'done').map(i => `    • [${i.status.toUpperCase()}] ${i.label}`).join('\n');
+    const done = cat.items.filter(i => i.status === 'done').length;
+    return `## ${cat.icon || ''} ${cat.title} (${done}/${cat.items.length} done)\nOpen items:\n${open || '    (all done)'}`;
+  }).join('\n\n');
+
+  const systemPrompt = `You are a senior Microsoft 365 Copilot and Copilot Studio adoption expert and CSM consultant.
+Your job is to create an actionable, prioritised "Excelerate Plan" — a concrete roadmap to unblock and accelerate a customer's Microsoft 365 Copilot and Copilot Studio adoption.
+
+Use your deep knowledge of:
+- Microsoft 365 Copilot features, rollout best practices, licence management
+- Copilot Studio (Power Virtual Agents), connectors, custom agents
+- Change management, executive sponsorship, end-user enablement
+- Common blockers (security review, conditional access, tenant config, SSO, governance, etc.)
+- Microsoft adoption frameworks (FastTrack, Viva, CAF)
+
+IMPORTANT: Identify which tasks are TECHNICAL (involve admin config, dev work, API, tenant settings, security, deployment, integrations) vs non-technical (training, communication, governance, workshops).
+
+Respond ONLY with a valid JSON object in this exact structure (no markdown, no preamble):
+{
+  "executiveSummary": "3-4 sentence strategic summary",
+  "currentHealthAssessment": "honest 2-3 sentence assessment of where they are",
+  "priorityActions": [
+    {
+      "category": "category name",
+      "icon": "relevant emoji",
+      "isTechnical": true,
+      "urgency": "critical|high|medium",
+      "context": "1-2 sentence explanation of why this matters",
+      "openItems": ["item label 1", "item label 2"],
+      "steps": [
+        {"step": 1, "action": "specific action", "owner": "CSM|Technical|Customer|Microsoft", "effort": "Low|Medium|High", "detail": "how to do it concretely"}
+      ],
+      "timeline": "e.g. 1-2 weeks",
+      "expectedOutcome": "what success looks like"
+    }
+  ],
+  "quickWins": [
+    {"action": "action text", "impact": "why it matters", "timeline": "days|1 week"}
+  ],
+  "successMetrics": ["metric 1", "metric 2"],
+  "riskFlags": ["risk 1", "risk 2"],
+  "nextCheckpoint": "recommended next review cadence and focus"
+}`;
+
+  const userMsg = `Generate an Excelerate Plan for this customer:
+
+Company: ${c.name}
+CSAM: ${c.csm || 'N/A'} | AE: ${c.ae || 'N/A'}
+Adoption: ${c.adoption}% | Status: ${c.status}
+Total Items: ${c.items} | Done: ${c.done} | Blocked: ${c.blocked} | Pending: ${c.pending} | Missed: ${c.missed}
+Total Users: ${c.seats || 'N/A'} | Copilot Users: ${c.activeUsers || 'N/A'}
+Renewal: ${c.contractEnd || 'N/A'} | AOP Date: ${c.aopDate || 'N/A'}
+
+Full Category Breakdown:
+${catDetail}
+
+Focus on the open/blocked/pending items and create a concrete plan to accelerate adoption. Prioritise by impact and urgency.`;
+
+  try {
+    const res = await fetch(`${workerBase}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in response');
+    const plan = JSON.parse(jsonMatch[0]);
+    renderExceleratePlan(id, plan);
+  } catch (err) {
+    out.innerHTML = `<div class="xp-section" style="color:#f87171;">⚠ Failed to generate plan: ${err.message}. Check your Worker URL in Settings.</div>`;
+  }
+}
+
+function renderExceleratePlan(id, plan) {
+  const c = CUSTOMERS[id];
+  const raw = RAW_DATA?.customers?.find(r => r.id === id);
+  const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  const out = document.getElementById('excelerate-output');
+
+  const logoHtml = c.logo
+    ? `<img src="${c.logo}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" />`
+    : `<div style="width:48px;height:48px;border-radius:12px;background:${c.gradient};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">${c.letter}</div>`;
+
+  const statusColor = c.status === 'on-track' ? 'var(--mint)' : c.status === 'at-risk' ? '#f97316' : '#f87171';
+
+  // Priority Actions
+  const actionsHtml = (plan.priorityActions || []).map(a => {
+    const urgClass = `urg-${a.urgency || 'medium'}`;
+    const urgLabel = { critical:'🔴 Critical', high:'🟠 High', medium:'🟡 Medium' }[a.urgency] || '🟡 Medium';
+    const techBadge = a.isTechnical
+      ? `<span class="xp-tech-badge">⚙️ technical process</span>`
+      : '';
+    const openItemsHtml = (a.openItems || []).length
+      ? `<div style="margin:10px 0 12px;display:flex;flex-wrap:wrap;gap:6px;">${(a.openItems||[]).map(i=>`<span style="background:var(--glass);border:1px solid var(--border);border-radius:7px;padding:2px 8px;font-size:11px;color:var(--muted);">${i}</span>`).join('')}</div>`
+      : '';
+    const stepsHtml = (a.steps || []).map(s => {
+      const ownerClass = s.owner?.toLowerCase().includes('tech') ? 'xp-tag-tech' : s.owner?.toLowerCase().includes('customer') ? 'xp-tag-customer' : 'xp-tag-csm';
+      const effortClass = s.effort === 'High' ? 'xp-tag-high' : s.effort === 'Medium' ? 'xp-tag-medium' : 'xp-tag-low';
+      return `<div class="xp-step">
+        <div class="xp-step-num">${s.step}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;margin-bottom:3px;">${s.action}
+            <span class="xp-tag ${ownerClass}">${s.owner||'CSM'}</span>
+            <span class="xp-tag ${effortClass}">${s.effort||'Medium'} effort</span>
+          </div>
+          ${s.detail ? `<div style="font-size:11.5px;color:var(--muted);line-height:1.5;">${s.detail}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="xp-action-card ${urgClass}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-size:18px;">${a.icon||'📌'}</span>
+        <span style="font-weight:700;font-size:14px;color:var(--text);">${a.category}${techBadge}</span>
+        <span style="margin-left:auto;font-size:11px;font-weight:600;color:var(--muted);">${urgLabel}</span>
+      </div>
+      ${a.context ? `<div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;line-height:1.5;">${a.context}</div>` : ''}
+      ${openItemsHtml}
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:6px;">Action Steps</div>
+      ${stepsHtml}
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+        ${a.timeline ? `<div style="font-size:11px;color:var(--muted);">⏱ <strong style="color:var(--text);">${a.timeline}</strong></div>` : ''}
+        ${a.expectedOutcome ? `<div style="font-size:11px;color:var(--muted);">🎯 ${a.expectedOutcome}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Quick Wins
+  const quickWinsHtml = (plan.quickWins || []).map(q =>
+    `<div class="xp-quick-win">
+      <span style="color:var(--mint);font-size:14px;flex-shrink:0;">✓</span>
+      <div>
+        <div style="font-weight:600;font-size:13px;">${q.action}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${q.impact || ''} ${q.timeline ? `· <strong>${q.timeline}</strong>` : ''}</div>
+      </div>
+    </div>`
+  ).join('');
+
+  // Metrics
+  const metricsHtml = (plan.successMetrics || []).map((m,i) =>
+    `<div class="xp-metric-chip">
+      <span style="color:${['var(--cyan)','var(--mint)','var(--lavender)','var(--pink)','#fbbf24'][i%5]};font-size:14px;">📊</span>
+      <span>${m}</span>
+    </div>`
+  ).join('');
+
+  // Risks
+  const risksHtml = (plan.riskFlags || []).map(r =>
+    `<div class="xp-risk-item"><span style="color:#f97316;flex-shrink:0;">⚠</span><span>${r}</span></div>`
+  ).join('');
+
+  out.innerHTML = `
+  <div class="xp-wrap">
+
+    <!-- HEADER -->
+    <div class="xp-header">
+      <div style="display:flex;align-items:flex-start;gap:16px;position:relative;z-index:1;">
+        ${logoHtml}
+        <div style="flex:1;">
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--text);">${c.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px;">✦ Excelerate Plan &nbsp;·&nbsp; Generated ${now}</div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${c.status==='on-track'?'rgba(110,231,183,.15)':c.status==='at-risk'?'rgba(249,115,22,.12)':'rgba(248,113,113,.12)'};color:${statusColor};border:1px solid ${statusColor}33;">${c.status.replace('-',' ').toUpperCase()}</span>
+            ${c.csm ? `<span style="font-size:11px;color:var(--muted);">CSAM: <strong style="color:var(--text);">${c.csm}</strong></span>` : ''}
+            ${c.ae ? `<span style="font-size:11px;color:var(--muted);">AE: <strong style="color:var(--text);">${c.ae}</strong></span>` : ''}
+            ${c.contractEnd && c.contractEnd !== 'N/A' ? `<span style="font-size:11px;color:var(--muted);">Renewal: <strong style="color:var(--text);">${c.contractEnd}</strong></span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="xp-kpis">
+      <div class="xp-kpi"><div class="xp-kpi-val" style="background:${c.gradient};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${c.adoption}%</div><div class="xp-kpi-lbl">Adoption</div></div>
+      <div class="xp-kpi"><div class="xp-kpi-val" style="color:var(--mint);">${c.done}<span style="font-size:14px;color:var(--muted);">/${c.items}</span></div><div class="xp-kpi-lbl">Tasks Done</div></div>
+      <div class="xp-kpi"><div class="xp-kpi-val" style="color:#f87171;">${c.blocked}</div><div class="xp-kpi-lbl">Blocked</div></div>
+      <div class="xp-kpi"><div class="xp-kpi-val" style="color:#fbbf24;">${c.pending}</div><div class="xp-kpi-lbl">Pending</div></div>
+    </div>
+
+    <!-- EXECUTIVE SUMMARY -->
+    ${plan.executiveSummary ? `
+    <div class="xp-section">
+      <div class="xp-section-label">Executive Summary</div>
+      <div style="font-size:13.5px;line-height:1.7;color:var(--text);">${plan.executiveSummary}</div>
+      ${plan.currentHealthAssessment ? `<div style="font-size:12.5px;line-height:1.6;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);">${plan.currentHealthAssessment}</div>` : ''}
+    </div>` : ''}
+
+    <!-- PRIORITY ACTION PLAN -->
+    ${actionsHtml ? `
+    <div class="xp-section">
+      <div class="xp-section-label">Priority Action Plan</div>
+      ${actionsHtml}
+    </div>` : ''}
+
+    <!-- TWO COLUMN: QUICK WINS + METRICS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      ${quickWinsHtml ? `
+      <div class="xp-section" style="margin-bottom:0;">
+        <div class="xp-section-label">Quick Wins</div>
+        ${quickWinsHtml}
+      </div>` : '<div></div>'}
+      ${metricsHtml ? `
+      <div class="xp-section" style="margin-bottom:0;">
+        <div class="xp-section-label">Success Metrics</div>
+        ${metricsHtml}
+      </div>` : '<div></div>'}
+    </div>
+
+    <!-- RISKS -->
+    ${risksHtml ? `
+    <div class="xp-section">
+      <div class="xp-section-label">Risk Flags</div>
+      ${risksHtml}
+    </div>` : ''}
+
+    <!-- NEXT CHECKPOINT -->
+    ${plan.nextCheckpoint ? `
+    <div class="xp-section" style="background:linear-gradient(135deg,rgba(103,232,249,.08),rgba(196,181,253,.08));border-color:rgba(103,232,249,.2);">
+      <div class="xp-section-label">Next Checkpoint</div>
+      <div style="font-size:13px;line-height:1.6;color:var(--text);">📅 ${plan.nextCheckpoint}</div>
+    </div>` : ''}
+
+    <!-- ACTIONS -->
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="settings-btn settings-btn-primary" onclick="window.print()" style="font-weight:700;">🖨 Print / Save PDF</button>
+      <button class="settings-btn" style="background:var(--btn-ghost-bg);color:var(--muted);border:1px solid var(--border);" onclick="document.getElementById('excelerate-output').style.display='none';">✕ Close</button>
+    </div>
+
+  </div>`;
 }
 
 /* ─── AI Chat Worker URL (declared early for ghUpdateUI) ─── */
