@@ -237,18 +237,30 @@ html, body {
 .view[hidden] { display:none; }
 
 /* detail */
-.detail-hero { padding:24px 28px 20px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
-.detail-hero-row { display:flex;align-items:flex-start;justify-content:space-between;gap:16px; }
-.detail-hero-left { display:flex;align-items:flex-start;gap:16px; }
-.detail-big-logo { width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#0f0c29;flex-shrink:0; }
-.detail-name { font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--text); }
+.detail-hero { padding:18px 28px 16px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
+.detail-hero-row { display:flex;align-items:stretch;gap:20px; }
+.detail-hero-left { display:flex;align-items:center;gap:16px;min-width:200px;padding-right:20px;border-right:1px solid var(--border);flex-shrink:0; }
+.detail-big-logo { width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#0f0c29;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,.25); }
+.detail-name { font-size:20px;font-weight:700;letter-spacing:-.4px;color:var(--text); }
 .detail-sub  { font-size:13px;color:var(--muted);margin-top:3px; }
 .detail-hero-pill { display:inline-flex;padding:3px 12px;border-radius:99px;font-size:11px;font-weight:500;margin-top:8px; }
-.detail-hero-actions { display:flex;gap:8px; }
-.detail-hero-info { flex:1;display:flex;flex-wrap:wrap;gap:6px 14px;align-content:flex-start;padding:0 12px; }
-.hero-info-item { display:flex;flex-direction:column;gap:1px;min-width:80px; }
-.hero-info-lbl { font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.6px; }
-.hero-info-val { font-size:12px;font-weight:500;color:var(--text); }
+.detail-hero-actions { display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:center;flex-shrink:0; }
+/* info card grid */
+.detail-hero-info { flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:7px;align-content:center; }
+.hero-info-item { display:flex;flex-direction:column;gap:3px;padding:8px 11px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.03);transition:border-color .15s; }
+.hero-info-item:hover { border-color:rgba(255,255,255,.18); }
+/* colour variants */
+.hi-people { border-color:rgba(196,181,253,.28)!important;background:rgba(196,181,253,.07)!important; }
+.hi-users  { border-color:rgba(103,232,249,.28)!important;background:rgba(103,232,249,.07)!important; }
+.hi-dates  { border-color:rgba(251,191,36,.28)!important; background:rgba(251,191,36,.07)!important;  }
+.hi-tasks  { border-color:rgba(251,113,133,.28)!important;background:rgba(251,113,133,.07)!important; }
+.hero-info-lbl { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px; }
+.hi-people .hero-info-lbl { color:rgba(196,181,253,.85); }
+.hi-users  .hero-info-lbl { color:rgba(103,232,249,.85); }
+.hi-dates  .hero-info-lbl { color:rgba(251,191,36,.85);  }
+.hi-tasks  .hero-info-lbl { color:rgba(251,113,133,.85); }
+.hero-info-lbl:not([class*=hi]) { color:var(--dim); }
+.hero-info-val { font-size:13px;font-weight:600;color:var(--text); }
 
 .detail-kpi-row { height:64px;flex-shrink:0;background:var(--glass);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center; }
 .detail-kpi { padding:0 26px; }
@@ -565,6 +577,20 @@ html, body {
         <div class="topbar-left">
           <button class="topbar-btn topbar-btn-ghost" onclick="goBack()">← Back</button>
           <div><div class="topbar-title" id="tb-detail-title">Customer</div><div class="topbar-subtitle">Customer Detail</div></div>
+        </div>
+        <!-- centre: date + sync -->
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:0;">
+          <div style="display:flex;align-items:center;gap:18px;padding:5px 18px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);">Today</span>
+              <span id="tb-today-date" style="font-size:12px;font-weight:600;color:var(--text);"></span>
+            </div>
+            <div style="width:1px;height:24px;background:var(--border);"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(110,231,183,.75);">Last Sync</span>
+              <span id="tb-last-sync" style="font-size:12px;font-weight:600;color:var(--mint);">—</span>
+            </div>
+          </div>
         </div>
         <div class="topbar-actions">
           <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">☀️</button>
@@ -1178,18 +1204,24 @@ function goToDetail(id) {
   // Move raw lookup early so hero can use it
   const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(r => r.id === id) : null;
 
+  const _hi = (cls, lbl, val) => `<div class="hero-info-item ${cls}"><span class="hero-info-lbl">${lbl}</span><span class="hero-info-val">${val}</span></div>`;
   const heroInfoItems = [
-    c.csm         ? `<div class="hero-info-item"><span class="hero-info-lbl">CSAM</span><span class="hero-info-val">${c.csm}</span></div>` : '',
-    c.ae          ? `<div class="hero-info-item"><span class="hero-info-lbl">AE</span><span class="hero-info-val">${c.ae}</span></div>` : '',
-    raw?.atsName  ? `<div class="hero-info-item"><span class="hero-info-lbl">ATS</span><span class="hero-info-val">${raw.atsName}</span></div>` : '',
-    raw?.seName   ? `<div class="hero-info-item"><span class="hero-info-lbl">SE</span><span class="hero-info-val">${raw.seName}</span></div>` : '',
-    c.seats       ? `<div class="hero-info-item"><span class="hero-info-lbl">Total Users</span><span class="hero-info-val">${c.seats.toLocaleString()}</span></div>` : '',
-    c.activeUsers ? `<div class="hero-info-item"><span class="hero-info-lbl">Copilot Users</span><span class="hero-info-val">${c.activeUsers.toLocaleString()}</span></div>` : '',
-    c.contractEnd !== 'N/A' ? `<div class="hero-info-item"><span class="hero-info-lbl">Renewal</span><span class="hero-info-val">${c.contractEnd}</span></div>` : '',
-    c.aopDate !== 'N/A'     ? `<div class="hero-info-item"><span class="hero-info-lbl">AOP Date</span><span class="hero-info-val">${c.aopDate}</span></div>` : '',
-    `<div class="hero-info-item"><span class="hero-info-lbl">Pending</span><span class="hero-info-val">${c.pending}</span></div>`,
-    `<div class="hero-info-item"><span class="hero-info-lbl">Unblocking</span><span class="hero-info-val">${c.unblock}</span></div>`,
+    c.csm         ? _hi('hi-people','CSAM',         c.csm)                      : '',
+    c.ae          ? _hi('hi-people','AE',            c.ae)                       : '',
+    raw?.atsName  ? _hi('hi-people','ATS',           raw.atsName)                : '',
+    raw?.seName   ? _hi('hi-people','SE',            raw.seName)                 : '',
+    c.seats       ? _hi('hi-users', 'Total Users',   c.seats.toLocaleString())   : '',
+    c.activeUsers ? _hi('hi-users', 'Copilot Users', c.activeUsers.toLocaleString()) : '',
+    c.contractEnd !== 'N/A' ? _hi('hi-dates','Renewal',  c.contractEnd) : '',
+    c.aopDate !== 'N/A'     ? _hi('hi-dates','AOP Date', c.aopDate)     : '',
+    _hi('hi-tasks','Pending',    c.pending),
+    _hi('hi-tasks','Unblocking', c.unblock),
   ].filter(Boolean).join('');
+
+  // Populate topbar date + sync pill
+  const _tdEl = document.getElementById('tb-today-date');
+  if (_tdEl) _tdEl.textContent = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  _updateSyncDisplay();
 
   document.getElementById('d-hero').innerHTML = `
     <div class="detail-hero-row">
@@ -1878,11 +1910,22 @@ const GH_RAW_KEY  = 'copilot-tracker-gh-raw';
 const GH_FILE     = 'copilot-tracker-data.json';
 const GH_OWNER    = 'toviksiton';
 
-let _ghPat     = localStorage.getItem(GH_PAT_KEY)  || '';
-let _ghGistId  = localStorage.getItem(GH_GIST_KEY) || '';
-let _ghRawUrl  = localStorage.getItem(GH_RAW_KEY)  || '';
-let _ghTimer   = null;
-let _ghSaving  = false;
+let _ghPat       = localStorage.getItem(GH_PAT_KEY)  || '';
+let _ghGistId    = localStorage.getItem(GH_GIST_KEY) || '';
+let _ghRawUrl    = localStorage.getItem(GH_RAW_KEY)  || '';
+let _ghTimer     = null;
+let _ghSaving    = false;
+let _lastSyncTime = localStorage.getItem('copilot-tracker-last-sync') || null;
+
+function _recordSync() {
+  _lastSyncTime = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  localStorage.setItem('copilot-tracker-last-sync', _lastSyncTime);
+  _updateSyncDisplay();
+}
+function _updateSyncDisplay() {
+  const el = document.getElementById('tb-last-sync');
+  if (el) el.textContent = _lastSyncTime || '—';
+}
 
 function ghStatus(msg, color) {
   const el = document.getElementById('gh-status');
@@ -1911,7 +1954,7 @@ async function connectGist() {
   if (gist) { _ghGistId = gist; localStorage.setItem(GH_GIST_KEY, gist); _ghRawUrl = ''; localStorage.removeItem(GH_RAW_KEY); }
   ghStatus('Connecting…', 'var(--cyan)');
   const ok = await _ghLoad(false);
-  if (ok) { ghStatus('✅ Connected and synced · ' + new Date().toLocaleTimeString(), '#6ee7b7'); ghUpdateUI(); }
+  if (ok) { _recordSync(); ghStatus('✅ Connected and synced · ' + _lastSyncTime, '#6ee7b7'); ghUpdateUI(); }
   else if (!_ghGistId) ghStatus('⚠️ No Gist ID found. Enter a Gist ID or PAT to auto-discover.', '#f97316');
 }
 
@@ -1930,7 +1973,7 @@ async function saveToGistNow() {
 async function loadFromGistNow() {
   ghStatus('Loading…', 'var(--cyan)');
   const ok = await _ghLoad(false);
-  if (ok) { ghStatus('✅ Loaded from Gist · ' + new Date().toLocaleTimeString(), '#6ee7b7'); updateKPIs(); buildList(); }
+  if (ok) { _recordSync(); ghStatus('✅ Loaded from Gist · ' + _lastSyncTime, '#6ee7b7'); updateKPIs(); buildList(); }
 }
 
 function scheduleGhSave() {
@@ -1954,7 +1997,7 @@ async function _ghSave() {
     const gist = await res.json();
     const f = gist.files && gist.files[GH_FILE];
     if (f && f.raw_url) { _ghRawUrl = f.raw_url.split('?')[0]; localStorage.setItem(GH_RAW_KEY, _ghRawUrl); }
-    ghStatus('✅ Saved to Gist · ' + new Date().toLocaleTimeString(), '#6ee7b7');
+    _recordSync(); ghStatus('✅ Saved to Gist · ' + _lastSyncTime, '#6ee7b7');
   } catch(e) { ghStatus('⚠️ Save failed: ' + e.message, '#f87171'); }
   finally { _ghSaving = false; }
 }
