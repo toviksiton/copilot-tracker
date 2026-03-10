@@ -883,6 +883,7 @@ html, body {
 .compete-chip-high   { background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.35); }
 .compete-chip-medium { background:rgba(251,191,36,.12);color:#fbbf24;border-color:rgba(251,191,36,.3); }
 .compete-chip-low    { background:rgba(110,231,183,.1);color:#6ee7b7;border-color:rgba(110,231,183,.28); }
+.compete-chip-ai     { border-style:dashed; opacity:.82; display:flex; align-items:center; gap:2px; }
 
 .dept-card-actions {
   display:flex;gap:5px;padding:4px 12px 10px;justify-content:flex-end;
@@ -1193,6 +1194,7 @@ html, body {
           <button class="settings-btn settings-btn-primary" onclick="openCompeteOrgModal()">+ New Map</button>
           <button class="settings-btn" id="compete-upload-bg-btn" onclick="document.getElementById('compete-bg-file').click()" style="display:none;">🤖 AI Import Org Chart</button>
           <input type="file" id="compete-bg-file" accept="image/*" style="display:none" onchange="onCompeteBgUpload(this)">
+          <button class="settings-btn" id="compete-reassess-btn" onclick="_runCompeteReassessment()" style="display:none;">⚡ Compete Reassessment</button>
           <button class="settings-btn settings-btn-primary" id="compete-add-dept-btn" onclick="openDeptModal()" style="display:none;">+ Department</button>
           <button class="settings-btn" id="compete-clear-bg-btn" onclick="clearCompeteBg()" style="display:none;background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2);">✕ Remove BG</button>
         </div>
@@ -4182,7 +4184,7 @@ function onCompeteAccountChange() {
   const maps = _competeOrgs().filter(o => o.customerId === accountId);
   orgSel.innerHTML = '<option value="">Select Map…</option>' +
     maps.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
-  ['compete-add-dept-btn','compete-upload-bg-btn','compete-clear-bg-btn'].forEach(id => {
+  ['compete-add-dept-btn','compete-upload-bg-btn','compete-clear-bg-btn','compete-reassess-btn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   _renderCompeteCanvas(null);
@@ -4191,7 +4193,7 @@ function onCompeteAccountChange() {
 function onCompeteOrgChange() {
   const org = _currentCompeteOrg();
   const show = org ? '' : 'none';
-  ['compete-add-dept-btn','compete-upload-bg-btn'].forEach(id => {
+  ['compete-add-dept-btn','compete-upload-bg-btn','compete-reassess-btn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = show;
   });
   const clrBtn = document.getElementById('compete-clear-bg-btn');
@@ -4285,7 +4287,9 @@ function _renderDeptCard(dept, org, canvas) {
   const shown = tree.slice(0, MAX_SHOWN);
   const peopleHtml = shown.map(({ person: p, depth }) => {
     const chips = (p.competeItems||[]).slice(0,2).map(ci =>
-      `<span class="dept-compete-chip compete-chip-${ci.risk}" title="${_esc(ci.competitor)} — ${ci.workload}">${_esc(ci.competitor.slice(0,10))}</span>`
+      `<span class="dept-compete-chip compete-chip-${ci.risk}${ci.aiSuggested?' compete-chip-ai':''}"
+        title="${_esc(ci.competitor)} — ${ci.workload}${ci.aiSuggested?' (AI suggested)':''}"
+      >${ci.aiSuggested?'✦ ':''}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(ci.competitor.slice(0,10))}</span></span>`
     ).join('');
     const indent = depth * 14;
     const connector = depth > 0
@@ -4615,13 +4619,19 @@ function _addCompeteItemRowData(container, ci) {
     devices:'Devices',analytics:'Analytics',communications:'Communications'};
   const wOpts = Object.entries(wloads)
     .map(([k,v]) => `<option value="${k}" ${ci && ci.workload===k ? 'selected' : ''}>${v}</option>`).join('');
+  const isAi = !!(ci && ci.aiSuggested);
   const div = document.createElement('div');
   div.className = 'compete-item-row';
+  if (isAi) div.dataset.aiSuggested = 'true';
+  if (isAi) div.style.cssText = 'background:rgba(139,92,246,.07);border-radius:6px;padding:2px 4px;border:1px dashed rgba(139,92,246,.25);';
   div.innerHTML = `
+    ${isAi ? '<span style="font-size:9px;color:#a78bfa;white-space:nowrap;align-self:center;flex-shrink:0;" title="AI suggested — you can remove it">✦ AI</span>' : ''}
     <input class="modal-input compete-competitor-input" placeholder="Competitor (e.g. Google Workspace)"
-      value="${_esc(ci ? ci.competitor : '')}" style="flex:2;min-width:100px;">
-    <select class="modal-input compete-workload-select" style="flex:1;min-width:80px;">${wOpts}</select>
-    <select class="modal-input compete-risk-select" style="width:80px;">
+      value="${_esc(ci ? ci.competitor : '')}" style="flex:2;min-width:100px;"${isAi?' readonly title="AI suggested — edit by removing and re-adding"':''}>
+    <select class="modal-input compete-workload-select" style="flex:1;min-width:80px;"${isAi?' disabled':''}>
+      ${wOpts}
+    </select>
+    <select class="modal-input compete-risk-select" style="width:80px;"${isAi?' disabled':''}>
       <option value="high"   ${ci && ci.risk==='high'   ? 'selected' : ''}>High</option>
       <option value="medium" ${ci && ci.risk==='medium' ? 'selected' : ''}>Medium</option>
       <option value="low"    ${ci && ci.risk==='low'    ? 'selected' : ''}>Low</option>
@@ -4655,11 +4665,14 @@ function saveDept() {
     const pName = item.querySelector('.person-name-input')?.value.trim();
     if (!pName) return;
     const competeItems = Array.from(item.querySelectorAll('.compete-item-row'))
-      .map(row => ({
-        competitor: row.querySelector('.compete-competitor-input')?.value.trim() || '',
-        workload:   row.querySelector('.compete-workload-select')?.value || 'm365',
-        risk:       row.querySelector('.compete-risk-select')?.value || 'medium',
-      })).filter(ci => ci.competitor);
+      .map(row => {
+        const isAi = row.dataset.aiSuggested === 'true';
+        // For AI rows, read the disabled selects via dataset or direct value
+        const competitor = row.querySelector('.compete-competitor-input')?.value.trim() || '';
+        const workload   = row.querySelector('.compete-workload-select')?.value || 'm365';
+        const risk       = row.querySelector('.compete-risk-select')?.value || 'medium';
+        return { competitor, workload, risk, ...(isAi ? { aiSuggested: true } : {}) };
+      }).filter(ci => ci.competitor);
     const reportsToRaw = item.querySelector('.person-reports-to-select')?.value || '';
     const reportsTo = reportsToRaw ? (pidToId[reportsToRaw] || reportsToRaw) : null;
     const targetDept = item.querySelector('.person-dept-select')?.value || thisDeptId;
@@ -4961,6 +4974,143 @@ function _showCompeteAiBanner(msg, type) {
   banner.onclick = () => banner.remove();
   canvas.appendChild(banner);
   if (type === 'success') setTimeout(() => banner.remove(), 8000);
+}
+
+/* ── Compete Reassessment ── */
+
+async function _runCompeteReassessment() {
+  const org = _currentCompeteOrg();
+  if (!org || !org.departments.length) {
+    alert('Add departments to the map before running a reassessment.');
+    return;
+  }
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) {
+    alert('AI Worker URL not configured in Settings. Add your Cloudflare Worker URL first.');
+    return;
+  }
+
+  _showCompeteAiLoading(true, 'Running compete reassessment with Claude…');
+
+  try {
+    // Build a compact description of every person+role for the prompt
+    const deptSummaries = org.departments.map(dept => {
+      const people = (dept.people || []).map(p =>
+        `  - ${p.name} (${p.title || dept.name})`
+      ).join('\n') || `  - ${dept.name}`;
+      return `Department: ${dept.name}\nPeople:\n${people}`;
+    }).join('\n\n');
+
+    const res = await fetch(`${workerBase}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: `You are a Microsoft competitive intelligence expert. Given an org chart, surface the most relevant non-Microsoft competitors that each department/person is likely to evaluate or already use for Microsoft products. Return ONLY valid JSON, no markdown.`,
+        messages: [{
+          role: 'user',
+          content: `Here is the org chart:\n\n${deptSummaries}\n\n` +
+`For each department, identify up to 3 relevant competitors to Microsoft products that this department likely evaluates.
+
+Return JSON in EXACTLY this format:
+{
+  "assessments": [
+    {
+      "deptName": "exact department name as given",
+      "personName": "exact person name (first person in the dept)",
+      "suggestions": [
+        {
+          "competitor": "Competitor product/company name",
+          "workload": one of: "m365" | "security" | "azure" | "copilot" | "devices" | "analytics" | "communications",
+          "risk": one of: "high" | "medium" | "low",
+          "reason": "one sentence why this is relevant"
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Focus on real, named competitors (e.g. ServiceNow, Salesforce, Google Workspace, Okta, Crowdstrike, Slack, Zoom, AWS, Snowflake).
+- Tailor suggestions to the role/title (CTO → Azure/cloud competitors; CIO → M365/device management; CISO → security).
+- risk = high if widely adopted alternative, medium if emerging, low if niche.
+- Return ONLY the JSON object.`,
+        }],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Worker responded ${res.status}`);
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in AI response');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    _showCompeteAiLoading(true, 'Merging suggestions…');
+    _applyCompeteReassessment(parsed, org);
+
+  } catch (err) {
+    _showCompeteAiLoading(false);
+    _showCompeteAiBanner(`⚠ Reassessment failed: ${err.message}`, 'error');
+  } finally {
+    _showCompeteAiLoading(false);
+  }
+}
+
+function _applyCompeteReassessment(parsed, org) {
+  const assessments = parsed.assessments || [];
+  if (!assessments.length) {
+    _showCompeteAiBanner('AI returned no suggestions. Try again or check your Worker.', 'warn');
+    return;
+  }
+
+  let added = 0;
+
+  assessments.forEach(a => {
+    // Match department by name (case-insensitive)
+    const dept = org.departments.find(d =>
+      d.name.toLowerCase() === (a.deptName || '').toLowerCase()
+    );
+    if (!dept || !dept.people.length) return;
+
+    // Target the first person (or match by name if provided)
+    let person = dept.people.find(p =>
+      p.name.toLowerCase() === (a.personName || '').toLowerCase()
+    ) || dept.people[0];
+    if (!person) return;
+
+    person.competeItems = person.competeItems || [];
+
+    (a.suggestions || []).forEach(s => {
+      if (!s.competitor) return;
+      // Skip if a competitor with this name already exists (avoid dupes)
+      const already = person.competeItems.some(ci =>
+        ci.competitor.toLowerCase() === s.competitor.toLowerCase()
+      );
+      if (already) return;
+      person.competeItems.push({
+        competitor: s.competitor,
+        workload:   s.workload || 'm365',
+        risk:       s.risk || 'medium',
+        aiSuggested: true,
+      });
+      added++;
+    });
+  });
+
+  saveData();
+  _renderCompeteCanvas(org);
+
+  if (added === 0) {
+    _showCompeteAiBanner('All AI suggestions already existed — no new competitors added.', 'warn');
+  } else {
+    _showCompeteAiBanner(
+      `✦ Added ${added} AI-suggested competitor${added>1?'s':''} across the map. ` +
+      `Dashed chips = AI suggestions. Open ✎ Edit on any dept to review or remove them.`,
+      'success'
+    );
+  }
 }
 
 function clearCompeteBg() {
