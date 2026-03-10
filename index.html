@@ -640,9 +640,9 @@ html, body {
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">AI Assistant</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Anthropic API key for the AI chat assistant. Get one at console.anthropic.com.</div>
-            <input class="modal-input" id="ai-key-input" type="password" placeholder="sk-ant-…" style="margin-bottom:8px;">
-            <button class="settings-btn settings-btn-primary" onclick="saveAiKey()">Save Key</button>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Enter your Cloudflare Worker URL. The Anthropic API key lives as a secret on the Worker — nothing sensitive is stored in the browser.</div>
+            <input class="modal-input" id="ai-worker-url-input" placeholder="https://copilot-tracker-api.&lt;user&gt;.workers.dev" style="margin-bottom:8px;">
+            <button class="settings-btn settings-btn-primary" onclick="saveWorkerUrl()">Save Worker URL</button>
             <div class="settings-divider"></div>
             <div class="settings-section-title">Danger Zone</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Clear all customer data from this browser. This cannot be undone.</div>
@@ -1876,8 +1876,8 @@ function renderReport() {
   `;
 }
 
-/* ─── AI Chat key (declared early for ghUpdateUI) ─── */
-const AI_KEY_STORE = 'copilot-tracker-ai-key';
+/* ─── AI Chat Worker URL (declared early for ghUpdateUI) ─── */
+const AI_WORKER_URL_STORE = 'copilot-tracker-ai-worker-url';
 
 /* ─── GitHub Gist sync ─── */
 const GH_PAT_KEY  = 'copilot-tracker-gh-pat';
@@ -1908,11 +1908,8 @@ function ghUpdateUI() {
   const gistInput = document.getElementById('gh-gist-input');
   if (patInput) patInput.value = _ghPat;
   if (gistInput) gistInput.value = _ghGistId;
-  const aiKeyInput = document.getElementById('ai-key-input');
-  if (aiKeyInput) {
-    const storedKey = localStorage.getItem(AI_KEY_STORE) || '';
-    aiKeyInput.value = storedKey;
-  }
+  const aiWorkerInput = document.getElementById('ai-worker-url-input');
+  if (aiWorkerInput) aiWorkerInput.value = localStorage.getItem(AI_WORKER_URL_STORE) || '';
 }
 
 async function connectGist() {
@@ -2048,9 +2045,9 @@ async function sendAiMsg() {
   const text = input.value.trim();
   if (!text) return;
 
-  const apiKey = localStorage.getItem(AI_KEY_STORE) || '';
-  if (!apiKey) {
-    appendAiMsg('assistant', '⚠ No API key set. Please add your Anthropic API key in Settings → AI Assistant.');
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) {
+    appendAiMsg('assistant', '⚠ No Worker URL set. Go to Settings → AI Assistant and enter your Cloudflare Worker URL.');
     return;
   }
 
@@ -2072,14 +2069,10 @@ async function sendAiMsg() {
   document.getElementById('ai-messages').scrollTop = 99999;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call the Cloudflare Worker /ai endpoint — the ANTHROPIC_API_KEY lives as a Worker secret
+    const res = await fetch(`${workerBase}/ai`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 512,
@@ -2098,11 +2091,11 @@ async function sendAiMsg() {
   }
 }
 
-function saveAiKey() {
-  const k = document.getElementById('ai-key-input')?.value.trim();
-  if (k) localStorage.setItem(AI_KEY_STORE, k);
-  else localStorage.removeItem(AI_KEY_STORE);
-  ghStatus('AI key saved.', 'var(--mint)');
+function saveWorkerUrl() {
+  const u = document.getElementById('ai-worker-url-input')?.value.trim();
+  if (u) localStorage.setItem(AI_WORKER_URL_STORE, u);
+  else localStorage.removeItem(AI_WORKER_URL_STORE);
+  ghStatus('Worker URL saved.', 'var(--mint)');
 }
 </script>
 </body>
