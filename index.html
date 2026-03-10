@@ -245,6 +245,10 @@ html, body {
 .detail-sub  { font-size:13px;color:var(--muted);margin-top:3px; }
 .detail-hero-pill { display:inline-flex;padding:3px 12px;border-radius:99px;font-size:11px;font-weight:500;margin-top:8px; }
 .detail-hero-actions { display:flex;gap:8px; }
+.detail-hero-info { flex:1;display:flex;flex-wrap:wrap;gap:6px 14px;align-content:flex-start;padding:0 12px; }
+.hero-info-item { display:flex;flex-direction:column;gap:1px;min-width:80px; }
+.hero-info-lbl { font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.6px; }
+.hero-info-val { font-size:12px;font-weight:500;color:var(--text); }
 
 .detail-kpi-row { height:64px;flex-shrink:0;background:var(--glass);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center; }
 .detail-kpi { padding:0 26px; }
@@ -534,9 +538,9 @@ html, body {
       <a class="nav-item" id="nav-integrations" href="#" onclick="showView('integrations');return false;"><span class="nav-icon">⊕</span> Integrations</a>
     </div>
     <div class="sidebar-footer">
-      <div class="user-row">
+      <div class="user-row" onclick="showView('settings');return false;" style="cursor:pointer;" title="Open Settings">
         <div class="user-avatar">AM</div>
-        <div><div class="user-name">Admin</div><div class="user-role">CSM Lead</div></div>
+        <div><div class="user-name">Admin</div><div class="user-role">CSM Lead · Settings</div></div>
       </div>
     </div>
   </aside>
@@ -1167,17 +1171,32 @@ function goToDetail(id) {
   const detailLogoHtml = c.logo
     ? `<div class="detail-big-logo" style="background:none;padding:0;overflow:hidden;"><img src="${c.logo}" style="width:100%;height:100%;object-fit:cover;" /></div>`
     : `<div class="detail-big-logo" style="background:${c.gradient};">${c.letter}</div>`;
-  const subParts = [c.seats ? c.seats.toLocaleString()+' users' : null, c.csm ? 'CSAM: '+c.csm : null, c.ae ? 'AE: '+c.ae : null].filter(Boolean);
+  // Move raw lookup early so hero can use it
+  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(r => r.id === id) : null;
+
+  const heroInfoItems = [
+    c.csm         ? `<div class="hero-info-item"><span class="hero-info-lbl">CSAM</span><span class="hero-info-val">${c.csm}</span></div>` : '',
+    c.ae          ? `<div class="hero-info-item"><span class="hero-info-lbl">AE</span><span class="hero-info-val">${c.ae}</span></div>` : '',
+    raw?.atsName  ? `<div class="hero-info-item"><span class="hero-info-lbl">ATS</span><span class="hero-info-val">${raw.atsName}</span></div>` : '',
+    raw?.seName   ? `<div class="hero-info-item"><span class="hero-info-lbl">SE</span><span class="hero-info-val">${raw.seName}</span></div>` : '',
+    c.seats       ? `<div class="hero-info-item"><span class="hero-info-lbl">Total Users</span><span class="hero-info-val">${c.seats.toLocaleString()}</span></div>` : '',
+    c.activeUsers ? `<div class="hero-info-item"><span class="hero-info-lbl">Copilot Users</span><span class="hero-info-val">${c.activeUsers.toLocaleString()}</span></div>` : '',
+    c.contractEnd !== 'N/A' ? `<div class="hero-info-item"><span class="hero-info-lbl">Renewal</span><span class="hero-info-val">${c.contractEnd}</span></div>` : '',
+    c.aopDate !== 'N/A'     ? `<div class="hero-info-item"><span class="hero-info-lbl">AOP Date</span><span class="hero-info-val">${c.aopDate}</span></div>` : '',
+    `<div class="hero-info-item"><span class="hero-info-lbl">Pending</span><span class="hero-info-val">${c.pending}</span></div>`,
+    `<div class="hero-info-item"><span class="hero-info-lbl">Unblocking</span><span class="hero-info-val">${c.unblock}</span></div>`,
+  ].filter(Boolean).join('');
+
   document.getElementById('d-hero').innerHTML = `
     <div class="detail-hero-row">
       <div class="detail-hero-left">
         ${detailLogoHtml}
         <div>
           <div class="detail-name">${c.name}</div>
-          <div class="detail-sub">${subParts.join(' · ')}</div>
           <div class="detail-hero-pill" style="${c.pillStyle};">${c.status}</div>
         </div>
       </div>
+      <div class="detail-hero-info">${heroInfoItems}</div>
       <div class="detail-hero-actions">
         <button class="topbar-btn topbar-btn-ghost" onclick="exportData()">Export</button>
       </div>
@@ -1194,23 +1213,15 @@ function goToDetail(id) {
     <div class="kpi-divider" style="margin:0 4px;"></div>
     <div class="detail-kpi"><div class="detail-kpi-num" style="color:var(--lavender);">${c.items}</div><div class="detail-kpi-lbl">Total Items</div></div>`;
 
-  const barsHtml = c.metrics.map(m => {
-    const pct = Math.round((m.value / m.max) * 100);
-    const label = m.max === 100 ? `${m.value}%` : `${m.value}/${m.max}`;
-    return `<div class="bar-item">
-      <div class="bar-item-label">${m.label}</div>
-      <div class="bar-item-track"><div class="bar-item-fill" style="width:${pct}%;background:${m.color};"></div></div>
-      <div class="bar-item-val">${label}</div>
-    </div>`;
-  }).join('');
 
   // All items by category
-  const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(r => r.id === id) : null;
   const statusMap = {done:'done', missed:'blocked', blocked:'blocked', unblock:'in-progress', pending:'open'};
   const categoriesPanels = raw ? `<div class="detail-cats-grid">${
     raw.categories.map((cat, catIdx) => {
       const catLabel = cat.title || cat.name || `Pillar ${catIdx+1}`;
       const icon = cat.icon ? cat.icon + ' ' : '';
+      const doneCount = cat.items.filter(i => i.status === 'done').length;
+      const donePct = cat.items.length ? Math.round(doneCount / cat.items.length * 100) : 0;
       const rowsHtml = cat.items.map((item, itemIdx) => {
         const dispStatus = statusMap[item.status] || 'open';
         const color = ITEM_COLORS[(catIdx + itemIdx) % ITEM_COLORS.length];
@@ -1239,7 +1250,12 @@ function goToDetail(id) {
             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
             onfocus="this.style.borderBottomColor='var(--cyan)'">${catLabel}</span></div>
           <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:10px;color:var(--muted);">${cat.items.filter(i=>i.status==='done').length}/${cat.items.length} done</span>
+            <div style="text-align:right;">
+              <span style="font-size:10px;color:var(--muted);">${doneCount}/${cat.items.length} done</span>
+              <div style="width:56px;height:3px;border-radius:2px;background:var(--border2);margin-top:3px;overflow:hidden;">
+                <div style="height:100%;width:${donePct}%;background:var(--mint);border-radius:2px;transition:width .3s;"></div>
+              </div>
+            </div>
             <button class="item-del-btn" style="font-size:12px;" onclick="deleteSection(event,'${id}',${catIdx})" title="Delete section">🗑</button>
           </div>
         </div>
@@ -1260,35 +1276,7 @@ function goToDetail(id) {
   </div>
   </div>` : '';
 
-  document.getElementById('d-body').innerHTML = `
-    <div class="detail-body-top">
-      <div class="detail-panel" id="panel-adoption">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div class="detail-panel-label" style="margin-bottom:0;">Adoption Metrics</div>
-          <button class="panel-toggle-btn" onclick="togglePanel('panel-adoption')" title="Collapse">▼</button>
-        </div>
-        <div class="detail-panel-body"><div class="bar-row">${barsHtml}</div></div>
-      </div>
-      <div class="detail-panel" id="panel-info">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div class="detail-panel-label" style="margin-bottom:0;">Account Info</div>
-          <button class="panel-toggle-btn" onclick="togglePanel('panel-info')" title="Collapse">▼</button>
-        </div>
-        <div class="detail-panel-body"><div class="info-grid">
-          ${c.contractEnd !== 'N/A' ? `<div class="info-item"><div class="info-item-lbl">Renewal Date</div><div class="info-item-val">${c.contractEnd}</div></div>` : ''}
-          ${c.aopDate !== 'N/A' ? `<div class="info-item"><div class="info-item-lbl">AOP Date</div><div class="info-item-val">${c.aopDate}</div></div>` : ''}
-          ${c.csm ? `<div class="info-item"><div class="info-item-lbl">CSAM</div><div class="info-item-val">${c.csm}</div></div>` : ''}
-          ${c.ae ? `<div class="info-item"><div class="info-item-lbl">AE</div><div class="info-item-val">${c.ae}</div></div>` : ''}
-          ${raw?.atsName ? `<div class="info-item"><div class="info-item-lbl">ATS</div><div class="info-item-val">${raw.atsName}</div></div>` : ''}
-          ${raw?.seName  ? `<div class="info-item"><div class="info-item-lbl">SE</div><div class="info-item-val">${raw.seName}</div></div>` : ''}
-          ${c.seats ? `<div class="info-item"><div class="info-item-lbl">Total Users</div><div class="info-item-val">${c.seats.toLocaleString()}</div></div>` : ''}
-          ${c.activeUsers ? `<div class="info-item"><div class="info-item-lbl">Copilot Users</div><div class="info-item-val">${c.activeUsers.toLocaleString()}</div></div>` : ''}
-          <div class="info-item"><div class="info-item-lbl">Pending</div><div class="info-item-val">${c.pending}</div></div>
-          <div class="info-item"><div class="info-item-lbl">Unblocking</div><div class="info-item-val">${c.unblock}</div></div>
-        </div></div>
-      </div>
-    </div>
-    ${categoriesPanels}`;
+  document.getElementById('d-body').innerHTML = `${categoriesPanels}`;
 
   document.getElementById('view-detail').hidden = false;
 }
