@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -387,6 +387,8 @@ html, body {
 .kanban-col-accent-progress   { border-top:2px solid rgba(103,232,249,.5); }
 .kanban-col-accent-blocked    { border-top:2px solid rgba(249,168,212,.5); }
 .kanban-col-accent-done       { border-top:2px solid rgba(110,231,183,.5); }
+.kanban-col-header:hover .k-edit-btn { opacity:1; }
+.k-edit-btn { opacity:0; transition:opacity .15s; background:none; border:none; cursor:pointer; color:var(--muted); font-size:13px; padding:2px 5px; border-radius:5px; }
 
 /* settings view */
 .settings-section { display:flex;flex-direction:column;gap:8px; }
@@ -517,9 +519,7 @@ html, body {
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
-      <a class="nav-item active" id="nav-dashboard" href="#" onclick="showView('list');return false;"><span class="nav-icon">◈</span> Dashboard</a>
       <a class="nav-item" id="nav-customers" href="#" onclick="showView('list');return false;"><span class="nav-icon">◎</span> Customers</a>
-      <a class="nav-item" id="nav-adoption" href="#" onclick="showView('list');return false;"><span class="nav-icon">⬡</span> Adoption</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
@@ -549,7 +549,7 @@ html, body {
       <div class="topbar" id="tb-list">
         <div><div class="topbar-title">Dashboard</div><div class="topbar-subtitle">All customers · March 2026</div></div>
         <div class="topbar-actions">
-          <button class="theme-toggle" id="toggle-btn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
+          <button class="theme-toggle" id="toggle-btn" onclick="toggleTheme()" title="Toggle light/dark">☀️</button>
           <button class="topbar-btn topbar-btn-ghost">⊞ Filter</button>
           <button class="topbar-btn topbar-btn-primary" onclick="openAddCustomer()">+ Add Customer</button>
         </div>
@@ -562,7 +562,7 @@ html, body {
           <div><div class="topbar-title" id="tb-detail-title">Customer</div><div class="topbar-subtitle">Customer Detail</div></div>
         </div>
         <div class="topbar-actions">
-          <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">🌙</button>
+          <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">☀️</button>
           <button class="topbar-btn topbar-btn-ghost" onclick="openEditCustomer()">⊞ Edit</button>
           <button class="topbar-btn topbar-btn-danger modal-btn-danger" style="height:34px;padding:0 14px;font-size:12px;" onclick="deleteCurrentCustomer()">🗑 Delete</button>
         </div>
@@ -760,7 +760,7 @@ function toggleTheme() {
 /* ─── view routing ─── */
 let currentView = 'list';
 const NAV_MAP = {
-  'list':         ['nav-dashboard','nav-customers','nav-adoption'],
+  'list':         ['nav-customers'],
   'kanban':       ['nav-kanban'],
   'backlog':      ['nav-backlog'],
   'settings':     ['nav-settings'],
@@ -1248,7 +1248,7 @@ function goBack() {
   document.getElementById('view-detail').hidden = true;
   // restore active nav
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('nav-dashboard').classList.add('active');
+  document.getElementById('nav-customers').classList.add('active');
 }
 
 /* ─── status picker ─── */
@@ -1343,6 +1343,7 @@ function buildBacklog() {
 }
 
 buildList();
+showView('list');
 
 /* ─── kanban board ─── */
 const KANBAN_COLS = [
