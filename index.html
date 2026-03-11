@@ -1117,6 +1117,35 @@ html, body {
 /* ── Risk legend ── */
 .compete-legend { display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
 .compete-legend-item { display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted); }
+
+/* ── Day to Day Intelligence ── */
+.intel-input-card { background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px; }
+.intel-input-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);margin-bottom:8px; }
+.intel-textarea { width:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;font-family:inherit;color:var(--text);resize:vertical;min-height:90px;outline:none;transition:border-color .15s; }
+.intel-textarea:focus { border-color:var(--cyan); }
+.intel-analyze-btn { margin-top:10px;background:linear-gradient(135deg,#67e8f9,#6ee7b7);border:none;border-radius:10px;padding:9px 22px;font-size:13px;font-weight:700;color:#0f1923;cursor:pointer;transition:opacity .15s; }
+.intel-analyze-btn:disabled { opacity:.5;cursor:default; }
+.intel-feed { display:flex;flex-direction:column;gap:12px; }
+.intel-card { background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative; }
+.intel-card-header { display:flex;align-items:flex-start;gap:10px;margin-bottom:10px; }
+.intel-card-icon { font-size:22px;flex-shrink:0; }
+.intel-card-meta { flex:1; }
+.intel-card-customer { font-size:14px;font-weight:800;color:var(--text); }
+.intel-card-date { font-size:11px;color:var(--dim);margin-top:1px; }
+.intel-card-summary { font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px; }
+.intel-tags-row { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px; }
+.intel-tag { font-size:11px;font-weight:700;border-radius:7px;padding:3px 9px;white-space:nowrap; }
+.intel-tag-topic { background:rgba(103,232,249,.13);color:#67e8f9;border:1px solid rgba(103,232,249,.3); }
+.intel-tag-compete { background:rgba(252,165,165,.13);color:#fca5a5;border:1px solid rgba(252,165,165,.3); }
+.intel-tag-product { background:rgba(110,231,183,.13);color:#6ee7b7;border:1px solid rgba(110,231,183,.3); }
+.intel-actions-list { margin:0;padding-left:16px; }
+.intel-actions-list li { font-size:12px;color:var(--muted);margin-bottom:3px;line-height:1.4; }
+.intel-card-raw { font-size:11px;color:var(--dim);font-style:italic;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);line-height:1.4; }
+.intel-del-btn { position:absolute;top:12px;right:14px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:2px 5px;border-radius:6px;transition:color .15s; }
+.intel-del-btn:hover { color:#f87171; }
+.intel-empty { text-align:center;padding:48px 20px;color:var(--dim);font-size:13px; }
+.intel-analyzing { display:flex;align-items:center;gap:10px;color:var(--cyan);font-size:13px;font-weight:600;padding:12px 0; }
+.intel-spinner { width:18px;height:18px;border:2.5px solid rgba(103,232,249,.2);border-top-color:#67e8f9;border-radius:50%;animation:spin .7s linear infinite; }
 </style>
 </head>
 <body>
@@ -1151,6 +1180,10 @@ html, body {
       <a class="nav-item" id="nav-crm-activities" href="#" onclick="showView('crm-activities');return false;"><span class="nav-icon">◷</span> Activities</a>
       <a class="nav-item" id="nav-crm-compete"    href="#" onclick="showView('crm-compete');return false;"><span class="nav-icon">⚔</span> Compete Map</a>
       <a class="nav-item" id="nav-compete-plans" href="#" onclick="showView('compete-plans');return false;"><span class="nav-icon">📋</span> Compete Plans<span class="nav-badge" id="compete-plans-badge" style="display:none;"></span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Intelligence</div>
+      <a class="nav-item" id="nav-intelligence" href="#" onclick="showView('intelligence');return false;"><span class="nav-icon">💬</span> Day to Day<span class="nav-badge" id="intel-badge" style="display:none;"></span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
@@ -1439,6 +1472,23 @@ html, body {
           <button class="settings-btn settings-btn-primary" onclick="openCompetePlanModal()">+ New Plan</button>
         </div>
         <div id="cp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <!-- DAY TO DAY INTELLIGENCE VIEW -->
+      <div class="view" id="view-intelligence" hidden>
+        <div class="crm-topbar">
+          <div class="crm-topbar-title">💬 Day to Day Intelligence</div>
+          <select id="intel-filter-customer" onchange="buildIntelFeed()">
+            <option value="">All Customers</option>
+          </select>
+        </div>
+        <div class="intel-input-card">
+          <div class="intel-input-label">Paste a WhatsApp message or field note</div>
+          <textarea id="intel-raw-input" class="intel-textarea" placeholder='e.g. "AMdocs told me they are using n8n to build an HR agent"'></textarea>
+          <div id="intel-analyzing-status" style="display:none;" class="intel-analyzing"><div class="intel-spinner"></div>Analyzing with AI…</div>
+          <button class="intel-analyze-btn" id="intel-analyze-btn" onclick="analyzeIntelNote()">✦ Analyze &amp; Save</button>
+        </div>
+        <div class="intel-feed" id="intel-feed"></div>
       </div>
 
       <!-- CRM: COMPETE MAP VIEW -->
@@ -2029,12 +2079,13 @@ const NAV_MAP = {
   'settings':     ['nav-settings'],
   'integrations': ['nav-integrations'],
   'reports':      ['nav-reports'],
+  'intelligence': ['nav-intelligence'],
 };
 
 function showView(name) {
   // hide all except detail which is managed separately
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(id => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = true;
   });
@@ -2067,6 +2118,9 @@ function showView(name) {
   } else if (name === 'reports') {
     document.getElementById('view-reports').hidden = false;
     populateReportSelect();
+  } else if (name === 'intelligence') {
+    document.getElementById('view-intelligence').hidden = false;
+    buildIntelFeed();
   }
 }
 
@@ -2464,7 +2518,7 @@ function goToDetail(id) {
   clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(v => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.hidden = true;
   });
@@ -3631,6 +3685,7 @@ async function _ghSave() {
       competeOrgs: RAW_DATA.competeOrgs,
       competePlans: RAW_DATA.competePlans,
       settings: RAW_DATA.settings,
+      intelligence: RAW_DATA.intelligence,
     };
     const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
       method: 'PATCH',
@@ -4022,6 +4077,7 @@ function _initCrmData() {
   if (!RAW_DATA.competeOrgs)   RAW_DATA.competeOrgs   = [];
   if (!RAW_DATA.competePlans)  RAW_DATA.competePlans  = [];
   if (!RAW_DATA.settings)      RAW_DATA.settings      = {};
+  if (!RAW_DATA.intelligence)  RAW_DATA.intelligence  = [];
 }
 
 // Call immediately if RAW_DATA already loaded
@@ -4293,7 +4349,7 @@ function buildCrmActivities() {
     _crmViews.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
 
     if (name === 'crm-contacts' || name === 'crm-opps' || name === 'crm-activities') {
-      ['view-list','view-kanban','view-backlog','view-settings','view-reports'].forEach(id => {
+      ['view-list','view-kanban','view-backlog','view-settings','view-reports','view-intelligence'].forEach(id => {
         const el = document.getElementById(id); if (el) el.hidden = true;
       });
       document.getElementById('view-detail').hidden = true;
@@ -4663,6 +4719,186 @@ _initCrmData();
   const oppBadge = document.getElementById('crm-opps-badge');
   if (oppBadge && closingMonth > 0) { oppBadge.textContent = closingMonth; oppBadge.style.display = ''; }
 })();
+
+/* ─── Day to Day Intelligence ─── */
+
+const INTEL_SYSTEM_PROMPT = `You are a Microsoft sales intelligence assistant helping a CSM (Customer Success Manager) extract structured insights from informal field notes or WhatsApp messages.
+
+Your job:
+1. Identify the customer name mentioned.
+2. Identify the main topic or use case discussed.
+3. Identify ANY competitors to Microsoft products. You must be smart about this — examples:
+   - n8n, Zapier, Make, Integromat → compete with Copilot Studio / Power Automate
+   - ServiceNow, Salesforce, HubSpot → compete with Copilot Studio / Dynamics 365
+   - Google Workspace, Google Docs, Gmail, Google Meet → compete with Microsoft 365 / Copilot 365
+   - Slack → competes with Microsoft Teams
+   - Zoom → competes with Microsoft Teams
+   - Notion, Confluence, Coda → compete with SharePoint / Microsoft 365
+   - AWS, GCP → compete with Azure
+   - ChatGPT (direct), OpenAI API, Gemini, Cohere, Mistral, Perplexity → compete with Microsoft Copilot 365 / Azure OpenAI
+   - GitHub Actions, Jenkins, GitLab CI → compete with Azure DevOps / GitHub
+   - Jira, Linear, Monday.com, Asana → compete with Azure DevOps / Microsoft Planner
+   - Workday, SAP SuccessFactors, BambooHR → compete with Dynamics 365 HR
+   - Snowflake, Databricks, Tableau, Power BI competitors → compete with Microsoft Fabric / Power BI
+   - Crowdstrike, Okta, Palo Alto → compete with Microsoft Security / Entra
+   - Docusign → competes with Microsoft Syntex / Purview
+   - Intercom, Zendesk → compete with Copilot Studio / Dynamics 365 Customer Service
+   - Figma → competes with Microsoft 365 (design/collaboration)
+   - Dropbox, Box → compete with OneDrive / SharePoint
+4. Identify which Microsoft products are relevant (from: Copilot 365, Copilot Studio, Microsoft Teams, Azure OpenAI, Microsoft 365, SharePoint, Dynamics 365, Azure DevOps, Microsoft Fabric, Microsoft Security, OneDrive, Power Automate, Power BI).
+5. Generate a short intelligence summary (2-3 sentences).
+6. Extract 1-3 actionable items for the CSM.
+
+Return ONLY valid JSON, no markdown:
+{
+  "customer": "customer name or null if not identifiable",
+  "topic": "short topic/use-case label",
+  "competitors": [{"name": "competitor name", "vsProduct": "Microsoft product it competes with", "risk": "high|medium|low"}],
+  "ourProducts": ["product1", "product2"],
+  "summary": "2-3 sentence intelligence summary",
+  "actionItems": ["action 1", "action 2"],
+  "icon": "a single relevant emoji for the topic"
+}`;
+
+async function analyzeIntelNote() {
+  const rawNote = (document.getElementById('intel-raw-input')?.value || '').trim();
+  if (!rawNote) return;
+
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) { alert('AI Worker URL not configured in Settings.'); return; }
+
+  const btn = document.getElementById('intel-analyze-btn');
+  const status = document.getElementById('intel-analyzing-status');
+  btn.disabled = true;
+  status.style.display = 'flex';
+
+  try {
+    const res = await fetch(`${workerBase}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: INTEL_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: rawNote }],
+      }),
+    });
+    if (!res.ok) throw new Error('Worker responded ' + res.status);
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON in AI response');
+    const parsed = JSON.parse(match[0]);
+
+    // Try to match customer name to existing customer
+    let customerId = null;
+    if (parsed.customer) {
+      const lower = parsed.customer.toLowerCase();
+      const match = Object.values(CUSTOMERS).find(c => c.name.toLowerCase().includes(lower) || lower.includes(c.name.toLowerCase()));
+      if (match) customerId = match.id;
+    }
+
+    _initCrmData();
+    const entry = {
+      id: 'intel-' + Date.now(),
+      createdAt: new Date().toISOString(),
+      rawNote,
+      customer: parsed.customer || null,
+      customerId,
+      topic: parsed.topic || null,
+      competitors: parsed.competitors || [],
+      ourProducts: parsed.ourProducts || [],
+      summary: parsed.summary || '',
+      actionItems: parsed.actionItems || [],
+      icon: parsed.icon || '💬',
+    };
+    RAW_DATA.intelligence.unshift(entry);
+    saveData();
+    document.getElementById('intel-raw-input').value = '';
+    buildIntelFeed();
+    _updateIntelBadge();
+  } catch (err) {
+    alert('Analysis failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    status.style.display = 'none';
+  }
+}
+
+function deleteIntelEntry(id) {
+  if (!RAW_DATA) return;
+  RAW_DATA.intelligence = (RAW_DATA.intelligence || []).filter(e => e.id !== id);
+  saveData();
+  buildIntelFeed();
+  _updateIntelBadge();
+}
+
+function buildIntelFeed() {
+  _initCrmData();
+  const feed = document.getElementById('intel-feed');
+  if (!feed) return;
+
+  // Populate customer filter
+  const filterSel = document.getElementById('intel-filter-customer');
+  if (filterSel) {
+    const chosen = filterSel.value;
+    filterSel.innerHTML = '<option value="">All Customers</option>' +
+      Object.values(CUSTOMERS).map(c => `<option value="${c.id}"${chosen===c.id?' selected':''}>${c.name}</option>`).join('');
+    filterSel.value = chosen;
+  }
+
+  let items = [...(RAW_DATA.intelligence || [])];
+  const filterVal = filterSel?.value || '';
+  if (filterVal) items = items.filter(e => e.customerId === filterVal);
+
+  if (!items.length) {
+    feed.innerHTML = '<div class="intel-empty">No intelligence notes yet.<br>Paste a WhatsApp message above and click Analyze.</div>';
+    return;
+  }
+
+  feed.innerHTML = items.map(entry => {
+    const date = new Date(entry.createdAt).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    const competeTags = (entry.competitors || []).map(c =>
+      `<span class="intel-tag intel-tag-compete" title="Competes with ${c.vsProduct}">⚔ ${c.name}</span>`
+    ).join('');
+    const productTags = (entry.ourProducts || []).map(p =>
+      `<span class="intel-tag intel-tag-product">◆ ${p}</span>`
+    ).join('');
+    const topicTag = entry.topic ? `<span class="intel-tag intel-tag-topic">◎ ${entry.topic}</span>` : '';
+    const actions = (entry.actionItems || []).length
+      ? `<ul class="intel-actions-list">${entry.actionItems.map(a => `<li>${a}</li>`).join('')}</ul>` : '';
+    const custName = entry.customer ? `<div class="intel-card-customer">${entry.customer}</div>` : '';
+    const competeVs = (entry.competitors || []).map(c =>
+      `<div style="font-size:11px;color:var(--dim);margin-top:2px;">⚔ <b>${c.name}</b> vs ${c.vsProduct} <span style="color:${c.risk==='high'?'#f87171':c.risk==='medium'?'#fbbf24':'#6ee7b7'}">(${c.risk} risk)</span></div>`
+    ).join('');
+    return `<div class="intel-card">
+      <button class="intel-del-btn" onclick="deleteIntelEntry('${entry.id}')" title="Delete">✕</button>
+      <div class="intel-card-header">
+        <div class="intel-card-icon">${entry.icon || '💬'}</div>
+        <div class="intel-card-meta">
+          ${custName}
+          <div class="intel-card-date">${date}</div>
+        </div>
+      </div>
+      <div class="intel-card-summary">${entry.summary}</div>
+      ${competeVs}
+      <div class="intel-tags-row" style="margin-top:10px;">${topicTag}${competeTags}${productTags}</div>
+      ${actions ? `<div style="margin-top:8px;">${actions}</div>` : ''}
+      <div class="intel-card-raw">"${entry.rawNote}"</div>
+    </div>`;
+  }).join('');
+}
+
+function _updateIntelBadge() {
+  const badge = document.getElementById('intel-badge');
+  if (!badge) return;
+  const count = (RAW_DATA && RAW_DATA.intelligence || []).length;
+  if (count > 0) { badge.textContent = count; badge.style.display = ''; }
+  else badge.style.display = 'none';
+}
+
+// Init badge on load
+(function() { if (RAW_DATA) _updateIntelBadge(); })();
 
 /* ═══════════════════════════════════════════════════════════════════
    COMPETE MAP MODULE
@@ -5659,7 +5895,7 @@ function clearCompeteBg() {
 
     if (name === 'crm-compete') {
       ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(id => {
+       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence'].forEach(id => {
         const el = document.getElementById(id); if (el) el.hidden = true;
       });
       document.getElementById('view-detail').hidden = true;
@@ -5880,7 +6116,7 @@ function _deleteCompetePlanById(id) {
     if (cpView && name !== 'compete-plans') cpView.hidden = true;
     if (name === 'compete-plans') {
       ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete'].forEach(id => {
+       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence'].forEach(id => {
         const el = document.getElementById(id); if (el) el.hidden = true;
       });
       document.getElementById('view-detail').hidden = true;
