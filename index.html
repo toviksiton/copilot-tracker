@@ -3639,7 +3639,7 @@ async function connectGist() {
   if (gist) { _ghGistId = gist; localStorage.setItem(GH_GIST_KEY, gist); _ghRawUrl = ''; localStorage.removeItem(GH_RAW_KEY); }
   ghStatus('Connecting…', 'var(--cyan)');
   const ok = await _ghLoad(false);
-  if (ok) { _recordSync(); ghStatus('✅ Connected and synced · ' + _lastSyncTime, '#6ee7b7'); ghUpdateUI(); updateKPIs(); buildList(); }
+  if (ok) { _recordSync(); ghStatus('✅ Connected and synced · ' + _lastSyncTime, '#6ee7b7'); ghUpdateUI(); updateKPIs(); buildList(); buildIntelFeed(); _updateIntelBadge(); }
   else if (!_ghGistId) ghStatus('⚠️ No Gist ID found. Enter a Gist ID or PAT to auto-discover.', '#f97316');
 }
 
@@ -3696,7 +3696,7 @@ async function _ghPoll() {
     localStorage.setItem(STORE_KEY, JSON.stringify(payload));
     _recordSync();
     ghStatus('🔄 Auto-synced · ' + _lastSyncTime, '#6ee7b7');
-    updateKPIs(); buildList();
+    updateKPIs(); buildList(); buildIntelFeed(); _updateIntelBadge();
   } catch(e) { /* silent — poll failures are non-fatal */ }
 }
 setInterval(_ghPoll, 30_000);
@@ -3776,7 +3776,7 @@ async function _ghLoad(silent) {
   const urlGist = new URLSearchParams(window.location.search).get('gist');
   if (urlGist) { _ghGistId = urlGist; localStorage.setItem(GH_GIST_KEY, urlGist); }
   const loaded = await _ghLoad(true);
-  if (loaded) { updateKPIs(); buildList(); }
+  if (loaded) { updateKPIs(); buildList(); buildIntelFeed(); _updateIntelBadge(); }
   ghUpdateUI();
   if (loaded && !_ghPat) ghStatus('👁 Read-only: enter a GitHub PAT in Settings to save changes.', '#f97316');
 })();
