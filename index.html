@@ -1296,6 +1296,21 @@ html, body {
             <input class="modal-input" id="ai-worker-url-input" placeholder="https://copilot-tracker-api.&lt;user&gt;.workers.dev" style="margin-bottom:8px;">
             <button class="settings-btn settings-btn-primary" onclick="saveWorkerUrl()">Save Worker URL</button>
             <div class="settings-divider"></div>
+            <div class="settings-section-title">AI System Prompts</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Customise the system prompts sent to Claude for each AI feature. Changes are saved in your browser.</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:6px;">Accelerate Plan</div>
+            <textarea id="accel-prompt-input" class="modal-input" rows="8" style="resize:vertical;font-size:11px;font-family:monospace;line-height:1.5;margin-bottom:8px;width:100%;box-sizing:border-box;"></textarea>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+              <button class="settings-btn settings-btn-primary" onclick="saveAccelPrompt()">Save</button>
+              <button class="settings-btn" onclick="resetAccelPrompt()">Reset to Default</button>
+            </div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:6px;">Compete Reassessment</div>
+            <textarea id="compete-prompt-input" class="modal-input" rows="4" style="resize:vertical;font-size:11px;font-family:monospace;line-height:1.5;margin-bottom:8px;width:100%;box-sizing:border-box;"></textarea>
+            <div style="display:flex;gap:8px;margin-bottom:4px;">
+              <button class="settings-btn settings-btn-primary" onclick="saveCompetePrompt()">Save</button>
+              <button class="settings-btn" onclick="resetCompetePrompt()">Reset to Default</button>
+            </div>
+            <div class="settings-divider"></div>
             <div class="settings-section-title">Danger Zone</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Clear all customer data from this browser. This cannot be undone.</div>
             <button class="settings-btn settings-btn-danger" onclick="clearAllData()">⚠ Clear All Data</button>
@@ -3226,56 +3241,7 @@ async function generateExceleratePlan() {
     return `## ${cat.icon || ''} ${cat.title} (${done}/${cat.items.length} done)\nOpen items:\n${open || '    (all done)'}`;
   }).join('\n\n');
 
-  const systemPrompt = `You are a senior Microsoft 365 Copilot and Copilot Studio adoption expert and CSM consultant.
-Your job is to create an actionable, prioritised "Excelerate Plan" — a concrete roadmap to unblock and accelerate a customer's Microsoft 365 Copilot and Copilot Studio adoption.
-
-Use your deep knowledge of:
-- Microsoft 365 Copilot features, rollout best practices, licence management
-- Copilot Studio (Power Virtual Agents), connectors, custom agents
-- Change management, executive sponsorship, end-user enablement
-- Common blockers (security review, conditional access, tenant config, SSO, governance, etc.)
-- Microsoft adoption frameworks (FastTrack, Viva, CAF)
-
-WRITING STYLE — CRITICAL:
-- "category": short, plain-English title a non-technical manager instantly understands. Max 5 words. E.g. "Connect Business Tools", "Train & Onboard Teams", "Fix Security Blockers", "Expand AI Use Cases". NEVER use jargon acronyms as the title.
-- "context": 1-2 friendly sentences explaining WHY this matters to the business — no jargon opening. You MAY mention technical names inside the sentence.
-- "action" in each step: one clear imperative sentence a human can read at a glance, e.g. "Run a 2-day use-case discovery workshop with IT". Keep it under 20 words.
-- "detail" in each step: this IS the technical deep-dive. Be as specific and technical as needed — admin steps, API names, config details, timelines, success criteria.
-- "executiveSummary": write for a senior business executive. Plain language, business impact focus. No raw acronyms without explanation.
-- "currentHealthAssessment": honest, friendly, like a doctor giving a check-up. Start with what's going well, then what needs attention.
-- "expectedOutcome": one sentence describing the business benefit, not the technical state.
-- "quickWins": action phrased as something you can do TODAY or THIS WEEK, in plain language.
-- "successMetrics": measurable, human-readable, e.g. "50% of licensed users active within 6 weeks".
-- "riskFlags": written as a risk to the business, not a technical status. E.g. "Renewal at risk if adoption stays below 30% by Q3".
-
-IMPORTANT: Identify which tasks are TECHNICAL (involve admin config, dev work, API, tenant settings, security, deployment, integrations) vs non-technical (training, communication, governance, workshops).
-
-Respond ONLY with a valid JSON object in this exact structure (no markdown, no preamble):
-{
-  "executiveSummary": "3-4 sentence strategic summary in plain business language",
-  "currentHealthAssessment": "honest 2-3 sentence assessment starting with positives",
-  "priorityActions": [
-    {
-      "category": "Short plain-English title (max 5 words)",
-      "icon": "relevant emoji",
-      "isTechnical": true,
-      "urgency": "critical|high|medium",
-      "context": "1-2 friendly sentences on business importance",
-      "openItems": ["item label 1", "item label 2"],
-      "steps": [
-        {"step": 1, "action": "Clear imperative sentence under 20 words", "owner": "CSM|Technical|Customer|Microsoft", "effort": "Low|Medium|High", "detail": "concrete technical how-to with specifics"}
-      ],
-      "timeline": "e.g. 1-2 weeks",
-      "expectedOutcome": "business benefit in one sentence"
-    }
-  ],
-  "quickWins": [
-    {"action": "Plain-language action doable this week", "impact": "business benefit", "timeline": "days|1 week"}
-  ],
-  "successMetrics": ["measurable human-readable metric"],
-  "riskFlags": ["business-level risk description"],
-  "nextCheckpoint": "recommended next review cadence and focus"
-}`;
+  const systemPrompt = localStorage.getItem(ACCEL_PROMPT_STORE) || DEFAULT_ACCEL_PROMPT;
 
   const userMsg = `Generate an Excelerate Plan for this customer:
 
@@ -3478,7 +3444,62 @@ function renderExceleratePlan(id, plan) {
 }
 
 /* ─── AI Chat Worker URL (declared early for ghUpdateUI) ─── */
-const AI_WORKER_URL_STORE = 'copilot-tracker-ai-worker-url';
+const AI_WORKER_URL_STORE    = 'copilot-tracker-ai-worker-url';
+const ACCEL_PROMPT_STORE     = 'copilot-tracker-accel-prompt';
+const COMPETE_PROMPT_STORE   = 'copilot-tracker-compete-prompt';
+
+const DEFAULT_ACCEL_PROMPT = `You are a senior Microsoft 365 Copilot and Copilot Studio adoption expert and CSM consultant.
+Your job is to create an actionable, prioritised "Excelerate Plan" — a concrete roadmap to unblock and accelerate a customer's Microsoft 365 Copilot and Copilot Studio adoption.
+
+Use your deep knowledge of:
+- Microsoft 365 Copilot features, rollout best practices, licence management
+- Copilot Studio (Power Virtual Agents), connectors, custom agents
+- Change management, executive sponsorship, end-user enablement
+- Common blockers (security review, conditional access, tenant config, SSO, governance, etc.)
+- Microsoft adoption frameworks (FastTrack, Viva, CAF)
+
+WRITING STYLE — CRITICAL:
+- "category": short, plain-English title a non-technical manager instantly understands. Max 5 words. E.g. "Connect Business Tools", "Train & Onboard Teams", "Fix Security Blockers", "Expand AI Use Cases". NEVER use jargon acronyms as the title.
+- "context": 1-2 friendly sentences explaining WHY this matters to the business — no jargon opening. You MAY mention technical names inside the sentence.
+- "action" in each step: one clear imperative sentence a human can read at a glance, e.g. "Run a 2-day use-case discovery workshop with IT". Keep it under 20 words.
+- "detail" in each step: this IS the technical deep-dive. Be as specific and technical as needed — admin steps, API names, config details, timelines, success criteria.
+- "executiveSummary": write for a senior business executive. Plain language, business impact focus. No raw acronyms without explanation.
+- "currentHealthAssessment": honest, friendly, like a doctor giving a check-up. Start with what's going well, then what needs attention.
+- "expectedOutcome": one sentence describing the business benefit, not the technical state.
+- "quickWins": action phrased as something you can do TODAY or THIS WEEK, in plain language.
+- "successMetrics": measurable, human-readable, e.g. "50% of licensed users active within 6 weeks".
+- "riskFlags": written as a risk to the business, not a technical status. E.g. "Renewal at risk if adoption stays below 30% by Q3".
+
+IMPORTANT: Identify which tasks are TECHNICAL (involve admin config, dev work, API, tenant settings, security, deployment, integrations) vs non-technical (training, communication, governance, workshops).
+
+Respond ONLY with a valid JSON object in this exact structure (no markdown, no preamble):
+{
+  "executiveSummary": "3-4 sentence strategic summary in plain business language",
+  "currentHealthAssessment": "honest 2-3 sentence assessment starting with positives",
+  "priorityActions": [
+    {
+      "category": "Short plain-English title (max 5 words)",
+      "icon": "relevant emoji",
+      "isTechnical": true,
+      "urgency": "critical|high|medium",
+      "context": "1-2 friendly sentences on business importance",
+      "openItems": ["item label 1", "item label 2"],
+      "steps": [
+        {"step": 1, "action": "Clear imperative sentence under 20 words", "owner": "CSM|Technical|Customer|Microsoft", "effort": "Low|Medium|High", "detail": "concrete technical how-to with specifics"}
+      ],
+      "timeline": "e.g. 1-2 weeks",
+      "expectedOutcome": "business benefit in one sentence"
+    }
+  ],
+  "quickWins": [
+    {"action": "Plain-language action doable this week", "impact": "business benefit", "timeline": "days|1 week"}
+  ],
+  "successMetrics": ["measurable human-readable metric"],
+  "riskFlags": ["business-level risk description"],
+  "nextCheckpoint": "recommended next review cadence and focus"
+}`;
+
+const DEFAULT_COMPETE_PROMPT = `You are a Microsoft competitive intelligence expert. Given an org chart, surface the most relevant non-Microsoft competitors that each department/person is likely to evaluate or already use for Microsoft products. Return ONLY valid JSON, no markdown.`;
 
 /* ─── GitHub Gist sync ─── */
 const GH_PAT_KEY  = 'copilot-tracker-gh-pat';
@@ -3523,6 +3544,10 @@ function ghUpdateUI() {
   if (gistInput) gistInput.value = _ghGistId;
   const aiWorkerInput = document.getElementById('ai-worker-url-input');
   if (aiWorkerInput) aiWorkerInput.value = localStorage.getItem(AI_WORKER_URL_STORE) || '';
+  const accelInput = document.getElementById('accel-prompt-input');
+  if (accelInput) accelInput.value = localStorage.getItem(ACCEL_PROMPT_STORE) || DEFAULT_ACCEL_PROMPT;
+  const competeInput = document.getElementById('compete-prompt-input');
+  if (competeInput) competeInput.value = localStorage.getItem(COMPETE_PROMPT_STORE) || DEFAULT_COMPETE_PROMPT;
 }
 
 async function connectGist() {
@@ -3876,6 +3901,32 @@ function saveWorkerUrl() {
   if (u) localStorage.setItem(AI_WORKER_URL_STORE, u);
   else localStorage.removeItem(AI_WORKER_URL_STORE);
   ghStatus('Worker URL saved.', 'var(--mint)');
+}
+
+function saveAccelPrompt() {
+  const v = document.getElementById('accel-prompt-input')?.value.trim();
+  if (v) localStorage.setItem(ACCEL_PROMPT_STORE, v);
+  else localStorage.removeItem(ACCEL_PROMPT_STORE);
+  ghStatus('Accelerate Plan prompt saved.', 'var(--mint)');
+}
+function resetAccelPrompt() {
+  localStorage.removeItem(ACCEL_PROMPT_STORE);
+  const el = document.getElementById('accel-prompt-input');
+  if (el) el.value = DEFAULT_ACCEL_PROMPT;
+  ghStatus('Accelerate Plan prompt reset to default.', 'var(--mint)');
+}
+
+function saveCompetePrompt() {
+  const v = document.getElementById('compete-prompt-input')?.value.trim();
+  if (v) localStorage.setItem(COMPETE_PROMPT_STORE, v);
+  else localStorage.removeItem(COMPETE_PROMPT_STORE);
+  ghStatus('Compete Reassessment prompt saved.', 'var(--mint)');
+}
+function resetCompetePrompt() {
+  localStorage.removeItem(COMPETE_PROMPT_STORE);
+  const el = document.getElementById('compete-prompt-input');
+  if (el) el.value = DEFAULT_COMPETE_PROMPT;
+  ghStatus('Compete Reassessment prompt reset to default.', 'var(--mint)');
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -5473,7 +5524,7 @@ async function _runCompeteReassessment() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-        system: `You are a Microsoft competitive intelligence expert. Given an org chart, surface the most relevant non-Microsoft competitors that each department/person is likely to evaluate or already use for Microsoft products. Return ONLY valid JSON, no markdown.`,
+        system: localStorage.getItem(COMPETE_PROMPT_STORE) || DEFAULT_COMPETE_PROMPT,
         messages: [{
           role: 'user',
           content: `Here is the org chart:\n\n${deptSummaries}\n\n` +
