@@ -232,6 +232,14 @@ html, body {
 .cust-bar-track { height:4px;background:var(--border);border-radius:99px;overflow:hidden; }
 .cust-bar-fill { height:100%;border-radius:99px; }
 .cust-pill { padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;flex-shrink:0;letter-spacing:.3px;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px; }
+.cust-dup-btn {
+  flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);
+  background:var(--btn-ghost-bg);color:var(--muted);font-size:13px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.cust-card:hover .cust-dup-btn { display:flex; }
+.cust-dup-btn:hover { background:rgba(103,232,249,.12);color:var(--cyan);border-color:rgba(103,232,249,.3); }
 .cust-arrow { font-size:18px;color:var(--dim);flex-shrink:0;transition:color .15s,transform .15s; }
 .cust-card:hover .cust-arrow { color:var(--cyan);transform:translateX(4px); }
 
@@ -722,6 +730,9 @@ html, body {
 
   /* AI FAB: move up a bit to avoid iOS home bar */
   #ai-fab { bottom:24px;right:16px; }
+
+  /* duplicate button: always visible on mobile (no hover) */
+  .cust-dup-btn { display:flex; }
 }
 
 @media (max-width: 480px) {
@@ -2338,6 +2349,7 @@ function buildList() {
         <div class="cust-bar-track"><div class="cust-bar-fill" style="width:${c.adoption}%;background:${c.status==='on-track'?'#6ee7b7':c.status==='at-risk'?'#fca5a5':'#fda4af'};"></div></div>
       </div>
       <div class="cust-pill" style="${c.status==='on-track'?'background:rgba(110,231,183,.15);color:#6ee7b7;border:1.5px solid rgba(110,231,183,.35);':c.status==='at-risk'?'background:rgba(252,165,165,.15);color:#fca5a5;border:1.5px solid rgba(252,165,165,.35);':'background:rgba(253,164,175,.15);color:#fda4af;border:1.5px solid rgba(253,164,175,.35);'}">${c.status==='on-track'?'● On Track':c.status==='at-risk'?'● At Risk':'● Needs Attn'}</div>
+      <button class="cust-dup-btn" title="Duplicate customer" onclick="event.stopPropagation();duplicateCustomer('${c.id}')">⧉</button>
       <div class="cust-arrow">›</div>
     </div>`).join('');
 }
@@ -2964,6 +2976,22 @@ function saveCustomer() {
   updateKPIs();
   buildList();
   if (editingCustomerId) goToDetail(editingCustomerId);
+}
+
+function duplicateCustomer(id) {
+  const srcRaw = RAW_DATA && RAW_DATA.customers.find(c => c.id === id);
+  if (!srcRaw) return;
+  const copy = JSON.parse(JSON.stringify(srcRaw));
+  copy.id = 'cust-' + Date.now();
+  copy.name = srcRaw.name + ' (Copy)';
+  // reset every item to pending
+  (copy.categories || []).forEach(cat => {
+    (cat.items || []).forEach(item => { item.status = 'pending'; });
+  });
+  RAW_DATA.customers.push(copy);
+  CUSTOMERS[copy.id] = mapCustomer(copy, RAW_DATA.customers.length - 1);
+  saveData();
+  buildList();
 }
 
 function deleteCurrentCustomer() {
