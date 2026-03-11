@@ -3241,7 +3241,7 @@ async function generateExceleratePlan() {
     return `## ${cat.icon || ''} ${cat.title} (${done}/${cat.items.length} done)\nOpen items:\n${open || '    (all done)'}`;
   }).join('\n\n');
 
-  const systemPrompt = localStorage.getItem(ACCEL_PROMPT_STORE) || DEFAULT_ACCEL_PROMPT;
+  const systemPrompt = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.accelPrompt) || DEFAULT_ACCEL_PROMPT;
 
   const userMsg = `Generate an Excelerate Plan for this customer:
 
@@ -3445,8 +3445,6 @@ function renderExceleratePlan(id, plan) {
 
 /* ─── AI Chat Worker URL (declared early for ghUpdateUI) ─── */
 const AI_WORKER_URL_STORE    = 'copilot-tracker-ai-worker-url';
-const ACCEL_PROMPT_STORE     = 'copilot-tracker-accel-prompt';
-const COMPETE_PROMPT_STORE   = 'copilot-tracker-compete-prompt';
 
 const DEFAULT_ACCEL_PROMPT = `You are a senior Microsoft 365 Copilot and Copilot Studio adoption expert and CSM consultant.
 Your job is to create an actionable, prioritised "Excelerate Plan" — a concrete roadmap to unblock and accelerate a customer's Microsoft 365 Copilot and Copilot Studio adoption.
@@ -3545,9 +3543,9 @@ function ghUpdateUI() {
   const aiWorkerInput = document.getElementById('ai-worker-url-input');
   if (aiWorkerInput) aiWorkerInput.value = localStorage.getItem(AI_WORKER_URL_STORE) || '';
   const accelInput = document.getElementById('accel-prompt-input');
-  if (accelInput) accelInput.value = localStorage.getItem(ACCEL_PROMPT_STORE) || DEFAULT_ACCEL_PROMPT;
+  if (accelInput) accelInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.accelPrompt) || DEFAULT_ACCEL_PROMPT;
   const competeInput = document.getElementById('compete-prompt-input');
-  if (competeInput) competeInput.value = localStorage.getItem(COMPETE_PROMPT_STORE) || DEFAULT_COMPETE_PROMPT;
+  if (competeInput) competeInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.competePrompt) || DEFAULT_COMPETE_PROMPT;
 }
 
 async function connectGist() {
@@ -3632,6 +3630,7 @@ async function _ghSave() {
       activities: RAW_DATA.activities,
       competeOrgs: RAW_DATA.competeOrgs,
       competePlans: RAW_DATA.competePlans,
+      settings: RAW_DATA.settings,
     };
     const res = await fetch('https://api.github.com/gists/' + _ghGistId, {
       method: 'PATCH',
@@ -3904,26 +3903,38 @@ function saveWorkerUrl() {
 }
 
 function saveAccelPrompt() {
+  if (!RAW_DATA) return;
+  _initCrmData();
   const v = document.getElementById('accel-prompt-input')?.value.trim();
-  if (v) localStorage.setItem(ACCEL_PROMPT_STORE, v);
-  else localStorage.removeItem(ACCEL_PROMPT_STORE);
+  if (v && v !== DEFAULT_ACCEL_PROMPT) RAW_DATA.settings.accelPrompt = v;
+  else delete RAW_DATA.settings.accelPrompt;
+  saveData();
   ghStatus('Accelerate Plan prompt saved.', 'var(--mint)');
 }
 function resetAccelPrompt() {
-  localStorage.removeItem(ACCEL_PROMPT_STORE);
+  if (!RAW_DATA) return;
+  _initCrmData();
+  delete RAW_DATA.settings.accelPrompt;
+  saveData();
   const el = document.getElementById('accel-prompt-input');
   if (el) el.value = DEFAULT_ACCEL_PROMPT;
   ghStatus('Accelerate Plan prompt reset to default.', 'var(--mint)');
 }
 
 function saveCompetePrompt() {
+  if (!RAW_DATA) return;
+  _initCrmData();
   const v = document.getElementById('compete-prompt-input')?.value.trim();
-  if (v) localStorage.setItem(COMPETE_PROMPT_STORE, v);
-  else localStorage.removeItem(COMPETE_PROMPT_STORE);
+  if (v && v !== DEFAULT_COMPETE_PROMPT) RAW_DATA.settings.competePrompt = v;
+  else delete RAW_DATA.settings.competePrompt;
+  saveData();
   ghStatus('Compete Reassessment prompt saved.', 'var(--mint)');
 }
 function resetCompetePrompt() {
-  localStorage.removeItem(COMPETE_PROMPT_STORE);
+  if (!RAW_DATA) return;
+  _initCrmData();
+  delete RAW_DATA.settings.competePrompt;
+  saveData();
   const el = document.getElementById('compete-prompt-input');
   if (el) el.value = DEFAULT_COMPETE_PROMPT;
   ghStatus('Compete Reassessment prompt reset to default.', 'var(--mint)');
@@ -4010,6 +4021,7 @@ function _initCrmData() {
   if (!RAW_DATA.activities)    RAW_DATA.activities    = [];
   if (!RAW_DATA.competeOrgs)   RAW_DATA.competeOrgs   = [];
   if (!RAW_DATA.competePlans)  RAW_DATA.competePlans  = [];
+  if (!RAW_DATA.settings)      RAW_DATA.settings      = {};
 }
 
 // Call immediately if RAW_DATA already loaded
@@ -5524,7 +5536,7 @@ async function _runCompeteReassessment() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-        system: localStorage.getItem(COMPETE_PROMPT_STORE) || DEFAULT_COMPETE_PROMPT,
+        system: (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.competePrompt) || DEFAULT_COMPETE_PROMPT,
         messages: [{
           role: 'user',
           content: `Here is the org chart:\n\n${deptSummaries}\n\n` +
