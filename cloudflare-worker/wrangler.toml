@@ -8,7 +8,7 @@ compatibility_date = "2024-09-23"
 # Vars (non-secret). GIST_ID can go here since it's not sensitive.
 # GH_PAT must be set as a secret (see README).
 [vars]
-GIST_ID = "26c1560f811785eb9098b3ad16277690"   # ← paste your Gist ID here, OR set via: wrangler secret put GIST_ID
+GIST_ID = "ec3432a88aed6c7b25d699f21bee270d"   # ← paste your Gist ID here, OR set via: wrangler secret put GIST_ID
 
 # KV namespace for user permissions (auth).
 # Create it once with: wrangler kv:namespace create PERMISSIONS_KV
