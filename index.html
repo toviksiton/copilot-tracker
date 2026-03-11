@@ -1213,6 +1213,7 @@ html, body {
         <div class="topbar-actions">
           <button class="theme-toggle" onclick="toggleTheme()" id="toggle-btn2" title="Toggle light/dark">☀️</button>
           <button class="topbar-btn topbar-btn-ghost" onclick="openEditCustomer()">⊞ Edit</button>
+          <button class="topbar-btn topbar-btn-ghost" onclick="duplicateCustomer(currentDetailId)" title="Duplicate customer (all items reset to pending)">⧉ Duplicate</button>
           <button class="topbar-btn topbar-btn-danger modal-btn-danger" style="height:34px;padding:0 14px;font-size:12px;" onclick="deleteCurrentCustomer()">🗑 Delete</button>
         </div>
       </div>
@@ -2992,6 +2993,7 @@ function duplicateCustomer(id) {
   CUSTOMERS[copy.id] = mapCustomer(copy, RAW_DATA.customers.length - 1);
   saveData();
   buildList();
+  goToDetail(copy.id);
 }
 
 function deleteCurrentCustomer() {
