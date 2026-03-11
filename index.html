@@ -1343,6 +1343,29 @@ html, body {
               <button class="settings-btn settings-btn-primary" onclick="saveCompetePrompt()">Save</button>
               <button class="settings-btn" onclick="resetCompetePrompt()">Reset to Default</button>
             </div>
+            <div style="margin-top:16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:6px;">Day to Day Intelligence</div>
+            <textarea id="intel-prompt-input" class="modal-input" rows="6" style="resize:vertical;font-size:11px;font-family:monospace;line-height:1.5;margin-bottom:8px;width:100%;box-sizing:border-box;"></textarea>
+            <div style="display:flex;gap:8px;margin-bottom:4px;">
+              <button class="settings-btn settings-btn-primary" onclick="saveIntelPrompt()">Save</button>
+              <button class="settings-btn" onclick="resetIntelPrompt()">Reset to Default</button>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-section-title">WhatsApp Integration</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Send field notes directly from WhatsApp to Day to Day Intelligence — no copy-paste needed. Uses Twilio's WhatsApp sandbox.</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:6px;">Webhook URL</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+              <input class="modal-input" id="wa-webhook-url-display" readonly style="flex:1;font-size:11px;font-family:monospace;cursor:text;" placeholder="Enter your Worker URL in AI Assistant above first">
+              <button class="settings-btn" onclick="copyWaWebhook()" title="Copy">⎘ Copy</button>
+            </div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+              <b style="color:var(--text);">Setup (2 minutes):</b><br>
+              1. Go to <b>console.twilio.com</b> → Messaging → Try it Out → Send a WhatsApp message<br>
+              2. Follow the sandbox join instructions (send a code to the Twilio number)<br>
+              3. In "When a message comes in", paste the Webhook URL above<br>
+              4. Set Method to <b>HTTP POST</b> and save<br>
+              5. Add <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;">TWILIO_AUTH_TOKEN</code> as a Worker secret for security (optional but recommended)<br>
+              6. Send any field note from WhatsApp — it auto-appears in Day to Day Intelligence
+            </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">Danger Zone</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Clear all customer data from this browser. This cannot be undone.</div>
@@ -3600,6 +3623,13 @@ function ghUpdateUI() {
   if (accelInput) accelInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.accelPrompt) || DEFAULT_ACCEL_PROMPT;
   const competeInput = document.getElementById('compete-prompt-input');
   if (competeInput) competeInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.competePrompt) || DEFAULT_COMPETE_PROMPT;
+  const intelInput = document.getElementById('intel-prompt-input');
+  if (intelInput) intelInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.intelPrompt) || DEFAULT_INTEL_PROMPT;
+  const waUrlInput = document.getElementById('wa-webhook-url-display');
+  if (waUrlInput) {
+    const workerUrl = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+    waUrlInput.value = workerUrl ? `${workerUrl}/whatsapp` : '';
+  }
 }
 
 async function connectGist() {
@@ -3993,6 +4023,31 @@ function resetCompetePrompt() {
   const el = document.getElementById('compete-prompt-input');
   if (el) el.value = DEFAULT_COMPETE_PROMPT;
   ghStatus('Compete Reassessment prompt reset to default.', 'var(--mint)');
+}
+
+function saveIntelPrompt() {
+  if (!RAW_DATA) return;
+  _initCrmData();
+  const v = document.getElementById('intel-prompt-input')?.value.trim();
+  if (v && v !== DEFAULT_INTEL_PROMPT) RAW_DATA.settings.intelPrompt = v;
+  else delete RAW_DATA.settings.intelPrompt;
+  saveData();
+  ghStatus('Day to Day Intelligence prompt saved.', 'var(--mint)');
+}
+function resetIntelPrompt() {
+  if (!RAW_DATA) return;
+  _initCrmData();
+  delete RAW_DATA.settings.intelPrompt;
+  saveData();
+  const el = document.getElementById('intel-prompt-input');
+  if (el) el.value = DEFAULT_INTEL_PROMPT;
+  ghStatus('Day to Day Intelligence prompt reset to default.', 'var(--mint)');
+}
+
+function copyWaWebhook() {
+  const el = document.getElementById('wa-webhook-url-display');
+  if (!el || !el.value) return;
+  navigator.clipboard.writeText(el.value).then(() => ghStatus('Webhook URL copied.', 'var(--mint)'));
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -4722,7 +4777,7 @@ _initCrmData();
 
 /* ─── Day to Day Intelligence ─── */
 
-const INTEL_SYSTEM_PROMPT = `You are a Microsoft sales intelligence assistant helping a CSM (Customer Success Manager) extract structured insights from informal field notes or WhatsApp messages.
+const DEFAULT_INTEL_PROMPT = `You are a Microsoft sales intelligence assistant helping a CSM (Customer Success Manager) extract structured insights from informal field notes or WhatsApp messages.
 
 Your job:
 1. Identify the customer name mentioned.
@@ -4779,7 +4834,7 @@ async function analyzeIntelNote() {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        system: INTEL_SYSTEM_PROMPT,
+        system: (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.intelPrompt) || DEFAULT_INTEL_PROMPT,
         messages: [{ role: 'user', content: rawNote }],
       }),
     });
@@ -4867,7 +4922,8 @@ function buildIntelFeed() {
     const topicTag = entry.topic ? `<span class="intel-tag intel-tag-topic">◎ ${entry.topic}</span>` : '';
     const actions = (entry.actionItems || []).length
       ? `<ul class="intel-actions-list">${entry.actionItems.map(a => `<li>${a}</li>`).join('')}</ul>` : '';
-    const custName = entry.customer ? `<div class="intel-card-customer">${entry.customer}</div>` : '';
+    const sourceBadge = entry.source === 'whatsapp' ? `<span style="font-size:10px;font-weight:700;background:rgba(37,211,102,.15);color:#25d366;border:1px solid rgba(37,211,102,.3);border-radius:5px;padding:1px 6px;margin-left:6px;">WhatsApp</span>` : '';
+    const custName = entry.customer ? `<div class="intel-card-customer">${entry.customer}${sourceBadge}</div>` : `<div class="intel-card-customer" style="color:var(--dim);">Unknown customer${sourceBadge}</div>`;
     const competeVs = (entry.competitors || []).map(c =>
       `<div style="font-size:11px;color:var(--dim);margin-top:2px;">⚔ <b>${c.name}</b> vs ${c.vsProduct} <span style="color:${c.risk==='high'?'#f87171':c.risk==='medium'?'#fbbf24':'#6ee7b7'}">(${c.risk} risk)</span></div>`
     ).join('');

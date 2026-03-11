@@ -537,6 +537,187 @@ async function handleAiProxy(request, env) {
   });
 }
 
+// ── Default intelligence system prompt (mirrors index.html) ──────────────────
+const DEFAULT_INTEL_PROMPT = `You are a Microsoft sales intelligence assistant helping a CSM extract structured insights from informal field notes or WhatsApp messages.
+
+Your job:
+1. Identify the customer name mentioned.
+2. Identify the main topic or use case discussed.
+3. Identify ANY competitors to Microsoft products. Be smart — examples:
+   - n8n, Zapier, Make, Integromat → Copilot Studio / Power Automate
+   - ServiceNow, Salesforce, HubSpot → Copilot Studio / Dynamics 365
+   - Google Workspace, Google Docs, Gmail, Google Meet → Microsoft 365 / Copilot 365
+   - Slack → Microsoft Teams
+   - Zoom → Microsoft Teams
+   - Notion, Confluence, Coda → SharePoint / Microsoft 365
+   - AWS, GCP → Azure
+   - ChatGPT, OpenAI API, Gemini, Cohere, Mistral, Perplexity → Copilot 365 / Azure OpenAI
+   - GitHub Actions, Jenkins, GitLab CI → Azure DevOps / GitHub
+   - Jira, Linear, Monday.com, Asana → Azure DevOps / Microsoft Planner
+   - Workday, SAP SuccessFactors, BambooHR → Dynamics 365 HR
+   - Snowflake, Databricks, Tableau → Microsoft Fabric / Power BI
+   - Crowdstrike, Okta, Palo Alto → Microsoft Security / Entra
+   - Docusign → Microsoft Syntex / Purview
+   - Intercom, Zendesk → Copilot Studio / Dynamics 365 Customer Service
+   - Dropbox, Box → OneDrive / SharePoint
+4. Identify relevant Microsoft products (from: Copilot 365, Copilot Studio, Microsoft Teams, Azure OpenAI, Microsoft 365, SharePoint, Dynamics 365, Azure DevOps, Microsoft Fabric, Microsoft Security, OneDrive, Power Automate, Power BI).
+5. Generate a short intelligence summary (2-3 sentences).
+6. Extract 1-3 actionable items for the CSM.
+
+Return ONLY valid JSON, no markdown:
+{
+  "customer": "customer name or null",
+  "topic": "short topic/use-case label",
+  "competitors": [{"name": "competitor", "vsProduct": "Microsoft product", "risk": "high|medium|low"}],
+  "ourProducts": ["product1"],
+  "summary": "2-3 sentence summary",
+  "actionItems": ["action 1"],
+  "icon": "single relevant emoji"
+}`;
+
+// ── Parse URL-encoded form body (Twilio sends application/x-www-form-urlencoded)
+function parseFormBody(text) {
+  const params = {};
+  for (const [k, v] of new URLSearchParams(text)) params[k] = v;
+  return params;
+}
+
+// ── Verify Twilio request signature ──────────────────────────────────────────
+async function verifyTwilioSignature(authToken, signature, url, params) {
+  // Build the string: URL + sorted key/value pairs
+  const sortedStr = Object.keys(params).sort().reduce((s, k) => s + k + params[k], url);
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(authToken),
+    { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sortedStr));
+  const computed = btoa(String.fromCharCode(...new Uint8Array(sig)));
+  return computed === signature;
+}
+
+// ── Save full data payload back to Gist ──────────────────────────────────────
+async function saveDataToGist(env, data) {
+  const { GIST_ID, GH_PAT } = env;
+  if (!GIST_ID || !GH_PAT) throw new Error('GIST_ID and GH_PAT required for saving');
+  const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `token ${GH_PAT}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'copilot-tracker-worker/1.0',
+    },
+    body: JSON.stringify({ files: { [GH_FILE]: { content: JSON.stringify(data, null, 2) } } }),
+  });
+  if (!res.ok) throw new Error(`Gist PATCH failed: ${res.status}`);
+  _cache = data;
+  _cacheTime = Date.now();
+}
+
+// ── TwiML response helper ─────────────────────────────────────────────────────
+function twiml(msg) {
+  const safe = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return new Response(
+    `<?xml version="1.0" encoding="UTF-8"?><Response>${msg ? `<Message>${safe}</Message>` : ''}</Response>`,
+    { headers: { 'Content-Type': 'text/xml' } }
+  );
+}
+
+// ── WhatsApp webhook (Twilio) ─────────────────────────────────────────────────
+async function handleWhatsApp(request, env) {
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+
+  const bodyText = await request.text();
+  const params   = parseFormBody(bodyText);
+
+  // Verify Twilio signature when auth token is configured
+  if (env.TWILIO_AUTH_TOKEN) {
+    const sig   = request.headers.get('X-Twilio-Signature') || '';
+    const valid = await verifyTwilioSignature(env.TWILIO_AUTH_TOKEN, sig, request.url, params);
+    if (!valid) return new Response('Forbidden', { status: 403 });
+  }
+
+  const messageBody = (params.Body || '').trim();
+  const profileName = params.ProfileName || params.From || '';
+  if (!messageBody) return twiml('');
+
+  // Load current tracker data
+  let data;
+  try { data = await fetchData(env); }
+  catch (e) { return twiml(`⚠️ Could not load tracker data: ${e.message}`); }
+
+  if (!env.ANTHROPIC_API_KEY) return twiml('⚠️ AI not configured on the Worker.');
+
+  // Use custom prompt from Gist settings if set
+  const systemPrompt = data?.settings?.intelPrompt || DEFAULT_INTEL_PROMPT;
+
+  // Call Claude
+  let parsed;
+  try {
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: messageBody }],
+      }),
+    });
+    const aiData = await aiRes.json();
+    const text   = aiData.content?.[0]?.text || '';
+    const match  = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON in AI response');
+    parsed = JSON.parse(match[0]);
+  } catch (e) {
+    return twiml(`⚠️ AI analysis failed: ${e.message}`);
+  }
+
+  // Try to match customer to existing record
+  const customers = data.customers || [];
+  let customerId  = null;
+  if (parsed.customer) {
+    const lower = parsed.customer.toLowerCase();
+    const found = customers.find(c =>
+      c.name?.toLowerCase().includes(lower) || lower.includes(c.name?.toLowerCase())
+    );
+    if (found) customerId = found.id;
+  }
+
+  // Append intelligence entry
+  if (!data.intelligence) data.intelligence = [];
+  const entry = {
+    id:          'intel-' + Date.now(),
+    createdAt:   new Date().toISOString(),
+    source:      'whatsapp',
+    from:        profileName,
+    rawNote:     messageBody,
+    customer:    parsed.customer  || null,
+    customerId,
+    topic:       parsed.topic     || null,
+    competitors: parsed.competitors  || [],
+    ourProducts: parsed.ourProducts  || [],
+    summary:     parsed.summary   || '',
+    actionItems: parsed.actionItems || [],
+    icon:        parsed.icon      || '💬',
+  };
+  data.intelligence.unshift(entry);
+
+  // Save back to Gist
+  try { await saveDataToGist(env, data); }
+  catch (e) { return twiml(`⚠️ Saved failed: ${e.message}`); }
+
+  // Reply to sender with confirmation
+  const competes = (entry.competitors || []).map(c => `${c.name}`).join(', ');
+  const reply = `✅ Intel logged\nCustomer: ${entry.customer || '?'}\nTopic: ${entry.topic || '?'}${competes ? `\nCompete: ${competes}` : ''}`;
+  return twiml(reply);
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -548,6 +729,9 @@ export default {
 
     // AI proxy endpoint
     if (path === '/ai') return handleAiProxy(request, env);
+
+    // WhatsApp webhook (Twilio)
+    if (path === '/whatsapp') return handleWhatsApp(request, env);
 
     // Auth / permissions endpoints
     if (path === '/auth/request') return handleAuthRequest(request, env);
