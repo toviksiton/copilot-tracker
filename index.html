@@ -6449,9 +6449,10 @@ async function generateWsSuggestions(custId) {
   if (!box) return;
   box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Generating suggestions…</div>`;
 
-  const workerUrl = (localStorage.getItem('ai-worker-url') || '').replace(/\/$/, '');
+  const workerUrl = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
   if (!workerUrl) {
     box.innerHTML = `<div style="font-size:12px;color:#f87171;padding:8px 0;">⚠ No AI Worker URL configured in Settings.</div>`;
+    setTimeout(() => { if (box) box.innerHTML = ''; }, 4000);
     return;
   }
 
