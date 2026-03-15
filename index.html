@@ -646,6 +646,117 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
 .od-connected-box { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--done-bg); border-radius: 6px; margin-bottom: 14px; }
 .hbtn.od-on { background: rgba(16,124,16,.25); border-color: rgba(16,124,16,.5); }
 
+/* ─── Detail Tabs ─── */
+.detail-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--ms-border);}
+.detail-tab{padding:9px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--ms-muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit;transition:color .15s;}
+.detail-tab.active{color:var(--ms-blue);border-bottom-color:var(--ms-blue);}
+.detail-tab:hover:not(.active){color:var(--ms-text);}
+.detail-tab-panel{display:none;}
+.detail-tab-panel.active{display:block;}
+
+/* ─── Whitespace ─── */
+.ws-coverage{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:24px;}
+.ws-prod-card{background:#fff;border:1px solid var(--ms-border);border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.ws-prod-card.ws-owned{border-left:4px solid var(--done);}
+.ws-prod-card.ws-opp{border-left:4px solid #f59e0b;}
+.ws-prod-card.ws-approved{border-left:4px solid var(--ms-blue);}
+.ws-prod-card.ws-dismissed{opacity:.55;border-left:4px solid #d1d5db;}
+.ws-prod-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ws-prod-icon{font-size:20px;}.ws-prod-name{font-size:13px;font-weight:700;flex:1;}
+.ws-badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+.ws-badge.owned{background:#d1fae5;color:#065f46;}.ws-badge.opp{background:#fef3c7;color:#92400e;}
+.ws-badge.approved{background:#ede9fe;color:#5b21b6;}.ws-badge.dismissed{background:#f3f4f6;color:#6b7280;}
+.ws-prod-users{font-size:12px;color:var(--ms-muted);margin-bottom:6px;}
+.ws-prod-note{font-size:11px;color:#6d28d9;background:#f5f3ff;border-radius:6px;padding:5px 9px;margin-bottom:8px;}
+.ws-prod-actions{display:flex;gap:6px;}
+.ws-plan-bar{display:flex;align-items:center;gap:12px;margin:24px 0 12px;flex-wrap:wrap;}
+.ws-plan-bar h3{font-size:16px;font-weight:700;flex:1;}
+.ws-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);font-size:13px;}
+.ws-table th{background:#f8f9fa;padding:8px 14px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--ms-muted);border-bottom:1px solid var(--ms-border);white-space:nowrap;}
+.ws-table td{padding:10px 14px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+.ws-table tr:last-child td{border-bottom:none;}.ws-table tr:hover td{background:#fafafa;}
+.ws-table-empty{text-align:center;padding:32px;color:var(--ms-muted);font-style:italic;}
+
+/* ─── Global Whitespace Plan overlay ─── */
+.wsplan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;z-index:2000;padding:30px 20px;overflow-y:auto;}
+.wsplan-overlay.hidden{display:none;}
+.wsplan-sheet{background:#fff;width:100%;max-width:860px;border-radius:var(--radius);box-shadow:0 12px 48px rgba(0,0,0,.3);overflow:hidden;margin:auto;}
+.wsplan-toolbar{background:#111827;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;}
+.wsplan-toolbar h3{flex:1;font-size:15px;font-weight:700;}
+.wsplan-body{padding:20px;}
+.wsplan-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.wsplan-filter{padding:4px 12px;border:1px solid var(--ms-border);border-radius:20px;font-size:12px;background:#fff;cursor:pointer;font-family:inherit;transition:background .12s;}
+.wsplan-filter.active{background:var(--ms-blue);color:#fff;border-color:var(--ms-blue);}
+
+/* ─── Settings overlay ─── */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;z-index:2000;padding:30px 20px;overflow-y:auto;}
+.settings-overlay.hidden{display:none;}
+.settings-sheet{background:#fff;width:100%;max-width:640px;border-radius:var(--radius);box-shadow:0 12px 48px rgba(0,0,0,.3);overflow:hidden;margin:auto;}
+.settings-toolbar{background:#111827;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;}
+.settings-toolbar h3{flex:1;font-size:15px;font-weight:700;}
+.settings-body{padding:24px;}
+.settings-group{margin-bottom:26px;}
+.settings-group h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ms-blue);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--ms-border);}
+.settings-toggle-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f3f4f6;}
+.settings-toggle-row:last-child{border-bottom:none;}
+.settings-toggle-info{flex:1;}.settings-toggle-info label{font-size:13px;font-weight:600;display:block;}
+.settings-toggle-info p{font-size:11px;color:var(--ms-muted);margin-top:1px;}
+.tog{position:relative;width:40px;height:22px;flex-shrink:0;display:inline-block;}
+.tog input{opacity:0;width:0;height:0;position:absolute;}
+.tog-sl{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:22px;transition:.2s;}
+.tog-sl::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.tog input:checked+.tog-sl{background:var(--ms-blue);}.tog input:checked+.tog-sl::before{transform:translateX(18px);}
+.ws-rule-row{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #f3f4f6;}
+.ws-rule-row:last-child{border-bottom:none;}
+.ws-rule-prod{font-size:13px;font-weight:600;padding-top:8px;}
+.ws-rule-row textarea{width:100%;padding:6px 10px;border:1px solid var(--ms-border);border-radius:6px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;line-height:1.5;}
+.ws-rule-row textarea:focus{outline:2px solid var(--ms-blue);}
+
+/* ─── Review overlay ─── */
+.review-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:flex-start;justify-content:center;z-index:3000;padding:30px 20px;overflow-y:auto;}
+.review-overlay.hidden{display:none;}
+.review-sheet{background:#fff;width:100%;max-width:740px;border-radius:14px;box-shadow:0 16px 60px rgba(0,0,0,.4);overflow:hidden;margin:auto;}
+.review-toolbar{background:#111827;color:#fff;padding:14px 22px;display:flex;align-items:center;gap:12px;}
+.review-toolbar h3{flex:1;font-size:16px;font-weight:700;}
+.review-body{padding:24px;}
+.review-cust-hdr{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.review-avatar{width:46px;height:46px;border-radius:12px;background:var(--ms-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;overflow:hidden;}
+.review-avatar img{width:100%;height:100%;object-fit:cover;}
+.review-cname{font-size:18px;font-weight:800;}.review-csub{font-size:12px;color:var(--ms-muted);margin-top:2px;}
+.review-prog-bg{height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;margin-bottom:18px;}
+.review-prog-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#db2777);border-radius:3px;}
+.review-cat{margin-bottom:20px;}
+.review-cat-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ms-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.review-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:5px;border:1px solid;}
+.review-item.r-missed{background:#fff7ed;border-color:#fed7aa;}
+.review-item.r-blocked{background:#fef2f2;border-color:#fecaca;}
+.review-item.r-unblock{background:#f0fdf4;border-color:#bbf7d0;}
+.review-item.r-pending{background:#f9fafb;border-color:#e5e7eb;}
+.review-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.review-label{font-size:13px;font-weight:500;flex:1;}
+.review-status-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0;}
+.review-empty{text-align:center;padding:40px;color:var(--ms-muted);}
+
+/* ─── CRM Sections ─── */
+.crm-section{margin-bottom:24px;}
+.crm-section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.crm-section-hdr h3{font-size:16px;font-weight:700;}
+.crm-contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:10px;}
+.crm-contact-card{background:#fff;border:1px solid var(--ms-border);border-radius:10px;padding:12px;display:flex;gap:10px;align-items:flex-start;}
+.crm-contact-av{width:36px;height:36px;border-radius:50%;background:var(--ms-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.crm-contact-name{font-size:13px;font-weight:700;}.crm-contact-role{font-size:11px;color:var(--ms-muted);}.crm-contact-email{font-size:11px;color:var(--ms-blue);}
+.crm-pipeline-card{background:#fff;border:1px solid var(--ms-border);border-radius:10px;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:10px;}
+.crm-field .crm-flbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ms-muted);}
+.crm-field .crm-fval{font-size:14px;font-weight:600;color:var(--ms-text);margin-top:2px;}
+.crm-act-list{background:#fff;border:1px solid var(--ms-border);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.crm-act-row{display:flex;gap:10px;align-items:flex-start;padding:9px 14px;border-bottom:1px solid #f3f4f6;}
+.crm-act-row:last-child{border-bottom:none;}
+.crm-act-date{font-size:11px;color:var(--ms-muted);width:68px;flex-shrink:0;padding-top:2px;}
+.crm-act-text{font-size:13px;flex:1;}
+.crm-add-bar{display:flex;gap:8px;padding:10px 14px;background:#fafafa;border-top:1px solid var(--ms-border);flex-wrap:wrap;}
+.crm-add-bar input,.crm-add-bar select{padding:6px 10px;border:1px solid var(--ms-border);border-radius:6px;font-size:12px;font-family:inherit;background:#fff;}
+.crm-add-bar input:focus,.crm-add-bar select:focus{outline:2px solid var(--ms-blue);}
+
 /* ── Drag & Drop ── */
 .drag-handle {
   cursor: grab; color: var(--ms-border); font-size: 13px;
@@ -707,12 +818,15 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <span id="crumb-name"></span>
   </div>
   <nav>
-    <button class="hbtn" onclick="openPillars()">⚙️ Pillars</button>
+    <button class="hbtn" onclick="openPillars()">📋 Pillars</button>
     <button class="hbtn" onclick="openAddCustomer()">+ Add Customer</button>
+    <button class="hbtn" onclick="openWsPlan()">💡 Whitespace</button>
     <button class="hbtn primary" id="report-btn" onclick="openReport()" disabled>📄 Report</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" id="fs-btn" title="Connect a local file for autosave" onclick="connectFile()">📁 Connect File</button>
     <button class="hbtn" id="od-btn" title="Load or save via OneDrive / URL" onclick="openOneDriveModal()">☁️ OneDrive / URL</button>
+    <div class="hbtn-sep"></div>
+    <button class="hbtn" onclick="openSettings()">⚙️ Settings</button>
     <div class="hbtn-sep"></div>
     <button class="hbtn" title="Export all data to a JSON file" onclick="exportData()">💾 Export</button>
     <button class="hbtn" title="Import data from a JSON file" onclick="document.getElementById('import-file-input').click()">📥 Import</button>
@@ -760,6 +874,7 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
         <div class="do-bar-bg"><div class="do-bar-fill" id="do-bar" style="width:0%"></div></div>
       </div>
       <div class="do-pills" id="do-pills"></div>
+      <button class="btn btn-sm" onclick="openReview(state.current)" style="white-space:nowrap;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border-color:transparent">👁 Review</button>
       <button class="btn btn-sm" onclick="openEditCustomer()" style="white-space:nowrap">✏️ Edit Info</button>
       <button class="btn btn-danger btn-sm" onclick="deleteCustomer()">🗑 Delete</button>
     </div>
@@ -767,22 +882,52 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <!-- Customer meta panel -->
     <div class="detail-meta" id="detail-meta"></div>
 
-    <!-- Legend -->
-    <div class="legend">
-      <span style="font-size:12px;font-weight:600;color:var(--ms-muted)">Status:</span>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--done-bg);color:var(--done)">✓</div> Done / Will Happen</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--miss-bg);color:var(--miss)">✗</div> Didn't Happen</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--block-bg);color:var(--block)">⊘</div> Blocked</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--unblock-bg);color:var(--unblock)">↻</div> Unblocking</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--pending-bg);color:var(--pending)">○</div> Not Started</div>
-      <span style="font-size:11px;color:var(--ms-muted);margin-left:auto">Click status to cycle • Hover to edit/delete</span>
+    <!-- Detail tab bar -->
+    <div class="detail-tabs">
+      <button class="detail-tab active" id="dtab-tracker"    onclick="switchDetailTab('tracker')">📋 Tracker</button>
+      <button class="detail-tab"        id="dtab-whitespace" onclick="switchDetailTab('whitespace')">💡 Whitespace</button>
+      <button class="detail-tab"        id="dtab-contacts"   onclick="switchDetailTab('contacts')"   style="display:none">👤 Contacts</button>
+      <button class="detail-tab"        id="dtab-pipeline"   onclick="switchDetailTab('pipeline')"   style="display:none">📊 Pipeline</button>
+      <button class="detail-tab"        id="dtab-activities" onclick="switchDetailTab('activities')" style="display:none">📝 Activities</button>
     </div>
 
-    <!-- Categories -->
-    <div class="categories-grid" id="categories-grid"></div>
-    <div class="add-section-wrap" id="add-section-wrap" style="display:none">
-      <button class="btn btn-blue" onclick="openAddSection()">➕ Add Section</button>
+    <!-- TRACKER tab -->
+    <div class="detail-tab-panel active" id="tab-tracker">
+      <div class="legend">
+        <span style="font-size:12px;font-weight:600;color:var(--ms-muted)">Status:</span>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--done-bg);color:var(--done)">✓</div> Done / Will Happen</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--miss-bg);color:var(--miss)">✗</div> Didn't Happen</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--block-bg);color:var(--block)">⊘</div> Blocked</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--unblock-bg);color:var(--unblock)">↻</div> Unblocking</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--pending-bg);color:var(--pending)">○</div> Not Started</div>
+        <span style="font-size:11px;color:var(--ms-muted);margin-left:auto">Click status to cycle • Hover to edit/delete</span>
+      </div>
+      <div class="categories-grid" id="categories-grid"></div>
+      <div class="add-section-wrap" id="add-section-wrap" style="display:none">
+        <button class="btn btn-blue" onclick="openAddSection()">➕ Add Section</button>
+      </div>
     </div>
+
+    <!-- WHITESPACE tab -->
+    <div class="detail-tab-panel" id="tab-whitespace">
+      <div id="ws-content"></div>
+    </div>
+
+    <!-- CONTACTS tab -->
+    <div class="detail-tab-panel" id="tab-contacts">
+      <div id="crm-contacts-content"></div>
+    </div>
+
+    <!-- PIPELINE tab -->
+    <div class="detail-tab-panel" id="tab-pipeline">
+      <div id="crm-pipeline-content"></div>
+    </div>
+
+    <!-- ACTIVITIES tab -->
+    <div class="detail-tab-panel" id="tab-activities">
+      <div id="crm-activities-content"></div>
+    </div>
+
   </div>
 
 </div>
@@ -835,6 +980,32 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
       <div class="form-group">
         <label>AOP Due Date</label>
         <input type="date" id="cf-aop" />
+      </div>
+
+      <div class="form-section-label">Product Coverage</div>
+      <div class="form-group">
+        <label>Copilot 3P Capacity Users</label>
+        <input type="number" id="cf-copilot3p" min="0" placeholder="e.g. 50" />
+      </div>
+      <div class="form-group">
+        <label>ADR Users</label>
+        <input type="number" id="cf-adr" min="0" placeholder="e.g. 0" />
+      </div>
+      <div class="form-group">
+        <label>Windows 365 Users</label>
+        <input type="number" id="cf-windows365" min="0" placeholder="e.g. 0" />
+      </div>
+      <div class="form-group">
+        <label>ME3 Users</label>
+        <input type="number" id="cf-me3" min="0" placeholder="e.g. 0" />
+      </div>
+      <div class="form-group">
+        <label>ME5 Users</label>
+        <input type="number" id="cf-me5" min="0" placeholder="e.g. 0" />
+      </div>
+      <div class="form-group">
+        <label>ME7 Users</label>
+        <input type="number" id="cf-me7" min="0" placeholder="e.g. 0" />
       </div>
 
       <div class="form-section-label">Team</div>
@@ -917,6 +1088,71 @@ header nav { margin-left: auto; display: flex; gap: 8px; }
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('section-modal')">Cancel</button>
       <button class="btn btn-blue" onclick="confirmAddSection()">Add Section</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SETTINGS ═══════════════════════════ -->
+<div class="settings-overlay hidden" id="settings-overlay">
+  <div class="settings-sheet">
+    <div class="settings-toolbar">
+      <h3>⚙️ Settings</h3>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);margin-left:auto" onclick="closeSettings()">✕ Close</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-group">
+        <h4>💡 Whitespace — Product Tips & Rules</h4>
+        <p style="font-size:12px;color:var(--ms-muted);margin-bottom:12px">Add a tip or condition for each product. These are shown next to each product card to guide your whitespace analysis.</p>
+        <div id="settings-ws-rules"><!-- filled by JS --></div>
+      </div>
+      <div class="settings-group">
+        <h4>🗂 CRM Sections</h4>
+        <p style="font-size:12px;color:var(--ms-muted);margin-bottom:12px">Enable sections in the customer detail view to track contacts, pipeline, and activities.</p>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-info"><label>👤 Contacts</label><p>Store key contacts for each customer</p></div>
+          <label class="tog"><input type="checkbox" id="tog-contacts"><span class="tog-sl"></span></label>
+        </div>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-info"><label>📊 Pipeline</label><p>Track deal stage, value, and close date</p></div>
+          <label class="tog"><input type="checkbox" id="tog-pipeline"><span class="tog-sl"></span></label>
+        </div>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-info"><label>📝 Activities</label><p>Log meetings, calls, and follow-ups</p></div>
+          <label class="tog"><input type="checkbox" id="tog-activities"><span class="tog-sl"></span></label>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn" onclick="closeSettings()">Cancel</button>
+        <button class="btn btn-blue" onclick="saveSettings()">💾 Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ REVIEW OVERLAY ═══════════════════════════ -->
+<div class="review-overlay hidden" id="review-overlay">
+  <div class="review-sheet">
+    <div class="review-toolbar">
+      <h3>👁 Open Items Review</h3>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);margin-left:auto" onclick="closeReview()">✕ Close</button>
+    </div>
+    <div class="review-body" id="review-body-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ WHITESPACE PLAN OVERLAY ═══════════════════════════ -->
+<div class="wsplan-overlay hidden" id="wsplan-overlay">
+  <div class="wsplan-sheet">
+    <div class="wsplan-toolbar">
+      <h3>💡 Global Whitespace Plan</h3>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);margin-left:auto" onclick="closeWsPlan()">✕ Close</button>
+    </div>
+    <div class="wsplan-body">
+      <div class="wsplan-filters" id="wsplan-filters"></div>
+      <table class="ws-table" id="wsplan-table">
+        <thead><tr><th onclick="sortWsPlan('customer')">Customer ↕</th><th onclick="sortWsPlan('product')">Product ↕</th><th>Users</th><th>Status</th><th></th></tr></thead>
+        <tbody id="wsplan-tbody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -1090,6 +1326,10 @@ const STATUS_META  = {
 // ═══════════════════════════════════════════════════════
 const STORE_KEY = 'copilot-tracker-v3';
 let state = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {customers:[],current:null}; } catch { return {customers:[],current:null}; } })();
+// Seed settings if not yet stored
+if (!state.settings) {
+  state.settings = { wsProductNotes: {}, crmContact: false, crmPipeline: false, crmActivities: false };
+}
 // Seed template from DEFAULT_CATEGORIES if not yet stored
 if (!state.template) {
   state.template = DEFAULT_CATEGORIES.map(cat => ({
@@ -1311,6 +1551,12 @@ function openDetail(id, updateHistory=true) {
   document.getElementById('crumb-name').textContent = customer.name;
   document.getElementById('report-btn').disabled = false;
   document.getElementById('add-section-wrap').style.display = '';
+  // Reset to tracker tab
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('dtab-tracker')?.classList.add('active');
+  document.getElementById('tab-tracker')?.classList.add('active');
+  updateCrmTabVisibility();
   renderDetailHeader(customer);
   renderCategories(customer);
 }
@@ -1397,8 +1643,8 @@ function buildCustomerCard(customer) {
 
   // Category mini bars
   const catBars = (customer.categories || []).map(cat => {
-    const done = cat.items.filter(i=>i.status==='done').length;
-    const pct  = cat.items.length ? Math.round(done/cat.items.length*100) : 0;
+    const done = (cat.items || []).filter(i=>i.status==='done').length;
+    const pct  = (cat.items || []).length ? Math.round(done/(cat.items||[]).length*100) : 0;
     return `<div class="cat-mini-row">
       <span class="cat-mini-icon">${cat.icon || ''}</span>
       <span class="cat-mini-label">${escHtml(cat.title)}</span>
@@ -1441,6 +1687,7 @@ function buildCustomerCard(customer) {
 
     <div class="cust-card-footer">
       <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openDetail('${customer.id}')">Open Tracker →</button>
+      <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border-color:transparent" onclick="event.stopPropagation();openReview('${customer.id}')">👁 Review</button>
       <button class="btn btn-sm" onclick="event.stopPropagation();openReportFor('${customer.id}')">📄 Report</button>
     </div>`;
   return card;
@@ -1737,7 +1984,7 @@ function _applyLogoPreview() {
 function _clearForm() {
   _logoDataUrl = null;
   ['cf-name','cf-ae','cf-ats','cf-csam','cf-se'].forEach(id => document.getElementById(id).value = '');
-  ['cf-users','cf-copilot-users'].forEach(id => document.getElementById(id).value = '');
+  ['cf-users','cf-copilot-users','cf-copilot3p','cf-adr','cf-windows365','cf-me3','cf-me5','cf-me7'].forEach(id => document.getElementById(id).value = '');
   ['cf-renewal','cf-aop'].forEach(id => document.getElementById(id).value = '');
   const urlField = document.getElementById('cf-logo-url');
   if (urlField) urlField.value = '';
@@ -1761,6 +2008,14 @@ function _readForm() {
     atsName:      document.getElementById('cf-ats').value.trim(),
     csamName:     document.getElementById('cf-csam').value.trim(),
     seName:       document.getElementById('cf-se').value.trim(),
+    products: {
+      copilot3p:  document.getElementById('cf-copilot3p').value.trim(),
+      adr:        document.getElementById('cf-adr').value.trim(),
+      windows365: document.getElementById('cf-windows365').value.trim(),
+      me3:        document.getElementById('cf-me3').value.trim(),
+      me5:        document.getElementById('cf-me5').value.trim(),
+      me7:        document.getElementById('cf-me7').value.trim(),
+    },
   };
 }
 
@@ -1797,6 +2052,12 @@ function openEditCustomer() {
   document.getElementById('cf-ats').value           = c.atsName || '';
   document.getElementById('cf-csam').value          = c.csamName || '';
   document.getElementById('cf-se').value            = c.seName || '';
+  document.getElementById('cf-copilot3p').value   = c.products?.copilot3p   || '';
+  document.getElementById('cf-adr').value          = c.products?.adr         || '';
+  document.getElementById('cf-windows365').value   = c.products?.windows365  || '';
+  document.getElementById('cf-me3').value          = c.products?.me3         || '';
+  document.getElementById('cf-me5').value          = c.products?.me5         || '';
+  document.getElementById('cf-me7').value          = c.products?.me7         || '';
   document.getElementById('customer-modal-title').textContent = '✏️ Edit Customer';
   document.getElementById('customer-modal-btn').textContent   = 'Save Changes';
   document.getElementById('customer-modal').classList.remove('hidden');
@@ -2452,6 +2713,447 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 document.querySelectorAll('.modal-overlay,.report-overlay,.pillars-overlay').forEach(el =>
   el.addEventListener('click', e => { if (e.target===el) el.classList.add('hidden'); })
 );
+
+// ═══════════════════════════════════════════════════════
+//  WHITESPACE PRODUCTS CONSTANT
+// ═══════════════════════════════════════════════════════
+const WS_PRODUCTS = [
+  { id:'copilot365',  name:'Copilot 365',         icon:'🤖' },
+  { id:'copilot3p',   name:'Copilot 3P Capacity',  icon:'⚡' },
+  { id:'adr',         name:'ADR',                  icon:'🔄' },
+  { id:'windows365',  name:'Windows 365',           icon:'🖥️' },
+  { id:'me3',         name:'ME3',                   icon:'📦' },
+  { id:'me5',         name:'ME5',                   icon:'💎' },
+  { id:'me7',         name:'ME7',                   icon:'🏆' },
+];
+
+// ═══════════════════════════════════════════════════════
+//  DETAIL TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+function switchDetailTab(tab) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`dtab-${tab}`)?.classList.add('active');
+  document.getElementById(`tab-${tab}`)?.classList.add('active');
+  const cust = state.customers.find(c => c.id === state.current);
+  if (!cust) return;
+  if (tab === 'whitespace') renderWhitespace(cust);
+  if (tab === 'contacts')   renderCrmContacts(cust);
+  if (tab === 'pipeline')   renderCrmPipeline(cust);
+  if (tab === 'activities') renderCrmActivities(cust);
+}
+
+function updateCrmTabVisibility() {
+  const s = state.settings;
+  const map = { contacts: s.crmContact, pipeline: s.crmPipeline, activities: s.crmActivities };
+  Object.entries(map).forEach(([t, enabled]) => {
+    const el = document.getElementById(`dtab-${t}`);
+    if (el) el.style.display = enabled ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════════
+function openSettings() {
+  renderSettingsModal();
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+function renderSettingsModal() {
+  document.getElementById('settings-ws-rules').innerHTML = WS_PRODUCTS.map(p => `
+    <div class="ws-rule-row">
+      <div class="ws-rule-prod">${p.icon} ${p.name}</div>
+      <textarea id="ws-note-${p.id}" placeholder="Tip / condition for suggesting this product…">${escHtml(state.settings.wsProductNotes[p.id] || '')}</textarea>
+    </div>`).join('');
+  document.getElementById('tog-contacts').checked   = state.settings.crmContact;
+  document.getElementById('tog-pipeline').checked   = state.settings.crmPipeline;
+  document.getElementById('tog-activities').checked = state.settings.crmActivities;
+}
+function saveSettings() {
+  WS_PRODUCTS.forEach(p => {
+    const el = document.getElementById(`ws-note-${p.id}`);
+    if (el) state.settings.wsProductNotes[p.id] = el.value.trim();
+  });
+  state.settings.crmContact    = document.getElementById('tog-contacts').checked;
+  state.settings.crmPipeline   = document.getElementById('tog-pipeline').checked;
+  state.settings.crmActivities = document.getElementById('tog-activities').checked;
+  save();
+  closeSettings();
+  updateCrmTabVisibility();
+  showToast('✅ Settings saved');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settings-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('settings-overlay'))
+      document.getElementById('settings-overlay').classList.add('hidden');
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//  WHITESPACE (per-customer)
+// ═══════════════════════════════════════════════════════
+function renderWhitespace(customer) {
+  const el = document.getElementById('ws-content');
+  if (!el) return;
+  if (!customer.whitespace) customer.whitespace = { approved: [], dismissed: [] };
+  if (!customer.products)   customer.products   = {};
+  const notes = state.settings.wsProductNotes || {};
+
+  const coverageHtml = WS_PRODUCTS.map(p => {
+    const users = p.id === 'copilot365'
+      ? Number(customer.copilotUsers || 0)
+      : Number(customer.products[p.id] || 0);
+    const isOwned    = users > 0;
+    const isApproved = customer.whitespace.approved.includes(p.id);
+    const isDismissed= customer.whitespace.dismissed.includes(p.id);
+
+    let cardCls, badgeCls, badgeLbl;
+    if (isOwned)     { cardCls='ws-owned';    badgeCls='owned';    badgeLbl='✓ In Use'; }
+    else if (isApproved) { cardCls='ws-approved'; badgeCls='approved'; badgeLbl='🎯 Opportunity'; }
+    else if (isDismissed){ cardCls='ws-dismissed';badgeCls='dismissed';badgeLbl='✕ N/A'; }
+    else             { cardCls='ws-opp';      badgeCls='opp';      badgeLbl='○ Assess'; }
+
+    const noteHtml = notes[p.id]
+      ? `<div class="ws-prod-note">💡 ${escHtml(notes[p.id])}</div>` : '';
+
+    let actHtml = '';
+    if (!isOwned) {
+      if (!isApproved && !isDismissed) {
+        actHtml = `<div class="ws-prod-actions">
+          <button class="btn btn-sm btn-blue" onclick="approveWsProduct('${customer.id}','${p.id}')">🎯 Opportunity</button>
+          <button class="btn btn-sm" onclick="dismissWsProduct('${customer.id}','${p.id}')">✕ N/A</button>
+        </div>`;
+      } else {
+        actHtml = `<div class="ws-prod-actions">
+          <button class="btn btn-sm" onclick="resetWsProduct('${customer.id}','${p.id}')">↺ Reset</button>
+        </div>`;
+      }
+    }
+
+    return `<div class="ws-prod-card ${cardCls}">
+      <div class="ws-prod-top">
+        <span class="ws-prod-icon">${p.icon}</span>
+        <span class="ws-prod-name">${p.name}</span>
+        <span class="ws-badge ${badgeCls}">${badgeLbl}</span>
+      </div>
+      <div class="ws-prod-users">${users > 0 ? users.toLocaleString() + ' users' : 'No users tracked'}</div>
+      ${noteHtml}${actHtml}
+    </div>`;
+  }).join('');
+
+  const approvedIds = customer.whitespace.approved;
+  const planHtml = approvedIds.length ? `
+    <div class="ws-plan-bar">
+      <h3>📋 Whitespace Plan — ${approvedIds.length} product${approvedIds.length>1?'s':''} identified</h3>
+    </div>
+    <table class="ws-table">
+      <thead><tr><th>Product</th><th>Customer</th><th>Status</th><th></th></tr></thead>
+      <tbody>${approvedIds.map(id => {
+        const p = WS_PRODUCTS.find(x=>x.id===id);
+        return p ? `<tr>
+          <td>${p.icon} ${escHtml(p.name)}</td>
+          <td>${escHtml(customer.name)}</td>
+          <td><span class="ws-badge approved">🎯 Opportunity</span></td>
+          <td><button class="btn btn-sm btn-danger" onclick="dismissWsProduct('${customer.id}','${id}')">Remove</button></td>
+        </tr>` : '';
+      }).join('')}</tbody>
+    </table>` : '';
+
+  el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">Whitespace Analysis</h2>
+      <p style="font-size:13px;color:var(--ms-muted)">Review which Microsoft products this customer could benefit from next. Use Settings ⚙️ to add tips per product.</p>
+    </div>
+    <div class="ws-coverage">${coverageHtml}</div>
+    ${planHtml}`;
+}
+
+function approveWsProduct(custId, prodId) {
+  const c = state.customers.find(x=>x.id===custId); if (!c) return;
+  if (!c.whitespace) c.whitespace = { approved:[], dismissed:[] };
+  c.whitespace.approved  = [...new Set([...c.whitespace.approved, prodId])];
+  c.whitespace.dismissed = c.whitespace.dismissed.filter(x=>x!==prodId);
+  save(); renderWhitespace(c);
+}
+function dismissWsProduct(custId, prodId) {
+  const c = state.customers.find(x=>x.id===custId); if (!c) return;
+  if (!c.whitespace) c.whitespace = { approved:[], dismissed:[] };
+  c.whitespace.dismissed = [...new Set([...c.whitespace.dismissed, prodId])];
+  c.whitespace.approved  = c.whitespace.approved.filter(x=>x!==prodId);
+  save(); renderWhitespace(c);
+}
+function resetWsProduct(custId, prodId) {
+  const c = state.customers.find(x=>x.id===custId); if (!c || !c.whitespace) return;
+  c.whitespace.approved  = c.whitespace.approved.filter(x=>x!==prodId);
+  c.whitespace.dismissed = c.whitespace.dismissed.filter(x=>x!==prodId);
+  save(); renderWhitespace(c);
+}
+
+// ═══════════════════════════════════════════════════════
+//  GLOBAL WHITESPACE PLAN OVERLAY
+// ═══════════════════════════════════════════════════════
+let _wsPlanFilter = 'all';
+let _wsPlanSort   = 'customer';
+
+function openWsPlan() {
+  _wsPlanFilter = 'all'; _wsPlanSort = 'customer';
+  renderWsPlanOverlay();
+  document.getElementById('wsplan-overlay').classList.remove('hidden');
+}
+function closeWsPlan() { document.getElementById('wsplan-overlay').classList.add('hidden'); }
+
+function renderWsPlanOverlay() {
+  // Collect all approved opportunities across all customers
+  const rows = [];
+  state.customers.forEach(c => {
+    if (!c.whitespace?.approved?.length) return;
+    const custUsers = Number(c.users || 0);
+    c.whitespace.approved.forEach(prodId => {
+      const p = WS_PRODUCTS.find(x=>x.id===prodId); if (!p) return;
+      const prodUsers = prodId === 'copilot365'
+        ? Number(c.copilotUsers || 0)
+        : Number(c.products?.[prodId] || 0);
+      rows.push({ custId: c.id, custName: c.name, prodId, prodName: p.name, prodIcon: p.icon, custUsers, prodUsers });
+    });
+  });
+
+  // Filters
+  const allProds = [...new Set(rows.map(r=>r.prodId))];
+  const filterHtml = `
+    <button class="wsplan-filter${_wsPlanFilter==='all'?' active':''}" onclick="_wsPlanFilter='all';renderWsPlanOverlay()">All Products</button>
+    ${allProds.map(id=>{
+      const p=WS_PRODUCTS.find(x=>x.id===id);
+      return `<button class="wsplan-filter${_wsPlanFilter===id?' active':''}" onclick="_wsPlanFilter='${id}';renderWsPlanOverlay()">${p.icon} ${p.name}</button>`;
+    }).join('')}`;
+  document.getElementById('wsplan-filters').innerHTML = filterHtml;
+
+  // Filter + sort
+  let filtered = _wsPlanFilter === 'all' ? rows : rows.filter(r=>r.prodId===_wsPlanFilter);
+  filtered.sort((a,b) => _wsPlanSort === 'product'
+    ? a.prodName.localeCompare(b.prodName) || a.custName.localeCompare(b.custName)
+    : a.custName.localeCompare(b.custName) || a.prodName.localeCompare(b.prodName));
+
+  const tbody = document.getElementById('wsplan-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="ws-table-empty">No whitespace opportunities marked yet. Open a customer → Whitespace tab → mark products as opportunities.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td><strong>${escHtml(r.custName)}</strong></td>
+      <td>${r.prodIcon} ${escHtml(r.prodName)}</td>
+      <td style="color:var(--ms-muted)">${r.custUsers > 0 ? r.custUsers.toLocaleString() + ' total users' : '—'}</td>
+      <td><span class="ws-badge approved">🎯 Opportunity</span></td>
+      <td>
+        <button class="btn btn-sm" onclick="openDetail('${r.custId}');closeWsPlan();setTimeout(()=>switchDetailTab('whitespace'),300)">View →</button>
+        <button class="btn btn-sm btn-danger" onclick="dismissWsProduct('${r.custId}','${r.prodId}');renderWsPlanOverlay()">Remove</button>
+      </td>
+    </tr>`).join('');
+}
+function sortWsPlan(col) { _wsPlanSort = col; renderWsPlanOverlay(); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('wsplan-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('wsplan-overlay'))
+      closeWsPlan();
+  });
+  document.getElementById('review-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('review-overlay'))
+      closeReview();
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//  REVIEW OVERLAY
+// ═══════════════════════════════════════════════════════
+function openReview(custId) {
+  const customer = state.customers.find(c=>c.id===custId);
+  if (!customer) return;
+  const s = custStats(customer);
+  const initials = customer.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const avatarHtml = customer.logo
+    ? `<div class="review-avatar"><img src="${customer.logo}"/></div>`
+    : `<div class="review-avatar">${initials}</div>`;
+
+  const catHtml = customer.categories.map(cat => {
+    const open = cat.items.filter(i => i.status !== 'done');
+    if (!open.length) return '';
+    const itemsHtml = open.map(item => {
+      const m = STATUS_META[item.status] || STATUS_META.pending;
+      const cls = `review-item r-${item.status}`;
+      return `<div class="${cls}">
+        <div class="review-dot" style="background:${m.bg};color:${m.color}">${m.icon}</div>
+        <span class="review-label">${escHtml(item.label)}</span>
+        <span class="review-status-tag" style="background:${m.bg};color:${m.color}">${m.label}</span>
+      </div>`;
+    }).join('');
+    return `<div class="review-cat">
+      <div class="review-cat-hdr"><span>${cat.icon}</span>${escHtml(cat.title)}</div>
+      ${itemsHtml}
+    </div>`;
+  }).filter(Boolean).join('');
+
+  const totalOpen = customer.categories.reduce((n, cat) => n + cat.items.filter(i=>i.status!=='done').length, 0);
+
+  document.getElementById('review-body-content').innerHTML = `
+    <div class="review-cust-hdr">
+      ${avatarHtml}
+      <div>
+        <div class="review-cname">${escHtml(customer.name)}</div>
+        <div class="review-csub">${totalOpen} open item${totalOpen!==1?'s':''} · ${s.pct}% complete</div>
+      </div>
+    </div>
+    <div class="review-prog-bg"><div class="review-prog-fill" style="width:${s.pct}%"></div></div>
+    ${catHtml || '<div class="review-empty">🎉 All items complete! Nothing to review.</div>'}`;
+  document.getElementById('review-overlay').classList.remove('hidden');
+}
+function closeReview() { document.getElementById('review-overlay').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════
+//  CRM — CONTACTS
+// ═══════════════════════════════════════════════════════
+function renderCrmContacts(customer) {
+  const el = document.getElementById('crm-contacts-content');
+  if (!el) return;
+  if (!customer.crm)          customer.crm = {};
+  if (!customer.crm.contacts) customer.crm.contacts = [];
+
+  const cardsHtml = customer.crm.contacts.map((c, i) => {
+    const initials = (c.name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    return `<div class="crm-contact-card">
+      <div class="crm-contact-av">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div class="crm-contact-name">${escHtml(c.name||'')}</div>
+        <div class="crm-contact-role">${escHtml(c.role||'')}</div>
+        ${c.email?`<div class="crm-contact-email">${escHtml(c.email)}</div>`:''}
+      </div>
+      <button class="icon-btn" title="Delete" onclick="deleteCrmContact('${customer.id}',${i})">🗑</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="crm-section">
+    <div class="crm-section-hdr"><h3>👤 Contacts</h3></div>
+    <div class="crm-contacts-grid">${cardsHtml||'<div style="font-size:13px;color:var(--ms-muted);padding:4px 0">No contacts yet.</div>'}</div>
+    <div class="crm-add-bar">
+      <input type="text" id="new-crm-name" placeholder="Full Name…" maxlength="60" style="flex:1;min-width:120px"/>
+      <input type="text" id="new-crm-role" placeholder="Title / Role…" maxlength="60" style="flex:1;min-width:100px"/>
+      <input type="email" id="new-crm-email" placeholder="Email…" maxlength="100" style="flex:1;min-width:140px"
+             onkeydown="if(event.key==='Enter') addCrmContact('${customer.id}')"/>
+      <button class="btn btn-sm btn-blue" onclick="addCrmContact('${customer.id}')">+ Add</button>
+    </div>
+  </div>`;
+}
+function addCrmContact(custId) {
+  const name  = document.getElementById('new-crm-name')?.value.trim();
+  const role  = document.getElementById('new-crm-role')?.value.trim();
+  const email = document.getElementById('new-crm-email')?.value.trim();
+  if (!name) { document.getElementById('new-crm-name')?.focus(); return; }
+  const c = state.customers.find(x=>x.id===custId); if (!c) return;
+  if (!c.crm) c.crm = {}; if (!c.crm.contacts) c.crm.contacts = [];
+  c.crm.contacts.push({ name, role, email });
+  save(); renderCrmContacts(c);
+}
+function deleteCrmContact(custId, idx) {
+  const c = state.customers.find(x=>x.id===custId); if (!c?.crm?.contacts) return;
+  if (!confirm('Delete this contact?')) return;
+  c.crm.contacts.splice(idx, 1); save(); renderCrmContacts(c);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CRM — PIPELINE
+// ═══════════════════════════════════════════════════════
+function renderCrmPipeline(customer) {
+  const el = document.getElementById('crm-pipeline-content');
+  if (!el) return;
+  if (!customer.crm)           customer.crm = {};
+  if (!customer.crm.pipeline)  customer.crm.pipeline = {};
+  const p = customer.crm.pipeline;
+  const stages = ['Discover','Qualify','Propose','Negotiate','Close Won','Close Lost'];
+  const opts = stages.map(s=>`<option${p.stage===s?' selected':''}>${s}</option>`).join('');
+
+  el.innerHTML = `<div class="crm-section">
+    <div class="crm-section-hdr"><h3>📊 Pipeline</h3></div>
+    <div class="crm-pipeline-card">
+      <div class="crm-field">
+        <div class="crm-flbl">Stage</div>
+        <select style="font-size:13px;font-family:inherit;border:1px solid var(--ms-border);border-radius:6px;padding:5px 8px;background:#fff;margin-top:4px"
+                onchange="saveCrmPipeline('${customer.id}','stage',this.value)">
+          <option value="">— Select —</option>${opts}
+        </select>
+      </div>
+      <div class="crm-field">
+        <div class="crm-flbl">Deal Value ($)</div>
+        <input type="number" style="font-size:13px;font-family:inherit;border:1px solid var(--ms-border);border-radius:6px;padding:5px 8px;width:130px;margin-top:4px"
+               value="${escHtml(String(p.value||''))}" placeholder="0"
+               onblur="saveCrmPipeline('${customer.id}','value',this.value)"/>
+      </div>
+      <div class="crm-field">
+        <div class="crm-flbl">Expected Close</div>
+        <input type="date" style="font-size:13px;font-family:inherit;border:1px solid var(--ms-border);border-radius:6px;padding:5px 8px;margin-top:4px"
+               value="${escHtml(p.closeDate||'')}"
+               onblur="saveCrmPipeline('${customer.id}','closeDate',this.value)"/>
+      </div>
+      <div class="crm-field" style="grid-column:1/-1">
+        <div class="crm-flbl">Notes</div>
+        <textarea rows="3" style="width:100%;font-size:12px;font-family:inherit;border:1px solid var(--ms-border);border-radius:6px;padding:6px 10px;resize:vertical;margin-top:4px"
+                  onblur="saveCrmPipeline('${customer.id}','notes',this.value)">${escHtml(p.notes||'')}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+function saveCrmPipeline(custId, field, value) {
+  const c = state.customers.find(x=>x.id===custId); if (!c) return;
+  if (!c.crm) c.crm = {}; if (!c.crm.pipeline) c.crm.pipeline = {};
+  c.crm.pipeline[field] = value; save();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CRM — ACTIVITIES
+// ═══════════════════════════════════════════════════════
+function renderCrmActivities(customer) {
+  const el = document.getElementById('crm-activities-content');
+  if (!el) return;
+  if (!customer.crm)             customer.crm = {};
+  if (!customer.crm.activities)  customer.crm.activities = [];
+
+  const rowsHtml = [...customer.crm.activities].reverse().map((a, ri) => {
+    const i = customer.crm.activities.length - 1 - ri;
+    const d = a.date ? new Date(a.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+    return `<div class="crm-act-row">
+      <span class="crm-act-date">${d}</span>
+      <span class="crm-act-text">${escHtml(a.text)}</span>
+      <button class="icon-btn" title="Delete" onclick="deleteCrmActivity('${customer.id}',${i})">🗑</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="crm-section">
+    <div class="crm-section-hdr"><h3>📝 Activities</h3></div>
+    <div class="crm-act-list">
+      ${rowsHtml||'<div style="padding:12px 14px;font-size:13px;color:var(--ms-muted);font-style:italic">No activities logged yet.</div>'}
+      <div class="crm-add-bar">
+        <input type="date" id="new-crm-act-date" value="${new Date().toISOString().slice(0,10)}" style="width:130px"/>
+        <input type="text" id="new-crm-act-text" placeholder="Note / activity…" style="flex:1;min-width:200px" maxlength="200"
+               onkeydown="if(event.key==='Enter') addCrmActivity('${customer.id}')"/>
+        <button class="btn btn-sm btn-blue" onclick="addCrmActivity('${customer.id}')">+ Add</button>
+      </div>
+    </div>
+  </div>`;
+}
+function addCrmActivity(custId) {
+  const date = document.getElementById('new-crm-act-date')?.value;
+  const text = document.getElementById('new-crm-act-text')?.value.trim();
+  if (!text) { document.getElementById('new-crm-act-text')?.focus(); return; }
+  const c = state.customers.find(x=>x.id===custId); if (!c) return;
+  if (!c.crm) c.crm = {}; if (!c.crm.activities) c.crm.activities = [];
+  c.crm.activities.push({ date, text }); save(); renderCrmActivities(c);
+}
+function deleteCrmActivity(custId, idx) {
+  const c = state.customers.find(x=>x.id===custId); if (!c?.crm?.activities) return;
+  c.crm.activities.splice(idx, 1); save(); renderCrmActivities(c);
+}
 
 // also close customer-modal on Enter in last field
 document.addEventListener('keydown', e => {
