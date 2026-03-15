@@ -1276,7 +1276,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ═══════════════════════════════════════════════════════
 function custStats(customer) {
   let total=0, done=0, missed=0, blocked=0, unblock=0, pending=0;
-  customer.categories.forEach(cat => cat.items.forEach(item => {
+  (customer.categories || []).forEach(cat => (cat.items || []).forEach(item => {
     total++;
     if (item.status==='done')    done++;
     else if (item.status==='missed')  missed++;
@@ -1396,11 +1396,11 @@ function buildCustomerCard(customer) {
     : '';
 
   // Category mini bars
-  const catBars = customer.categories.map(cat => {
+  const catBars = (customer.categories || []).map(cat => {
     const done = cat.items.filter(i=>i.status==='done').length;
     const pct  = cat.items.length ? Math.round(done/cat.items.length*100) : 0;
     return `<div class="cat-mini-row">
-      <span class="cat-mini-icon">${cat.icon}</span>
+      <span class="cat-mini-icon">${cat.icon || ''}</span>
       <span class="cat-mini-label">${escHtml(cat.title)}</span>
       <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${pct}%;background:${pct>=75?'var(--done)':pct>=40?'var(--ms-blue)':'var(--block)'}"></div></div>
       <span class="cat-mini-pct">${pct}%</span>
@@ -1488,7 +1488,7 @@ function renderDetailHeader(customer) {
 function renderCategories(customer) {
   const grid = document.getElementById('categories-grid');
   grid.innerHTML = '';
-  customer.categories.forEach(cat => grid.appendChild(buildCategoryCard(customer, cat)));
+  (customer.categories || []).forEach(cat => grid.appendChild(buildCategoryCard(customer, cat)));
   // "Add Section" card at the end of the grid
   const addCard = document.createElement('div');
   addCard.className = 'category-card add-section-card';
