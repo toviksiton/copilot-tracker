@@ -5991,13 +5991,20 @@ Rules:
     _showCompeteAiLoading(true, 'Parsing response…');
     const data = await res.json();
     trackAiUsage(data);
-    const text = data.content?.[0]?.text || data.error?.message || '';
-    if (!text) throw new Error('Empty response from AI');
+    const raw = data.content?.[0]?.text || data.error?.message || '';
+    if (!raw) throw new Error('Empty response from AI');
 
-    // Extract JSON — handle cases where model wraps in backticks despite instructions
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in AI response');
-    const parsed = JSON.parse(jsonMatch[0]);
+    // Strip markdown fences, then extract the JSON object robustly.
+    // Greedy /\{[\s\S]*\}/ fails when the model adds text with {braces} before
+    // the actual JSON — scan from each '{' until JSON.parse succeeds instead.
+    const stripped = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    let parsed = null;
+    let scanIdx = stripped.indexOf('{');
+    while (scanIdx !== -1 && !parsed) {
+      try { parsed = JSON.parse(stripped.slice(scanIdx)); } catch(e) {}
+      scanIdx = stripped.indexOf('{', scanIdx + 1);
+    }
+    if (!parsed) throw new Error('No valid JSON found in AI response. Raw: ' + raw.slice(0, 120));
 
     _showCompeteAiLoading(true, 'Building map…');
     _applyParsedOrgChart(parsed, org);
