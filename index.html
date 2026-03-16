@@ -6487,9 +6487,9 @@ const WS_PRODUCTS = [
 
 const DEFAULT_WS_PROMPT = `You are a Microsoft sales advisor. Based on the customer profile below, suggest which Microsoft products they should adopt next to maximise value.
 Products available: Copilot 365, Copilot 3P Capacity, ADR, Windows 365, ME3, ME5, ME7.
-For each gap product (where users = 0), evaluate whether it is a strong fit given the customer size, copilot adoption rate, and renewal timeline.
-Return a JSON array like: [{"product":"<name>","reason":"<1-2 sentence business reason>","priority":"High|Medium|Low"}]
-Only include products that are NOT already licensed (i.e. where users = 0 in the profile). Limit to top 3 suggestions.`;
+Only include products that are NOT already licensed (i.e. where users = 0 in the profile). Limit to top 3 suggestions.
+Output ONLY a flat JSON array — no wrapper object, no extra keys. Each element must have exactly these three keys: "product" (the product name string), "reason" (1-2 sentence business justification), "priority" ("High", "Medium", or "Low").
+Example: [{"product":"ME3","reason":"Good fit for mid-size orgs.","priority":"High"},{"product":"Windows 365","reason":"Enables cloud PCs.","priority":"Medium"}]`;
 
 const DEFAULT_WS_RULES = [
   {
@@ -6859,12 +6859,16 @@ async function generateWsSuggestions(custId) {
       box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Could not generate suggestions. Please try again.</div>`;
       return;
     }
-    console.log('WS AI suggestion[0] keys:', suggestions[0] ? JSON.stringify(suggestions[0]) : 'none');
+    // Unwrap if model returned [{customer, suggestions:[...]}] instead of a flat array
+    if (suggestions.length === 1 && typeof suggestions[0] === 'object') {
+      const inner = suggestions[0].suggestions || suggestions[0].recommendations || suggestions[0].items || suggestions[0].products;
+      if (Array.isArray(inner) && inner.length > 0) suggestions = inner;
+    }
     const _pick = (obj, keys) => keys.reduce((v, k) => v || (typeof obj[k] === 'string' && obj[k]) || '', '');
     const _fallbackStr = (obj, minLen) => { for (const v of Object.values(obj)) { if (typeof v === 'string' && v.length >= minLen) return v; } return ''; };
     const items = suggestions.slice(0,4).map(s => {
       if (typeof s === 'string') return { product: s, reason: '', priority: 'Medium' };
-      const product = _pick(s, ['product','name','productName','product_name','title','item','recommendation','service']) || _fallbackStr(s, 2);
+      const product = _pick(s, ['product','productName','product_name','title','item','recommendation','service']) || _fallbackStr(s, 2);
       const reason  = _pick(s, ['reason','description','rationale','explanation','justification','why','detail','details','benefit','summary','notes','value']) || _fallbackStr(s, 50);
       const priority = _pick(s, ['priority','priorityLevel','priority_level','importance','urgency','level','rank']) || 'Medium';
       return { product, reason, priority };
