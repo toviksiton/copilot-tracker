@@ -6472,12 +6472,14 @@ Current products:\n${productLines}`;
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
-    const text = data.content?.[0]?.text || data.completion || data.error?.message || '';
+    console.log('[WS AI] raw worker response:', JSON.stringify(data));
+    const text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || data.error?.message || (typeof data === 'string' ? data : '');
+    console.log('[WS AI] extracted text:', text);
     const match = text.match(/\[[\s\S]*\]/);
     let suggestions = [];
-    if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) {} }
+    if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) { console.log('[WS AI] JSON parse error:', e); } }
     if (!suggestions.length) {
-      box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">${text || 'No suggestions returned.'}</div>`;
+      box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">${text || 'No suggestions returned. Check DevTools console (F12) for raw Worker response.'}</div>`;
       return;
     }
     box.innerHTML = suggestions.map((s, i) => {
