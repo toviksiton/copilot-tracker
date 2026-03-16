@@ -1392,7 +1392,7 @@ html, body {
       <div class="view" id="view-ws-rules" hidden>
         <div class="section-label">Whitespace Rules</div>
         <div style="max-width:680px;">
-          <p style="font-size:13px;color:var(--muted);margin:0 0 20px;">IF/THEN rules that automatically append extra instructions to the AI prompt based on customer data. Enabled rules are injected whenever AI suggestions are generated.</p>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 20px;">IF/THEN rules that automatically inject extra instructions into the AI prompt based on customer data. Enabled rules are merged into the full instruction every time AI suggestions are generated.</p>
           <div id="ws-rules-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
           <button class="settings-btn settings-btn-primary" onclick="openAddWsRule()" id="ws-add-rule-btn" style="font-size:13px;padding:7px 18px;">+ Add Rule</button>
           <div id="ws-rule-form" style="display:none;margin-top:16px;background:var(--bg2,#f3f4f6);border:1px solid var(--border2,#e5e7eb);border-radius:10px;padding:18px;">
@@ -1406,6 +1406,14 @@ html, body {
               <button class="settings-btn settings-btn-primary" onclick="saveNewWsRule()" style="font-size:13px;">Save Rule</button>
               <button class="settings-btn" onclick="document.getElementById('ws-rule-form').style.display='none'" style="font-size:13px;">Cancel</button>
             </div>
+          </div>
+
+          <!-- Effective Instruction Preview -->
+          <div style="margin-top:28px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:8px;">Effective Instruction Preview</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">This is the full instruction that will be sent to the AI — your base prompt with all enabled rules inserted.</div>
+            <textarea id="ws-instruction-preview" readonly rows="14" style="width:100%;box-sizing:border-box;font-size:11px;font-family:monospace;line-height:1.6;resize:vertical;background:var(--bg2,#f3f4f6);border:1px solid var(--border2,#e5e7eb);border-radius:8px;padding:12px;color:var(--text);opacity:0.85;cursor:default;"></textarea>
+            <div style="font-size:11px;color:var(--dim);margin-top:6px;">Edit the base prompt in <b>Settings → Whitespace AI Prompt</b>. Rule instructions are appended automatically.</div>
           </div>
         </div>
       </div>
@@ -6754,6 +6762,28 @@ function evaluateWsRules(customer) {
     .join('\n');
 }
 
+function _updateWsRulesPreview() {
+  const el = document.getElementById('ws-instruction-preview');
+  if (!el) return;
+  const base = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
+  const rules = getWsRules().filter(r => r.enabled);
+  let full = base;
+  if (rules.length) {
+    full += '\n\n── Rules (injected automatically per customer) ──';
+    rules.forEach((r, i) => {
+      const label = r.ifLabel || (r.ifConditions || []).map(c => {
+        if (c.field === 'text' || c.op === 'text') return c.value;
+        const fLabel = WS_RULE_FIELDS.find(f => f.value === c.field)?.label || c.field;
+        const opLabel = { gt: '>', lt: '<', gte: '≥', lte: '≤', eq: '=' }[c.op] || c.op;
+        return `${fLabel} ${opLabel} ${c.value}`;
+      }).join(' AND ');
+      full += `\n\n[Rule ${i+1}: IF ${label}]\n${r.then}`;
+    });
+  }
+  full += '\n\nRespond with ONLY a raw JSON array — no markdown, no explanation, no text before or after.';
+  el.value = full;
+}
+
 function loadWsRulesUI() {
   const list = document.getElementById('ws-rules-list');
   if (!list) return;
@@ -6762,6 +6792,7 @@ function loadWsRulesUI() {
     list.innerHTML = `<div style="font-size:12px;color:var(--muted);">No rules yet. Add your first rule below.</div>`;
     return;
   }
+  _updateWsRulesPreview();
   list.innerHTML = rules.map((r, i) => {
     const condSummary = r.ifLabel || (r.ifConditions || []).map(c => {
       if (c.field === 'text' || c.op === 'text') return `<em>${c.value}</em>`;
