@@ -1210,9 +1210,10 @@ html, body {
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
       <a class="nav-item" id="nav-customers" href="#" onclick="showView('list');return false;"><span class="nav-icon">◎</span> Customers</a>
+      <a class="nav-item" id="nav-kanban" href="#" onclick="showView('kanban');return false;"><span class="nav-icon">⊞</span> Kanban</a>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-section-label">CRM</div>
+      <div class="sidebar-section-label">Compete</div>
       <a class="nav-item" id="nav-crm-contacts" href="#" onclick="showView('crm-contacts');return false;"><span class="nav-icon">👤</span> Contacts<span class="nav-badge" id="crm-contacts-badge" style="display:none;"></span></a>
       <a class="nav-item" id="nav-crm-opps"     href="#" onclick="showView('crm-opps');return false;"><span class="nav-icon">◆</span> Pipeline<span class="nav-badge" id="crm-opps-badge" style="display:none;"></span></a>
       <a class="nav-item" id="nav-crm-activities" href="#" onclick="showView('crm-activities');return false;"><span class="nav-icon">◷</span> Activities</a>
@@ -1229,20 +1230,15 @@ html, body {
       <a class="nav-item" id="nav-ws-rules" href="#" onclick="showView('ws-rules');return false;" style="padding-left:28px;font-size:12px;"><span class="nav-icon" style="font-size:11px;">⊶</span> Whitespace Rules</a>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-section-label">Manage</div>
-      <a class="nav-item" id="nav-backlog" href="#" onclick="showView('backlog');return false;"><span class="nav-icon">◷</span> Backlog<span class="nav-badge" id="backlog-badge">5</span></a>
-      <a class="nav-item" id="nav-kanban" href="#" onclick="showView('kanban');return false;"><span class="nav-icon">⊞</span> Kanban</a>
+      <div class="sidebar-section-label">Reports</div>
       <a class="nav-item" id="nav-reports" href="#" onclick="showView('reports');return false;"><span class="nav-icon">⊞</span> Reports</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">System</div>
-      <a class="nav-item" id="nav-settings" href="#" onclick="showView('settings');return false;"><span class="nav-icon">⚙</span> Settings</a>
-      <a class="nav-item" id="nav-integrations" href="#" onclick="showView('integrations');return false;"><span class="nav-icon">⊕</span> Integrations</a>
+      <a class="nav-item" id="nav-backlog" href="#" onclick="showView('backlog');return false;"><span class="nav-icon">◷</span> Backlog<span class="nav-badge" id="backlog-badge">5</span></a>
     </div>
     <div class="sidebar-footer">
-      <div class="user-row" onclick="showView('settings');return false;" style="cursor:pointer;" title="Open Settings">
+      <div class="user-row">
         <div class="user-avatar">AM</div>
-        <div><div class="user-name">Admin</div><div class="user-role">CSM Lead · Settings</div></div>
+        <div style="flex:1;min-width:0;"><div class="user-name">Admin</div><div class="user-role">CSM Lead</div></div>
+        <button onclick="showView('settings');return false;" title="Settings" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);padding:4px;line-height:1;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">⚙</button>
       </div>
     </div>
   </aside>
@@ -1413,8 +1409,20 @@ html, body {
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">Appearance</div>
-            <div style="display:flex;gap:10px;align-items:center;">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
               <button class="settings-btn settings-btn-primary" onclick="toggleTheme()">Toggle Light / Dark Mode</button>
+            </div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:8px;">Application Icon</div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div id="app-icon-preview" onclick="document.getElementById('app-icon-input').click()" title="Click to upload new icon" style="width:48px;height:48px;border-radius:12px;overflow:hidden;cursor:pointer;border:2px dashed var(--border2);flex-shrink:0;background:#fff;">
+                <img id="app-icon-preview-img" src="CPT.png" style="width:100%;height:100%;object-fit:cover;display:block;">
+              </div>
+              <div>
+                <button class="settings-btn settings-btn-primary" onclick="document.getElementById('app-icon-input').click()">⬆ Upload Icon</button>
+                <button class="settings-btn" onclick="resetAppIcon()" style="margin-left:6px;">Reset</button>
+                <input id="app-icon-input" type="file" accept="image/*" style="display:none" onchange="uploadAppIcon(this)">
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;">PNG, JPG or SVG. Stored locally in your browser.</div>
+              </div>
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">AI Assistant</div>
@@ -2243,6 +2251,32 @@ function toggleTheme() {
   document.getElementById('toggle-btn2').textContent = icon;
 }
 
+/* ─── app icon ─── */
+const APP_ICON_KEY = 'app-icon-data';
+function uploadAppIcon(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = e.target.result;
+    localStorage.setItem(APP_ICON_KEY, data);
+    applyAppIcon(data);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+function resetAppIcon() {
+  localStorage.removeItem(APP_ICON_KEY);
+  applyAppIcon('CPT.png');
+}
+function applyAppIcon(src) {
+  document.querySelectorAll('.sidebar-brand-logo, #app-icon-preview-img').forEach(el => el.src = src);
+}
+(function() {
+  const saved = localStorage.getItem(APP_ICON_KEY);
+  if (saved) { window.addEventListener('DOMContentLoaded', () => applyAppIcon(saved)); }
+})();
+
 /* ─── view routing ─── */
 let currentView = 'list';
 const NAV_MAP = {
@@ -2294,6 +2328,9 @@ function showView(name) {
   } else if (name === 'settings' || name === 'integrations') {
     document.getElementById('view-settings').hidden = false;
     ghUpdateUI(); renderAiUsage();
+    const savedIcon = localStorage.getItem(APP_ICON_KEY);
+    const previewImg = document.getElementById('app-icon-preview-img');
+    if (previewImg) previewImg.src = savedIcon || 'CPT.png';
   } else if (name === 'reports') {
     document.getElementById('view-reports').hidden = false;
     populateReportSelect();
