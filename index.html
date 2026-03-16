@@ -6796,7 +6796,7 @@ async function generateWsSuggestions(custId) {
     const raw_text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || '';
     // strip markdown code fences if present
     const text = raw_text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-    const match = text.match(/\[[\s\S]*?\]/);
+    const match = text.match(/\[[\s\S]*\]/);
     let suggestions = [];
     if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) {} }
     if (!suggestions.length) {
