@@ -1184,7 +1184,12 @@ html, body {
 .review-task-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border2);margin-bottom:5px;}
 .review-task-label{flex:1;font-size:13px;color:var(--text);}
 .review-task-status{font-size:11px;font-weight:600;padding:2px 9px;border-radius:5px;}
+.cmap-layer-btn{background:var(--btn-ghost-bg,rgba(255,255,255,.05));border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;transition:background .15s,color .15s;}
+.cmap-layer-btn:hover{background:rgba(93,173,226,.15);color:var(--cyan);}
+.cmap-layer-btn.active{background:rgba(93,173,226,.25);color:var(--cyan);border-color:rgba(93,173,226,.5);}
 </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -1211,6 +1216,7 @@ html, body {
       <div class="sidebar-section-label">AI Health Overview</div>
       <a class="nav-item" id="nav-customers" href="#" onclick="showView('list');return false;"><span class="nav-icon">◎</span> Customers</a>
       <a class="nav-item" id="nav-kanban" href="#" onclick="showView('kanban');return false;"><span class="nav-icon">⊞</span> Kanban</a>
+      <a class="nav-item" id="nav-customer-map" href="#" onclick="showView('customer-map');return false;"><span class="nav-icon">🗺</span> Customer Map</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Compete</div>
@@ -1223,6 +1229,7 @@ html, body {
     <div class="sidebar-section">
       <div class="sidebar-section-label">Intelligence</div>
       <a class="nav-item" id="nav-intelligence" href="#" onclick="showView('intelligence');return false;"><span class="nav-icon">💬</span> Day to Day<span class="nav-badge" id="intel-badge" style="display:none;"></span></a>
+      <a class="nav-item" id="nav-social-intel" href="#" onclick="showView('social-intel');return false;"><span class="nav-icon">🔍</span> Social Intelligence</a>
     </div>
     <div class="sidebar-section" id="sidebar-section-sales">
       <div class="sidebar-section-label">Sales</div>
@@ -1330,6 +1337,28 @@ html, body {
       <div class="view" id="view-backlog" hidden>
         <div class="section-label">All Blocked &amp; Missed Items</div>
         <div id="backlog-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- CUSTOMER MAP VIEW -->
+      <div class="view" id="view-customer-map" hidden>
+        <div style="padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface);">
+          <span style="font-size:14px;font-weight:700;color:var(--text);">Customer Map</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:11px;color:var(--muted);margin-right:2px;">Layer:</span>
+            <button class="cmap-layer-btn active" data-layer="all" onclick="setCMapLayer('all')">All Customers</button>
+            <button class="cmap-layer-btn" data-layer="copilot365" onclick="setCMapLayer('copilot365')">Copilot 365</button>
+            <button class="cmap-layer-btn" data-layer="copilot3p" onclick="setCMapLayer('copilot3p')">Copilot 3P</button>
+            <button class="cmap-layer-btn" data-layer="adr" onclick="setCMapLayer('adr')">ADR</button>
+            <button class="cmap-layer-btn" data-layer="windows365" onclick="setCMapLayer('windows365')">Windows 365</button>
+            <button class="cmap-layer-btn" data-layer="me3" onclick="setCMapLayer('me3')">ME3</button>
+            <button class="cmap-layer-btn" data-layer="me5" onclick="setCMapLayer('me5')">ME5</button>
+            <button class="cmap-layer-btn" data-layer="me7" onclick="setCMapLayer('me7')">ME7</button>
+          </div>
+        </div>
+        <div style="position:relative;height:calc(100vh - 164px);">
+          <div id="leaflet-map" style="width:100%;height:100%;z-index:0;"></div>
+          <div id="cmap-no-location" style="display:none;position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;white-space:nowrap;z-index:1000;pointer-events:none;"></div>
+        </div>
       </div>
 
       <!-- WHITESPACE VIEW -->
@@ -1687,6 +1716,33 @@ html, body {
         </div>
       </div>
 
+      <!-- SOCIAL INTELLIGENCE VIEW -->
+      <div class="view" id="view-social-intel" hidden>
+        <div class="crm-topbar">
+          <div class="crm-topbar-title">🔍 Social Intelligence</div>
+          <select id="social-intel-customer" class="modal-input" style="max-width:220px;font-size:12px;">
+            <option value="">All Customers</option>
+          </select>
+        </div>
+        <div style="padding:16px 20px;max-width:860px;">
+          <div class="intel-input-card">
+            <div class="intel-input-label">Paste public content to analyse</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Copy text from a LinkedIn profile, job posting, company news, press release or website and paste it here. The AI will extract competitor signals, hiring trends, and adoption risk.</div>
+            <select id="social-intel-type" class="modal-input" style="max-width:220px;font-size:12px;margin-bottom:10px;">
+              <option value="auto">Auto-detect source type</option>
+              <option value="linkedin">LinkedIn profile / post</option>
+              <option value="jobs">Job posting</option>
+              <option value="news">News / press release</option>
+              <option value="website">Company website</option>
+              <option value="other">Other public content</option>
+            </select>
+            <textarea id="social-intel-input" class="intel-textarea" rows="6" placeholder="Paste LinkedIn content, job postings, news articles, or any public company information here…"></textarea>
+            <button class="intel-analyze-btn" onclick="analyseSocialIntel()">🔍 Analyse for Signals</button>
+          </div>
+          <div id="social-intel-feed" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+      </div>
+
       <!-- DETAIL VIEW -->
       <div id="view-detail" hidden style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
         <div class="detail-hero" id="d-hero"></div>
@@ -1758,6 +1814,14 @@ html, body {
           <div>
             <div class="modal-label">AOP Date</div>
             <input class="modal-input" id="cm-aop" type="date">
+          </div>
+          <div>
+            <div class="modal-label">Country</div>
+            <input class="modal-input" id="cm-country" placeholder="e.g. Israel">
+          </div>
+          <div>
+            <div class="modal-label">City</div>
+            <input class="modal-input" id="cm-city" placeholder="e.g. Tel Aviv">
           </div>
           <div class="modal-grid-full">
             <div class="products-section-title">Current Products (# of licensed users)</div>
@@ -2293,12 +2357,14 @@ const NAV_MAP = {
   'crm-opps':       ['nav-crm-opps'],
   'crm-activities': ['nav-crm-activities'],
   'crm-compete':    ['nav-crm-compete'],
+  'customer-map':   ['nav-customer-map'],
+  'social-intel':   ['nav-social-intel'],
 };
 
 function showView(name) {
   // hide all except detail which is managed separately
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace','view-ws-rules'].forEach(id => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace','view-ws-rules','view-customer-map','view-social-intel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = true;
   });
@@ -2343,6 +2409,12 @@ function showView(name) {
   } else if (name === 'ws-rules') {
     document.getElementById('view-ws-rules').hidden = false;
     loadWsRulesUI();
+  } else if (name === 'customer-map') {
+    document.getElementById('view-customer-map').hidden = false;
+    buildCustomerMap();
+  } else if (name === 'social-intel') {
+    document.getElementById('view-social-intel').hidden = false;
+    buildSocialIntelView();
   }
 }
 
@@ -2741,7 +2813,7 @@ function goToDetail(id) {
   clearTimeout(scTimer);
   document.getElementById('sidecar').classList.remove('open');
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace'].forEach(v => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace','view-customer-map','view-social-intel'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.hidden = true;
   });
@@ -3199,7 +3271,7 @@ function closeCustomerModal() {
 function openAddCustomer() {
   editingCustomerId = null;
   document.getElementById('customer-modal-title').textContent = 'Add Customer';
-  ['cm-name','cm-csam','cm-ae','cm-ats','cm-se'].forEach(id => document.getElementById(id).value = '');
+  ['cm-name','cm-csam','cm-ae','cm-ats','cm-se','cm-country','cm-city'].forEach(id => document.getElementById(id).value = '');
   ['cm-users','cm-copilot'].forEach(id => document.getElementById(id).value = '');
   ['cm-renewal','cm-aop'].forEach(id => document.getElementById(id).value = '');
   ['cm-p-copilot365','cm-p-copilot3p','cm-p-adr','cm-p-windows365','cm-p-me3','cm-p-me5','cm-p-me7'].forEach(id => document.getElementById(id).value = '');
@@ -3222,6 +3294,8 @@ function openEditCustomer() {
   document.getElementById('cm-copilot').value = raw.copilotUsers || '';
   document.getElementById('cm-renewal').value = raw.renewalDate || '';
   document.getElementById('cm-aop').value     = raw.aopDate || '';
+  document.getElementById('cm-country').value = raw.country || '';
+  document.getElementById('cm-city').value    = raw.city    || '';
   const p = raw.products || {};
   document.getElementById('cm-p-copilot365').value  = p.copilot365  || '';
   document.getElementById('cm-p-copilot3p').value   = p.copilot3p   || '';
@@ -3252,6 +3326,10 @@ function saveCustomer() {
     raw.copilotUsers= parseInt(document.getElementById('cm-copilot').value) || 0;
     raw.renewalDate = document.getElementById('cm-renewal').value;
     raw.aopDate     = document.getElementById('cm-aop').value;
+    const _nc = document.getElementById('cm-country').value.trim();
+    const _nci = document.getElementById('cm-city').value.trim();
+    if (_nc !== (raw.country||'') || _nci !== (raw.city||'')) { raw.lat = null; raw.lng = null; }
+    raw.country = _nc; raw.city = _nci;
     raw.products    = _readProductFields();
     if (_logoDataUrl !== undefined) raw.logo = _logoDataUrl || '';
     const idx = RAW_DATA.customers.indexOf(raw);
@@ -3269,6 +3347,8 @@ function saveCustomer() {
       copilotUsers:parseInt(document.getElementById('cm-copilot').value) || 0,
       renewalDate: document.getElementById('cm-renewal').value,
       aopDate:     document.getElementById('cm-aop').value,
+      country:     document.getElementById('cm-country').value.trim(),
+      city:        document.getElementById('cm-city').value.trim(),
       products:    _readProductFields(),
       logo:        _logoDataUrl || '',
       categories:  [],
@@ -4709,7 +4789,7 @@ function buildCrmActivities() {
     _crmViews.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
 
     if (name === 'crm-contacts' || name === 'crm-opps' || name === 'crm-activities') {
-      ['view-list','view-kanban','view-backlog','view-settings','view-reports','view-intelligence'].forEach(id => {
+      ['view-list','view-kanban','view-backlog','view-settings','view-reports','view-intelligence','view-customer-map','view-social-intel'].forEach(id => {
         const el = document.getElementById(id); if (el) el.hidden = true;
       });
       document.getElementById('view-detail').hidden = true;
@@ -6266,7 +6346,7 @@ function clearCompeteBg() {
 
     if (name === 'crm-compete') {
       ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace'].forEach(id => {
+       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace','view-customer-map','view-social-intel'].forEach(id => {
         const el = document.getElementById(id); if (el) el.hidden = true;
       });
       document.getElementById('view-detail').hidden = true;
@@ -7054,7 +7134,7 @@ function closeReview() {
     if (cpView && name !== 'compete-plans') cpView.hidden = true;
     if (name === 'compete-plans') {
       ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace'].forEach(id => {
+       'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace','view-customer-map','view-social-intel'].forEach(id => {
         const el = document.getElementById(id); if (el) el.hidden = true;
       });
       document.getElementById('view-detail').hidden = true;
@@ -7072,6 +7152,243 @@ function closeReview() {
     }
   };
 })();
+
+/* ══════════════════════════════════════════════════
+   CUSTOMER MAP
+══════════════════════════════════════════════════ */
+let _cmapLeaflet = null;
+let _cmapMarkers = [];
+let _cmapLayer   = 'all';
+
+const CMAP_PRODUCTS = [
+  { key: 'all',        label: 'All Customers', color: '#5dade2' },
+  { key: 'copilot365', label: 'Copilot 365',   color: '#6ee7b7' },
+  { key: 'copilot3p',  label: 'Copilot 3P',    color: '#c4b5fd' },
+  { key: 'adr',        label: 'ADR',            color: '#f9a8d4' },
+  { key: 'windows365', label: 'Windows 365',   color: '#67e8f9' },
+  { key: 'me3',        label: 'ME3',            color: '#fbbf24' },
+  { key: 'me5',        label: 'ME5',            color: '#f87171' },
+  { key: 'me7',        label: 'ME7',            color: '#a78bfa' },
+];
+
+async function buildCustomerMap() {
+  if (!RAW_DATA || !RAW_DATA.customers) return;
+  const mapEl = document.getElementById('leaflet-map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  if (!_cmapLeaflet) {
+    _cmapLeaflet = L.map('leaflet-map', { zoomControl: true }).setView([20, 10], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(_cmapLeaflet);
+  } else {
+    setTimeout(() => _cmapLeaflet.invalidateSize(), 50);
+  }
+
+  await _cmapGeocodeAll();
+  _renderCmapMarkers();
+}
+
+async function _cmapGeocodeAll() {
+  if (!RAW_DATA || !RAW_DATA.customers) return;
+  const pending = RAW_DATA.customers.filter(c => (c.city || c.country) && !c.lat && !c.lng);
+  if (!pending.length) return;
+  for (const c of pending) {
+    try {
+      const q = [c.city, c.country].filter(Boolean).join(', ');
+      const r = await fetch(
+        'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1',
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const d = await r.json();
+      if (d && d[0]) { c.lat = parseFloat(d[0].lat); c.lng = parseFloat(d[0].lon); }
+    } catch(e) {}
+    await new Promise(res => setTimeout(res, 400));
+  }
+  saveData();
+}
+
+function _renderCmapMarkers() {
+  if (!_cmapLeaflet) return;
+  _cmapMarkers.forEach(m => _cmapLeaflet.removeLayer(m));
+  _cmapMarkers = [];
+
+  const customers = (RAW_DATA && RAW_DATA.customers || []).filter(c => c.lat && c.lng);
+  const colorInfo = CMAP_PRODUCTS.find(p => p.key === _cmapLayer) || CMAP_PRODUCTS[0];
+
+  let maxVal = 1;
+  customers.forEach(c => {
+    const v = _cmapLayer === 'all' ? (c.users || 0) : ((c.products || {})[_cmapLayer] || 0);
+    if (v > maxVal) maxVal = v;
+  });
+
+  const bounds = [];
+  customers.forEach(c => {
+    const val = _cmapLayer === 'all' ? (c.users || 0) : ((c.products || {})[_cmapLayer] || 0);
+    if (_cmapLayer !== 'all' && val === 0) return;
+    const radius = 8 + Math.round((val / maxVal) * 22);
+    const m = L.circleMarker([c.lat, c.lng], {
+      radius, fillColor: colorInfo.color,
+      color: '#fff', weight: 2, opacity: 0.9, fillOpacity: 0.8,
+    });
+    const pct = c.users ? Math.round((c.copilotUsers || 0) / c.users * 100) : 0;
+    const loc = [c.city, c.country].filter(Boolean).join(', ');
+    m.bindPopup(
+      '<div style="min-width:180px;font-family:system-ui,sans-serif;">' +
+      '<div style="font-weight:700;font-size:14px;margin-bottom:6px;">' + _esc(c.name) + '</div>' +
+      (loc ? '<div style="font-size:12px;color:#666;margin-bottom:4px;">📍 ' + _esc(loc) + '</div>' : '') +
+      '<div style="font-size:12px;margin-bottom:2px;">👥 ' + (c.users||0).toLocaleString() + ' users · ' + pct + '% Copilot</div>' +
+      (_cmapLayer !== 'all' ? '<div style="font-size:12px;font-weight:600;color:#1a5276;margin-top:4px;">' + _esc(colorInfo.label) + ': ' + val.toLocaleString() + ' licenses</div>' : '') +
+      '</div>'
+    );
+    m.addTo(_cmapLeaflet);
+    _cmapMarkers.push(m);
+    bounds.push([c.lat, c.lng]);
+  });
+
+  if (bounds.length) _cmapLeaflet.fitBounds(bounds, { padding: [40, 40] });
+
+  const noCity = (RAW_DATA.customers || []).filter(c => !c.city && !c.country).length;
+  const notice = document.getElementById('cmap-no-location');
+  if (notice) {
+    notice.style.display = noCity > 0 ? '' : 'none';
+    notice.textContent = noCity + ' customer' + (noCity !== 1 ? 's' : '') + ' have no location set — edit them to add Country/City.';
+  }
+}
+
+function setCMapLayer(layer) {
+  _cmapLayer = layer;
+  document.querySelectorAll('.cmap-layer-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.layer === layer)
+  );
+  _renderCmapMarkers();
+}
+
+/* ══════════════════════════════════════════════════
+   SOCIAL INTELLIGENCE
+══════════════════════════════════════════════════ */
+
+const DEFAULT_SOCIAL_INTEL_PROMPT = `You are a Microsoft sales intelligence analyst. Analyse the public content below and extract competitive signals relevant to a Microsoft Copilot / Microsoft 365 sales motion.
+
+Return ONLY a JSON array of signal objects. Each object must have:
+- "title": short headline (max 8 words)
+- "category": one of "Competitor Signal", "Hiring Trend", "Tech Stack", "Leadership Change", "Adoption Risk", "Opportunity"
+- "severity": "High", "Medium", or "Low"
+- "detail": 2-3 sentence explanation of the signal and why it matters
+- "action": recommended sales action (1 sentence)
+- "icon": a single relevant emoji
+
+Return [] if no relevant signals found. No markdown, no explanation — only the raw JSON array.`;
+
+function buildSocialIntelView() {
+  const sel = document.getElementById('social-intel-customer');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Customers</option>' +
+    (RAW_DATA && RAW_DATA.customers || []).map(c =>
+      '<option value="' + _esc(c.id) + '"' + (c.id === current ? ' selected' : '') + '>' + _esc(c.name) + '</option>'
+    ).join('');
+  _renderSocialFeed();
+}
+
+function _renderSocialFeed() {
+  const feed = document.getElementById('social-intel-feed');
+  if (!feed) return;
+  const custId = document.getElementById('social-intel-customer')?.value || '';
+  const entries = ((RAW_DATA && RAW_DATA.socialIntel) || [])
+    .filter(e => !custId || e.customerId === custId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (!entries.length) {
+    feed.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--dim);font-size:13px;">No signals yet — paste public content above and click Analyse.</div>';
+    return;
+  }
+  const severityColor = { High: '#f87171', Medium: '#fbbf24', Low: '#6ee7b7' };
+  feed.innerHTML = entries.map(e => `
+    <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="font-size:26px;line-height:1;flex-shrink:0;">${e.icon || '🔍'}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-size:14px;font-weight:700;color:var(--text);">${_esc(e.title)}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(93,173,226,.15);color:var(--cyan);">${_esc(e.category)}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;color:#0f1923;background:${severityColor[e.severity]||'#6ee7b7'};">${e.severity}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text);line-height:1.65;margin-bottom:8px;">${_esc(e.detail)}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--cyan);padding:6px 10px;background:rgba(93,173,226,.08);border-radius:7px;border-left:3px solid var(--cyan);">→ ${_esc(e.action)}</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:8px;">${e.customerName ? '👤 ' + _esc(e.customerName) + ' · ' : ''}${new Date(e.createdAt).toLocaleDateString()}</div>
+        </div>
+        <button onclick="deleteSocialIntelEntry('${e.id}')" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0;flex-shrink:0;" title="Delete">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function analyseSocialIntel() {
+  const input = document.getElementById('social-intel-input');
+  const btn   = document.querySelector('#view-social-intel .intel-analyze-btn');
+  const text  = input ? input.value.trim() : '';
+  if (!text) { alert('Please paste some content to analyse.'); return; }
+
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) { alert('AI Worker URL not configured in Settings.'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Analysing…'; }
+  try {
+    const custId   = document.getElementById('social-intel-customer')?.value || '';
+    const srcType  = document.getElementById('social-intel-type')?.value || 'auto';
+    const custName = custId && RAW_DATA && RAW_DATA.customers ? (RAW_DATA.customers.find(c => c.id === custId) || {}).name || '' : '';
+    const userMsg  = (custName ? 'Customer context: ' + custName + '\n' : '') +
+                     'Source type: ' + srcType + '\n\n' + text;
+
+    const res = await fetch(workerBase + '/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001', max_tokens: 1500,
+        system: DEFAULT_SOCIAL_INTEL_PROMPT,
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || data.error || 'HTTP ' + res.status);
+    trackAiUsage(data);
+
+    const raw = data.content?.[0]?.text || '';
+    let signals = [];
+    try { const p = JSON.parse(raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim()); if (Array.isArray(p)) signals = p; } catch(e) {}
+    if (!signals.length) {
+      const m = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim().match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (m) { try { signals = JSON.parse(m[0]); } catch(e) {} }
+    }
+    if (!signals.length) throw new Error('No signals returned. The content may not contain relevant competitive information.');
+
+    if (!RAW_DATA.socialIntel) RAW_DATA.socialIntel = [];
+    signals.slice(0, 8).forEach(s => {
+      RAW_DATA.socialIntel.unshift({
+        id: 'si-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
+        customerId: custId, customerName: custName,
+        title: s.title || 'Signal', category: s.category || 'Competitor Signal',
+        severity: s.severity || 'Medium', detail: s.detail || '',
+        action: s.action || '', icon: s.icon || '🔍',
+        createdAt: new Date().toISOString(),
+      });
+    });
+    saveData();
+    if (input) input.value = '';
+    _renderSocialFeed();
+  } catch(err) {
+    alert('Analysis failed: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔍 Analyse for Signals'; }
+  }
+}
+
+function deleteSocialIntelEntry(id) {
+  if (!RAW_DATA) return;
+  RAW_DATA.socialIntel = (RAW_DATA.socialIntel || []).filter(e => e.id !== id);
+  saveData();
+  _renderSocialFeed();
+}
 </script>
 </body>
 </html>
