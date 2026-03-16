@@ -6329,7 +6329,7 @@ const DEFAULT_WS_PROMPT = `You are a Microsoft sales advisor. Based on the custo
 Products available: Copilot 365, Copilot 3P Capacity, ADR, Windows 365, ME3, ME5, ME7.
 For each gap product (where users = 0), evaluate whether it is a strong fit given the customer size, copilot adoption rate, and renewal timeline.
 Return a JSON array like: [{"product":"<name>","reason":"<1-2 sentence business reason>","priority":"High|Medium|Low"}]
-Only include products that are NOT already licensed (users > 0). Limit to top 3 suggestions.`;
+Only include products that are NOT already licensed (i.e. where users = 0 in the profile). Limit to top 3 suggestions.`;
 
 function _readProductFields() {
   return {
@@ -6469,10 +6469,10 @@ Current products:\n${productLines}`;
     const resp = await fetch(`${workerUrl}/ai`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
-    const text = data.content?.[0]?.text || data.completion || '';
+    const text = data.content?.[0]?.text || data.completion || data.error?.message || '';
     const match = text.match(/\[[\s\S]*\]/);
     let suggestions = [];
     if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) {} }
