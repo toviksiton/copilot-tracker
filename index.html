@@ -6789,9 +6789,14 @@ async function generateWsSuggestions(custId) {
     const resp = await fetch(`${workerUrl}/ai`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
+    if (!resp.ok) {
+      const errMsg = data.error?.message || data.error || data.message || `HTTP ${resp.status}`;
+      box.innerHTML = `<div style="font-size:12px;color:#f87171;padding:8px 0;">AI error: ${errMsg}</div>`;
+      return;
+    }
     trackAiUsage(data);
     const raw_text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || '';
     // strip markdown code fences if present
