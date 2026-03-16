@@ -6617,7 +6617,7 @@ function _wsFieldVal(field, customer) {
 
 function _wsOpMatch(val, op, threshold) {
   if (op === 'text') return true; // free-text always passes
-  const t = Number(threshold);
+  const t = parseFloat(threshold);
   if (op === 'gt')  return val >  t;
   if (op === 'lt')  return val <  t;
   if (op === 'gte') return val >= t;
@@ -6707,7 +6707,7 @@ function _renderWsCondRow(idx, cond) {
         <option value="lte" ${cond.op==='lte'?'selected':''}>≤</option>
         <option value="eq" ${cond.op==='eq'?'selected':''}}>=</option>
       </select>
-      <input id="ws-cond-val-${idx}" type="number" class="modal-input" value="${isText ? 0 : (cond.value||0)}" style="flex:1;font-size:12px;padding:4px 6px;" oninput="_wsRuleConds[${idx}].value=Number(this.value)">
+      <input id="ws-cond-val-${idx}" type="text" class="modal-input" value="${isText ? '' : (cond.value||'')}" placeholder="value" style="flex:1;font-size:12px;padding:4px 6px;" oninput="_wsRuleConds[${idx}].value=this.value">
     </div>
     <input id="ws-cond-text-${idx}" type="text" class="modal-input" value="${isText ? (cond.value||'') : ''}" placeholder="e.g. > 15% of total users with E3 or E5" style="display:${isText ? 'block' : 'none'};flex:2;font-size:12px;padding:4px 8px;" oninput="_wsRuleConds[${idx}].value=this.value">
     ${idx > 0 ? `<button onclick="removeWsRuleCond(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;" title="Remove">×</button>` : '<span style="width:22px;display:inline-block;"></span>'}`;
