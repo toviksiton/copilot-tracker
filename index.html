@@ -6471,30 +6471,29 @@ Only suggest products the customer does NOT already have (users = 0). Return top
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
-    console.log('[WS AI] raw worker response:', JSON.stringify(data));
-    const text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || data.error?.message || (typeof data === 'string' ? data : '');
-    console.log('[WS AI] extracted text:', text);
-    const match = text.match(/\[[\s\S]*\]/);
+    const raw_text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || '';
+    // strip markdown code fences if present
+    const text = raw_text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const match = text.match(/\[[\s\S]*?\]/);
     let suggestions = [];
-    if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) { console.log('[WS AI] JSON parse error:', e); } }
+    if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) {} }
     if (!suggestions.length) {
-      box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">${text || 'No suggestions returned. Check DevTools console (F12) for raw Worker response.'}</div>`;
+      box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Could not generate suggestions. Please try again.</div>`;
       return;
     }
-    const escaped = suggestions.map(s => ({ product: s.product, reason: s.reason, priority: s.priority || 'Medium' }));
+    const items = suggestions.slice(0,4).map(s => ({ product: s.product || '', reason: s.reason || '', priority: s.priority || 'Medium' }));
     box.innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0 12px;">
-        ${escaped.map((s, i) => `
-          <div class="ws-ai-tile" onclick="toggleWsTileExplain('${custId}',${i})" data-idx="${i}" style="cursor:pointer;background:#1b4f72;color:#fff;border-radius:8px;padding:16px 14px;min-width:90px;text-align:center;font-size:13px;font-weight:600;line-height:1.3;transition:background .15s;user-select:none;">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;padding:6px 0 10px;">
+        ${items.map((s, i) => `
+          <div onclick="toggleWsTileExplain('${custId}',${i})" data-idx="${i}" class="ws-ai-tile" style="cursor:pointer;background:#1a5276;color:#fff;border-radius:8px;width:110px;height:70px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;font-weight:600;line-height:1.3;padding:8px;box-sizing:border-box;transition:background .15s,outline .1s;user-select:none;">
             ${s.product}
           </div>`).join('')}
       </div>
-      <div id="ws-tile-explain-${custId}" style="display:none;background:var(--card-bg,#f8f9fa);border-radius:10px;padding:18px 20px;margin-top:2px;">
-        <div id="ws-tile-explain-text-${custId}" style="font-size:15px;line-height:1.65;color:var(--text);margin-bottom:14px;"></div>
+      <div id="ws-tile-explain-${custId}" style="display:none;border-top:1px solid var(--border2,#e5e7eb);padding-top:14px;margin-top:4px;">
+        <p id="ws-tile-explain-text-${custId}" style="font-size:14px;line-height:1.7;color:var(--text);margin:0 0 12px;"></p>
         <button class="settings-btn settings-btn-primary" id="ws-tile-add-btn-${custId}" style="font-size:12px;padding:5px 14px;">+ Add to Plan</button>
       </div>`;
-    // store data for click handler
-    box._wsSuggestions = escaped;
+    box._wsSuggestions = items;
   } catch(err) {
     box.innerHTML = `<div style="font-size:12px;color:#f87171;padding:8px 0;">Error: ${err.message}</div>`;
   }
