@@ -3731,24 +3731,19 @@ async function checkApiLimits() {
     const data = await res.json();
     trackAiUsage(data); renderAiUsage();
     if (tokRemain !== null) {
-      const remain = parseInt(tokRemain);
-      const limit  = tokLimit ? parseInt(tokLimit) : null;
-      const pct    = limit ? Math.round(remain / limit * 100) : null;
-      const barColor = pct === null ? '#5dade2' : pct > 50 ? '#6ee7b7' : pct > 20 ? '#fbbf24' : '#f87171';
+      const remain  = parseInt(tokRemain);
+      const limit   = tokLimit ? parseInt(tokLimit) : null;
+      const used    = limit ? limit - remain : null;
+      const usedPct = limit ? Math.round(used / limit * 100) : null;
+      const barColor = usedPct === null ? '#5dade2' : usedPct < 50 ? '#6ee7b7' : usedPct < 80 ? '#fbbf24' : '#f87171';
       const resetStr = resetAt ? ' · resets ' + new Date(resetAt).toLocaleTimeString() : '';
+      const msg = usedPct !== null ? `You reached <strong style="color:${barColor};font-size:15px;">${usedPct}%</strong> of your token usage` : `<strong style="color:var(--cyan);">${remain.toLocaleString()}</strong> tokens remaining`;
       out.innerHTML = `
-        <div style="margin-bottom:6px;font-size:11px;color:var(--muted);">
-          <span style="color:var(--mint);">✓ Connected</span>${resetStr}
-          ${reqRemain !== null ? ` · <strong style="color:var(--text);">${parseInt(reqRemain).toLocaleString()}</strong> requests remaining` : ''}
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          ${limit ? `<div style="flex:1;height:8px;background:var(--border2,#e5e7eb);border-radius:4px;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width .4s;"></div>
-          </div>` : ''}
-          <div style="white-space:nowrap;font-size:13px;font-weight:700;color:${barColor};">
-            ${pct !== null ? `${pct}%` : ''} <span style="font-weight:400;color:var(--muted);font-size:11px;">${remain.toLocaleString()}${limit ? ' / ' + limit.toLocaleString() : ''} tokens</span>
-          </div>
-        </div>`;
+        <div style="font-size:13px;color:var(--text);margin-bottom:10px;">${msg}</div>
+        ${limit ? `<div style="height:8px;background:var(--border2,#e5e7eb);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+          <div style="width:${usedPct}%;height:100%;background:${barColor};border-radius:4px;transition:width .4s;"></div>
+        </div>` : ''}
+        <div style="font-size:11px;color:var(--muted);">${used !== null ? used.toLocaleString() + ' / ' + limit.toLocaleString() + ' tokens used' : ''}${resetStr}</div>`;
     } else {
       out.innerHTML = `<span style="color:var(--mint);">✓ Connected</span> · Rate-limit headers not forwarded by Worker (add <code>expose_headers</code> in Worker CORS config to see limits).`;
     }
