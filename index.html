@@ -6826,7 +6826,7 @@ async function generateWsSuggestions(custId) {
     const resp = await fetch(`${workerUrl}/ai`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -6856,7 +6856,8 @@ async function generateWsSuggestions(custId) {
     }
     if (!suggestions.length) {
       console.warn('WS AI suggestions: unparseable response:', raw_text);
-      box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Could not generate suggestions. Please try again.</div>`;
+      const debugSnippet = raw_text ? raw_text.slice(0, 300).replace(/</g,'&lt;').replace(/>/g,'&gt;') : '(empty)';
+      box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Could not generate suggestions. Please try again.<br><span style="font-size:10px;opacity:.6;word-break:break-all;">Raw: ${debugSnippet}</span></div>`;
       return;
     }
     const items = suggestions.slice(0,4).map(s => ({ product: s.product || '', reason: s.reason || '', priority: s.priority || 'Medium' }));
