@@ -6456,20 +6456,19 @@ async function generateWsSuggestions(custId) {
     return;
   }
 
-  const systemPrompt = (RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
+  const systemPrompt = `You are a Microsoft sales advisor. Respond with ONLY a raw JSON array — no markdown, no explanation, no text before or after.
+Format: [{"product":"<name>","reason":"<one short sentence>","priority":"High|Medium|Low"}]
+Products to consider: Copilot 365, Copilot 3P Capacity, ADR, Windows 365, ME3, ME5, ME7.
+Only suggest products the customer does NOT already have (users = 0). Return top 3.`;
   const prods = raw.products || {};
-  const productLines = WS_PRODUCTS.map(p => `  ${p.label}: ${prods[p.key] || 0} users`).join('\n');
-  const userMsg = `Customer: ${raw.name}
-Total users: ${raw.users || 0}
-Copilot users: ${raw.copilotUsers || 0}
-Renewal: ${raw.renewalDate || 'unknown'}
-Current products:\n${productLines}`;
+  const productLines = WS_PRODUCTS.map(p => `${p.label}: ${prods[p.key] || 0} users`).join(', ');
+  const userMsg = `Customer: ${raw.name}, total users: ${raw.users || 0}, Copilot users: ${raw.copilotUsers || 0}, renewal: ${raw.renewalDate || 'unknown'}. Products: ${productLines}.`;
 
   try {
     const resp = await fetch(`${workerUrl}/ai`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
     console.log('[WS AI] raw worker response:', JSON.stringify(data));
@@ -6502,7 +6501,7 @@ Current products:\n${productLines}`;
 }
 
 function toggleWsTileExplain(custId, idx) {
-  const box = document.getElementById(`ws-ai-box-${custId}`);
+  const box = document.getElementById(`ws-suggestions-${custId}`);
   if (!box) return;
   const suggestions = box._wsSuggestions || [];
   const s = suggestions[idx];
