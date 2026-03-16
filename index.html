@@ -7175,8 +7175,8 @@ async function buildCustomerMap() {
 
   if (!_cmapLeaflet) {
     _cmapLeaflet = L.map('leaflet-map', { zoomControl: true }).setView([20, 10], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
       maxZoom: 19,
     }).addTo(_cmapLeaflet);
   } else {
