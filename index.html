@@ -248,7 +248,7 @@ html, body {
 .view[hidden] { display:none; }
 
 /* detail */
-.detail-hero { padding:18px 28px 16px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0; }
+.detail-hero { padding:18px 28px 16px;border-bottom:1px solid var(--border);background:var(--glass);flex-shrink:0;overflow:hidden; }
 .detail-hero-row { display:flex;align-items:stretch;gap:20px; }
 .detail-hero-left { display:flex;align-items:center;gap:16px;min-width:200px;padding-right:20px;border-right:1px solid var(--border);flex-shrink:0; }
 .detail-big-logo { width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#0f0c29;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,.25); }
@@ -271,7 +271,7 @@ html, body {
 .hi-dates  .hero-info-lbl { color:rgba(251,191,36,.85);  }
 .hi-tasks  .hero-info-lbl { color:rgba(251,113,133,.85); }
 .hero-info-lbl:not([class*=hi]) { color:var(--dim); }
-.hero-info-val { font-size:13px;font-weight:600;color:var(--text); }
+.hero-info-val { font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 
 .detail-kpi-row { height:64px;flex-shrink:0;background:var(--glass);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center; }
 .detail-kpi { padding:0 26px; }
@@ -716,6 +716,19 @@ html, body {
 
   /* stats row: 2 columns */
   .stats-row { grid-template-columns:repeat(2,1fr); }
+
+  /* detail hero: stack vertically on mobile */
+  .detail-hero { padding:14px; }
+  .detail-hero-row { flex-direction:column; gap:12px; }
+  .detail-hero-left { min-width:0; border-right:none; padding-right:0; border-bottom:1px solid var(--border); padding-bottom:12px; }
+  .detail-hero-info { grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); }
+  .detail-hero-actions { display:none; }
+  .detail-name { font-size:17px; }
+
+  /* detail KPI row: horizontally scrollable, no overflow */
+  .detail-kpi-row { padding:0 14px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .detail-kpi-row::-webkit-scrollbar { display:none; }
+  .detail-kpi { padding:0 14px; flex-shrink:0; }
 
   /* detail body */
   .detail-body { padding:16px 14px; }
