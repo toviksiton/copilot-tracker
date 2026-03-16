@@ -6709,7 +6709,7 @@ function _renderWsCondRow(idx, cond) {
       </select>
       <input id="ws-cond-val-${idx}" type="number" class="modal-input" value="${isText ? 0 : (cond.value||0)}" style="flex:1;font-size:12px;padding:4px 6px;" oninput="_wsRuleConds[${idx}].value=Number(this.value)">
     </div>
-    <input id="ws-cond-text-${idx}" type="text" class="modal-input" value="${isText ? (cond.value||'') : ''}" placeholder="e.g. > 15% of total users with E3 or E5" style="display:${isText ? 'flex' : 'none'};flex:2;font-size:12px;padding:4px 8px;" oninput="_wsRuleConds[${idx}].value=this.value">
+    <input id="ws-cond-text-${idx}" type="text" class="modal-input" value="${isText ? (cond.value||'') : ''}" placeholder="e.g. > 15% of total users with E3 or E5" style="display:${isText ? 'block' : 'none'};flex:2;font-size:12px;padding:4px 8px;" oninput="_wsRuleConds[${idx}].value=this.value">
     ${idx > 0 ? `<button onclick="removeWsRuleCond(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;" title="Remove">×</button>` : '<span style="width:22px;display:inline-block;"></span>'}`;
   list.appendChild(row);
 }
@@ -6720,7 +6720,7 @@ function _onWsCondFieldChange(idx, field) {
   const structured = document.getElementById(`ws-cond-structured-${idx}`);
   const textEl = document.getElementById(`ws-cond-text-${idx}`);
   if (structured) structured.style.display = isText ? 'none' : 'flex';
-  if (textEl) textEl.style.display = isText ? 'flex' : 'none';
+  if (textEl) textEl.style.display = isText ? 'block' : 'none';
   if (isText) { _wsRuleConds[idx].op = 'text'; _wsRuleConds[idx].value = textEl?.value || ''; }
   else { _wsRuleConds[idx].op = 'gt'; _wsRuleConds[idx].value = 0; }
 }
