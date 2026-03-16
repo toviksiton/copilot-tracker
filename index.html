@@ -1454,6 +1454,23 @@ html, body {
               <button class="settings-btn" onclick="resetWsPrompt()">Reset to Default</button>
             </div>
             <div class="settings-divider"></div>
+            <div class="settings-section-title">White Space Rules</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">IF/THEN rules that automatically append extra instructions to the AI prompt based on customer data. Enabled rules are injected whenever AI suggestions are generated.</div>
+            <div id="ws-rules-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;"></div>
+            <button class="settings-btn settings-btn-primary" onclick="openAddWsRule()" style="font-size:12px;">+ Add Rule</button>
+            <div id="ws-rule-form" style="display:none;margin-top:14px;background:var(--bg2,#f3f4f6);border:1px solid var(--border2,#e5e7eb);border-radius:8px;padding:14px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:12px;">New Rule</div>
+              <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">IF <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(all conditions must match)</span></div>
+              <div id="ws-rule-cond-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+              <button class="settings-btn" onclick="addWsRuleCond()" style="font-size:11px;padding:3px 10px;margin-bottom:14px;">+ Condition</button>
+              <div style="font-size:11px;font-weight:700;color:var(--mint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">THEN <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">— instruction appended to AI prompt</span></div>
+              <textarea id="ws-rule-then" class="modal-input" rows="3" style="resize:vertical;font-size:11px;width:100%;box-sizing:border-box;margin-bottom:10px;" placeholder="e.g. Prioritise Copilot 365 as a HIGH priority suggestion since the customer has E5 licences but low Copilot 365 adoption."></textarea>
+              <div style="display:flex;gap:8px;">
+                <button class="settings-btn settings-btn-primary" onclick="saveNewWsRule()" style="font-size:12px;">Save Rule</button>
+                <button class="settings-btn" onclick="document.getElementById('ws-rule-form').style.display='none'" style="font-size:12px;">Cancel</button>
+              </div>
+            </div>
+            <div class="settings-divider"></div>
             <div class="settings-section-title">CRM Sections Visibility</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Show or hide CRM sections in the sidebar. Changes take effect immediately.</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
@@ -3863,6 +3880,7 @@ function ghUpdateUI() {
   }
   const wsPromptInput = document.getElementById('ws-prompt-input');
   if (wsPromptInput) wsPromptInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
+  loadWsRulesUI();
   const crmToggles = JSON.parse(localStorage.getItem('crm-toggles') || '{"contacts":true,"pipeline":true,"activities":true}');
   const chkC = document.getElementById('crm-toggle-contacts');   if (chkC) chkC.checked = !!crmToggles.contacts;
   const chkP = document.getElementById('crm-toggle-pipeline');   if (chkP) chkP.checked = !!crmToggles.pipeline;
@@ -6427,6 +6445,31 @@ For each gap product (where users = 0), evaluate whether it is a strong fit give
 Return a JSON array like: [{"product":"<name>","reason":"<1-2 sentence business reason>","priority":"High|Medium|Low"}]
 Only include products that are NOT already licensed (i.e. where users = 0 in the profile). Limit to top 3 suggestions.`;
 
+const DEFAULT_WS_RULES = [
+  {
+    id: 'default-e5-copilot365',
+    enabled: true,
+    ifLabel: 'Has ME5 (E5)  ·  Copilot 365 adoption < 15%',
+    ifConditions: [
+      { field: 'me5',            op: 'gt', value: 0  },
+      { field: 'copilot365_pct', op: 'lt', value: 15 }
+    ],
+    then: 'This customer holds Microsoft E5 (ME5) licences but has very low Copilot 365 adoption (under 15%). Copilot 365 is already included in their E5 agreement — make it the top HIGH priority whitespace suggestion and clearly explain it is an untapped entitlement that maximises their existing investment at no extra per-seat cost.'
+  }
+];
+
+const WS_RULE_FIELDS = [
+  { value: 'me5',            label: 'ME5 (E5) users' },
+  { value: 'me3',            label: 'ME3 (E3) users' },
+  { value: 'me7',            label: 'ME7 users' },
+  { value: 'copilot365',     label: 'Copilot 365 licensed users' },
+  { value: 'copilot365_pct', label: 'Copilot 365 adoption %' },
+  { value: 'copilot3p',      label: 'Copilot 3P licensed users' },
+  { value: 'adr',            label: 'ADR licensed users' },
+  { value: 'windows365',     label: 'Windows 365 licensed users' },
+  { value: 'total_users',    label: 'Total users' },
+];
+
 function _readProductFields() {
   return {
     copilot365:  parseInt(document.getElementById('cm-p-copilot365')?.value)  || 0,
@@ -6538,6 +6581,166 @@ function resetWsPrompt() {
   ghStatus('Whitespace prompt reset to default.', 'var(--mint)');
 }
 
+// ── White Space Rules ────────────────────────────────────────────────────────
+
+function getWsRules() {
+  return (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsRules)
+    ? RAW_DATA.settings.wsRules
+    : JSON.parse(JSON.stringify(DEFAULT_WS_RULES));
+}
+
+function _saveWsRulesData(rules) {
+  if (!RAW_DATA) return;
+  _initCrmData();
+  RAW_DATA.settings.wsRules = rules;
+  saveData();
+}
+
+function _wsFieldVal(field, customer) {
+  const prods = customer.products || {};
+  const users = customer.users || 0;
+  if (field === 'copilot365_pct') return users ? (prods.copilot365 || 0) / users * 100 : 0;
+  if (field === 'total_users') return users;
+  return prods[field] || 0;
+}
+
+function _wsOpMatch(val, op, threshold) {
+  const t = Number(threshold);
+  if (op === 'gt')  return val >  t;
+  if (op === 'lt')  return val <  t;
+  if (op === 'gte') return val >= t;
+  if (op === 'lte') return val <= t;
+  if (op === 'eq')  return val === t;
+  return false;
+}
+
+function evaluateWsRules(customer) {
+  return getWsRules()
+    .filter(r => r.enabled && (r.ifConditions || []).every(c => _wsOpMatch(_wsFieldVal(c.field, customer), c.op, c.value)))
+    .map(r => r.then)
+    .join('\n');
+}
+
+function loadWsRulesUI() {
+  const list = document.getElementById('ws-rules-list');
+  if (!list) return;
+  const rules = getWsRules();
+  if (!rules.length) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--muted);">No rules yet. Add your first rule below.</div>`;
+    return;
+  }
+  list.innerHTML = rules.map((r, i) => {
+    const condSummary = r.ifLabel || (r.ifConditions || []).map(c => {
+      const fLabel = WS_RULE_FIELDS.find(f => f.value === c.field)?.label || c.field;
+      const opLabel = { gt: '>', lt: '<', gte: '≥', lte: '≤', eq: '=' }[c.op] || c.op;
+      return `${fLabel} ${opLabel} ${c.value}`;
+    }).join(' AND ');
+    return `<div style="background:var(--surface,#fff);border:1px solid var(--border2,#e5e7eb);border-radius:8px;padding:12px;display:flex;gap:10px;align-items:flex-start;opacity:${r.enabled ? 1 : 0.5};">
+      <input type="checkbox" ${r.enabled ? 'checked' : ''} onchange="toggleWsRule(${i})" style="margin-top:3px;cursor:pointer;accent-color:var(--cyan);" title="${r.enabled ? 'Enabled' : 'Disabled'}">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">IF</div>
+        <div style="font-size:12px;color:var(--text);margin-bottom:8px;">${condSummary}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--mint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">THEN</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5;">${r.then}</div>
+      </div>
+      <button onclick="deleteWsRule(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;" title="Delete rule">×</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleWsRule(idx) {
+  const rules = getWsRules();
+  if (!rules[idx]) return;
+  rules[idx].enabled = !rules[idx].enabled;
+  _saveWsRulesData(rules);
+  loadWsRulesUI();
+}
+
+function deleteWsRule(idx) {
+  const rules = getWsRules();
+  rules.splice(idx, 1);
+  _saveWsRulesData(rules);
+  loadWsRulesUI();
+}
+
+let _wsRuleConds = [];
+
+function openAddWsRule() {
+  _wsRuleConds = [];
+  const condList = document.getElementById('ws-rule-cond-list');
+  if (condList) condList.innerHTML = '';
+  const t = document.getElementById('ws-rule-then');
+  if (t) t.value = '';
+  document.getElementById('ws-rule-form').style.display = 'block';
+  addWsRuleCond();
+}
+
+function addWsRuleCond() {
+  const idx = _wsRuleConds.length;
+  _wsRuleConds.push({ field: 'me5', op: 'gt', value: 0 });
+  const list = document.getElementById('ws-rule-cond-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.id = `ws-cond-row-${idx}`;
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  row.innerHTML = `
+    <select id="ws-cond-field-${idx}" class="modal-input" style="flex:2;font-size:11px;padding:4px 6px;" onchange="_wsRuleConds[${idx}].field=this.value">
+      ${WS_RULE_FIELDS.map(f => `<option value="${f.value}">${f.label}</option>`).join('')}
+    </select>
+    <select id="ws-cond-op-${idx}" class="modal-input" style="flex:0 0 56px;font-size:11px;padding:4px 6px;" onchange="_wsRuleConds[${idx}].op=this.value">
+      <option value="gt">&gt;</option>
+      <option value="lt">&lt;</option>
+      <option value="gte">&ge;</option>
+      <option value="lte">&le;</option>
+      <option value="eq">=</option>
+    </select>
+    <input id="ws-cond-val-${idx}" type="number" class="modal-input" value="0" style="flex:1;font-size:11px;padding:4px 6px;" oninput="_wsRuleConds[${idx}].value=Number(this.value)">
+    ${idx > 0 ? `<button onclick="removeWsRuleCond(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0;">×</button>` : '<span style="width:18px;display:inline-block;"></span>'}`;
+  list.appendChild(row);
+}
+
+function removeWsRuleCond(idx) {
+  _wsRuleConds.splice(idx, 1);
+  // re-render form keeping THEN value
+  const thenVal = document.getElementById('ws-rule-then')?.value || '';
+  const saved = _wsRuleConds.slice();
+  _wsRuleConds = [];
+  const condList = document.getElementById('ws-rule-cond-list');
+  if (condList) condList.innerHTML = '';
+  saved.forEach(c => {
+    const i = _wsRuleConds.length;
+    _wsRuleConds.push({ ...c });
+    addWsRuleCond();
+    const fEl = document.getElementById(`ws-cond-field-${i}`);
+    const oEl = document.getElementById(`ws-cond-op-${i}`);
+    const vEl = document.getElementById(`ws-cond-val-${i}`);
+    if (fEl) fEl.value = c.field;
+    if (oEl) oEl.value = c.op;
+    if (vEl) vEl.value = c.value;
+  });
+  const t = document.getElementById('ws-rule-then');
+  if (t) t.value = thenVal;
+}
+
+function saveNewWsRule() {
+  const then = document.getElementById('ws-rule-then')?.value.trim();
+  if (!then) { ghStatus('Please fill in the THEN instruction.', '#f87171'); return; }
+  if (!_wsRuleConds.length) { ghStatus('Please add at least one IF condition.', '#f87171'); return; }
+  const rules = getWsRules();
+  rules.push({
+    id: 'rule-' + Date.now(),
+    enabled: true,
+    ifConditions: JSON.parse(JSON.stringify(_wsRuleConds)),
+    then
+  });
+  _saveWsRulesData(rules);
+  document.getElementById('ws-rule-form').style.display = 'none';
+  loadWsRulesUI();
+  ghStatus('Rule saved.', 'var(--mint)');
+}
+
+// ── End White Space Rules ────────────────────────────────────────────────────
+
 async function generateWsSuggestions(custId) {
   const raw = RAW_DATA && RAW_DATA.customers ? RAW_DATA.customers.find(c => c.id === custId) : null;
   if (!raw) return;
@@ -6552,10 +6755,11 @@ async function generateWsSuggestions(custId) {
     return;
   }
 
-  const systemPrompt = `You are a Microsoft sales advisor. Respond with ONLY a raw JSON array — no markdown, no explanation, no text before or after.
-Format: [{"product":"<name>","reason":"<one short sentence>","priority":"High|Medium|Low"}]
-Products to consider: Copilot 365, Copilot 3P Capacity, ADR, Windows 365, ME3, ME5, ME7.
-Only suggest products the customer does NOT already have (users = 0). Return top 3.`;
+  const basePrompt = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
+  const ruleAdditions = evaluateWsRules(raw);
+  const systemPrompt = (ruleAdditions
+    ? basePrompt + '\n\nAdditional context-specific instructions:\n' + ruleAdditions
+    : basePrompt) + '\n\nRespond with ONLY a raw JSON array — no markdown, no explanation, no text before or after.';
   const prods = raw.products || {};
   const productLines = WS_PRODUCTS.map(p => `${p.label}: ${prods[p.key] || 0} users`).join(', ');
   const userMsg = `Customer: ${raw.name}, total users: ${raw.users || 0}, Copilot users: ${raw.copilotUsers || 0}, renewal: ${raw.renewalDate || 'unknown'}. Products: ${productLines}.`;
