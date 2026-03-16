@@ -6838,10 +6838,24 @@ async function generateWsSuggestions(custId) {
     const raw_text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || '';
     // strip markdown code fences if present
     const text = raw_text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-    const match = text.match(/\[[\s\S]*\]/);
     let suggestions = [];
-    if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) {} }
+    // 1) try direct parse (model returned clean JSON as instructed)
+    try { const p = JSON.parse(text); if (Array.isArray(p)) suggestions = p; } catch(e) {}
+    // 2) find an array-of-objects specifically — avoids greedily capturing non-JSON [bracketed text] before the array
     if (!suggestions.length) {
+      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (match) { try { suggestions = JSON.parse(match[0]); } catch(e) {} }
+    }
+    // 3) scan from each '[' position until we find one that produces a valid array
+    if (!suggestions.length) {
+      let idx = text.indexOf('[');
+      while (idx !== -1 && !suggestions.length) {
+        try { const p = JSON.parse(text.slice(idx)); if (Array.isArray(p)) suggestions = p; } catch(e) {}
+        idx = text.indexOf('[', idx + 1);
+      }
+    }
+    if (!suggestions.length) {
+      console.warn('WS AI suggestions: unparseable response:', raw_text);
       box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;">Could not generate suggestions. Please try again.</div>`;
       return;
     }
