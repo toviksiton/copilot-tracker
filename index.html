@@ -1226,6 +1226,7 @@ html, body {
     <div class="sidebar-section" id="sidebar-section-sales">
       <div class="sidebar-section-label">Sales</div>
       <a class="nav-item" id="nav-whitespace" href="#" onclick="showView('whitespace');return false;"><span class="nav-icon">◈</span> Whitespace</a>
+      <a class="nav-item" id="nav-ws-rules" href="#" onclick="showView('ws-rules');return false;" style="padding-left:28px;font-size:12px;"><span class="nav-icon" style="font-size:11px;">⊶</span> Whitespace Rules</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
@@ -1362,6 +1363,28 @@ html, body {
         <div class="ws-grid" id="ws-grid"></div>
       </div>
 
+      <!-- WHITESPACE RULES VIEW -->
+      <div class="view" id="view-ws-rules" hidden>
+        <div class="section-label">Whitespace Rules</div>
+        <div style="max-width:680px;">
+          <p style="font-size:13px;color:var(--muted);margin:0 0 20px;">IF/THEN rules that automatically append extra instructions to the AI prompt based on customer data. Enabled rules are injected whenever AI suggestions are generated.</p>
+          <div id="ws-rules-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+          <button class="settings-btn settings-btn-primary" onclick="openAddWsRule()" id="ws-add-rule-btn" style="font-size:13px;padding:7px 18px;">+ Add Rule</button>
+          <div id="ws-rule-form" style="display:none;margin-top:16px;background:var(--bg2,#f3f4f6);border:1px solid var(--border2,#e5e7eb);border-radius:10px;padding:18px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;">New Rule</div>
+            <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">IF <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(all conditions must match)</span></div>
+            <div id="ws-rule-cond-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+            <button class="settings-btn" onclick="addWsRuleCond()" style="font-size:12px;padding:4px 12px;margin-bottom:18px;">+ Condition</button>
+            <div style="font-size:11px;font-weight:700;color:var(--mint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">THEN <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">— instruction appended to AI prompt</span></div>
+            <textarea id="ws-rule-then" class="modal-input" rows="3" style="resize:vertical;font-size:12px;width:100%;box-sizing:border-box;margin-bottom:12px;" placeholder="e.g. Prioritise Copilot 365 as a HIGH priority suggestion since the customer has E5 licences but low Copilot 365 adoption."></textarea>
+            <div style="display:flex;gap:8px;">
+              <button class="settings-btn settings-btn-primary" onclick="saveNewWsRule()" style="font-size:13px;">Save Rule</button>
+              <button class="settings-btn" onclick="document.getElementById('ws-rule-form').style.display='none'" style="font-size:13px;">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SETTINGS VIEW -->
       <div class="view" id="view-settings" hidden>
         <div class="section-label">Settings</div>
@@ -1452,23 +1475,6 @@ html, body {
             <div style="display:flex;gap:8px;margin-bottom:4px;">
               <button class="settings-btn settings-btn-primary" onclick="saveWsPrompt()">Save</button>
               <button class="settings-btn" onclick="resetWsPrompt()">Reset to Default</button>
-            </div>
-            <div class="settings-divider"></div>
-            <div class="settings-section-title">White Space Rules</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">IF/THEN rules that automatically append extra instructions to the AI prompt based on customer data. Enabled rules are injected whenever AI suggestions are generated.</div>
-            <div id="ws-rules-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;"></div>
-            <button class="settings-btn settings-btn-primary" onclick="openAddWsRule()" style="font-size:12px;">+ Add Rule</button>
-            <div id="ws-rule-form" style="display:none;margin-top:14px;background:var(--bg2,#f3f4f6);border:1px solid var(--border2,#e5e7eb);border-radius:8px;padding:14px;">
-              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:12px;">New Rule</div>
-              <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">IF <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(all conditions must match)</span></div>
-              <div id="ws-rule-cond-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
-              <button class="settings-btn" onclick="addWsRuleCond()" style="font-size:11px;padding:3px 10px;margin-bottom:14px;">+ Condition</button>
-              <div style="font-size:11px;font-weight:700;color:var(--mint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">THEN <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">— instruction appended to AI prompt</span></div>
-              <textarea id="ws-rule-then" class="modal-input" rows="3" style="resize:vertical;font-size:11px;width:100%;box-sizing:border-box;margin-bottom:10px;" placeholder="e.g. Prioritise Copilot 365 as a HIGH priority suggestion since the customer has E5 licences but low Copilot 365 adoption."></textarea>
-              <div style="display:flex;gap:8px;">
-                <button class="settings-btn settings-btn-primary" onclick="saveNewWsRule()" style="font-size:12px;">Save Rule</button>
-                <button class="settings-btn" onclick="document.getElementById('ws-rule-form').style.display='none'" style="font-size:12px;">Cancel</button>
-              </div>
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">CRM Sections Visibility</div>
@@ -2248,6 +2254,7 @@ const NAV_MAP = {
   'reports':        ['nav-reports'],
   'intelligence':   ['nav-intelligence'],
   'whitespace':     ['nav-whitespace'],
+  'ws-rules':       ['nav-ws-rules'],
   'crm-contacts':   ['nav-crm-contacts'],
   'crm-opps':       ['nav-crm-opps'],
   'crm-activities': ['nav-crm-activities'],
@@ -2257,7 +2264,7 @@ const NAV_MAP = {
 function showView(name) {
   // hide all except detail which is managed separately
   ['view-list','view-kanban','view-backlog','view-settings','view-reports',
-   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace'].forEach(id => {
+   'view-crm-contacts','view-crm-opps','view-crm-activities','view-crm-compete','view-intelligence','view-whitespace','view-ws-rules'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = true;
   });
@@ -2296,6 +2303,9 @@ function showView(name) {
   } else if (name === 'whitespace') {
     document.getElementById('view-whitespace').hidden = false;
     buildWhitespace();
+  } else if (name === 'ws-rules') {
+    document.getElementById('view-ws-rules').hidden = false;
+    loadWsRulesUI();
   }
 }
 
@@ -3880,7 +3890,6 @@ function ghUpdateUI() {
   }
   const wsPromptInput = document.getElementById('ws-prompt-input');
   if (wsPromptInput) wsPromptInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
-  loadWsRulesUI();
   const crmToggles = JSON.parse(localStorage.getItem('crm-toggles') || '{"contacts":true,"pipeline":true,"activities":true}');
   const chkC = document.getElementById('crm-toggle-contacts');   if (chkC) chkC.checked = !!crmToggles.contacts;
   const chkP = document.getElementById('crm-toggle-pipeline');   if (chkP) chkP.checked = !!crmToggles.pipeline;
@@ -6468,6 +6477,7 @@ const WS_RULE_FIELDS = [
   { value: 'adr',            label: 'ADR licensed users' },
   { value: 'windows365',     label: 'Windows 365 licensed users' },
   { value: 'total_users',    label: 'Total users' },
+  { value: 'text',           label: '— Free text condition —' },
 ];
 
 function _readProductFields() {
@@ -6597,6 +6607,7 @@ function _saveWsRulesData(rules) {
 }
 
 function _wsFieldVal(field, customer) {
+  if (field === 'text') return true; // free-text conditions always pass
   const prods = customer.products || {};
   const users = customer.users || 0;
   if (field === 'copilot365_pct') return users ? (prods.copilot365 || 0) / users * 100 : 0;
@@ -6605,6 +6616,7 @@ function _wsFieldVal(field, customer) {
 }
 
 function _wsOpMatch(val, op, threshold) {
+  if (op === 'text') return true; // free-text always passes
   const t = Number(threshold);
   if (op === 'gt')  return val >  t;
   if (op === 'lt')  return val <  t;
@@ -6631,10 +6643,11 @@ function loadWsRulesUI() {
   }
   list.innerHTML = rules.map((r, i) => {
     const condSummary = r.ifLabel || (r.ifConditions || []).map(c => {
+      if (c.field === 'text' || c.op === 'text') return `<em>${c.value}</em>`;
       const fLabel = WS_RULE_FIELDS.find(f => f.value === c.field)?.label || c.field;
       const opLabel = { gt: '>', lt: '<', gte: '≥', lte: '≤', eq: '=' }[c.op] || c.op;
       return `${fLabel} ${opLabel} ${c.value}`;
-    }).join(' AND ');
+    }).join(' <span style="color:var(--muted);font-size:10px;">AND</span> ');
     return `<div style="background:var(--surface,#fff);border:1px solid var(--border2,#e5e7eb);border-radius:8px;padding:12px;display:flex;gap:10px;align-items:flex-start;opacity:${r.enabled ? 1 : 0.5};">
       <input type="checkbox" ${r.enabled ? 'checked' : ''} onchange="toggleWsRule(${i})" style="margin-top:3px;cursor:pointer;accent-color:var(--cyan);" title="${r.enabled ? 'Enabled' : 'Disabled'}">
       <div style="flex:1;min-width:0;">
@@ -6675,49 +6688,57 @@ function openAddWsRule() {
   addWsRuleCond();
 }
 
-function addWsRuleCond() {
-  const idx = _wsRuleConds.length;
-  _wsRuleConds.push({ field: 'me5', op: 'gt', value: 0 });
+function _renderWsCondRow(idx, cond) {
   const list = document.getElementById('ws-rule-cond-list');
   if (!list) return;
   const row = document.createElement('div');
   row.id = `ws-cond-row-${idx}`;
   row.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  const isText = cond.field === 'text';
   row.innerHTML = `
-    <select id="ws-cond-field-${idx}" class="modal-input" style="flex:2;font-size:11px;padding:4px 6px;" onchange="_wsRuleConds[${idx}].field=this.value">
-      ${WS_RULE_FIELDS.map(f => `<option value="${f.value}">${f.label}</option>`).join('')}
+    <select id="ws-cond-field-${idx}" class="modal-input" style="flex:2;font-size:12px;padding:4px 6px;" onchange="_onWsCondFieldChange(${idx},this.value)">
+      ${WS_RULE_FIELDS.map(f => `<option value="${f.value}" ${f.value === cond.field ? 'selected' : ''}>${f.label}</option>`).join('')}
     </select>
-    <select id="ws-cond-op-${idx}" class="modal-input" style="flex:0 0 56px;font-size:11px;padding:4px 6px;" onchange="_wsRuleConds[${idx}].op=this.value">
-      <option value="gt">&gt;</option>
-      <option value="lt">&lt;</option>
-      <option value="gte">&ge;</option>
-      <option value="lte">&le;</option>
-      <option value="eq">=</option>
-    </select>
-    <input id="ws-cond-val-${idx}" type="number" class="modal-input" value="0" style="flex:1;font-size:11px;padding:4px 6px;" oninput="_wsRuleConds[${idx}].value=Number(this.value)">
-    ${idx > 0 ? `<button onclick="removeWsRuleCond(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0;">×</button>` : '<span style="width:18px;display:inline-block;"></span>'}`;
+    <div id="ws-cond-structured-${idx}" style="display:${isText ? 'none' : 'flex'};gap:6px;flex:2;align-items:center;">
+      <select id="ws-cond-op-${idx}" class="modal-input" style="flex:0 0 56px;font-size:12px;padding:4px 6px;" onchange="_wsRuleConds[${idx}].op=this.value">
+        <option value="gt" ${cond.op==='gt'?'selected':''}>></option>
+        <option value="lt" ${cond.op==='lt'?'selected':''}><</option>
+        <option value="gte" ${cond.op==='gte'?'selected':''}>≥</option>
+        <option value="lte" ${cond.op==='lte'?'selected':''}>≤</option>
+        <option value="eq" ${cond.op==='eq'?'selected':''}}>=</option>
+      </select>
+      <input id="ws-cond-val-${idx}" type="number" class="modal-input" value="${isText ? 0 : (cond.value||0)}" style="flex:1;font-size:12px;padding:4px 6px;" oninput="_wsRuleConds[${idx}].value=Number(this.value)">
+    </div>
+    <input id="ws-cond-text-${idx}" type="text" class="modal-input" value="${isText ? (cond.value||'') : ''}" placeholder="e.g. > 15% of total users with E3 or E5" style="display:${isText ? 'flex' : 'none'};flex:2;font-size:12px;padding:4px 8px;" oninput="_wsRuleConds[${idx}].value=this.value">
+    ${idx > 0 ? `<button onclick="removeWsRuleCond(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;" title="Remove">×</button>` : '<span style="width:22px;display:inline-block;"></span>'}`;
   list.appendChild(row);
 }
 
+function _onWsCondFieldChange(idx, field) {
+  _wsRuleConds[idx].field = field;
+  const isText = field === 'text';
+  const structured = document.getElementById(`ws-cond-structured-${idx}`);
+  const textEl = document.getElementById(`ws-cond-text-${idx}`);
+  if (structured) structured.style.display = isText ? 'none' : 'flex';
+  if (textEl) textEl.style.display = isText ? 'flex' : 'none';
+  if (isText) { _wsRuleConds[idx].op = 'text'; _wsRuleConds[idx].value = textEl?.value || ''; }
+  else { _wsRuleConds[idx].op = 'gt'; _wsRuleConds[idx].value = 0; }
+}
+
+function addWsRuleCond() {
+  const idx = _wsRuleConds.length;
+  _wsRuleConds.push({ field: 'me5', op: 'gt', value: 0 });
+  _renderWsCondRow(idx, _wsRuleConds[idx]);
+}
+
 function removeWsRuleCond(idx) {
-  _wsRuleConds.splice(idx, 1);
-  // re-render form keeping THEN value
   const thenVal = document.getElementById('ws-rule-then')?.value || '';
+  _wsRuleConds.splice(idx, 1);
   const saved = _wsRuleConds.slice();
   _wsRuleConds = [];
   const condList = document.getElementById('ws-rule-cond-list');
   if (condList) condList.innerHTML = '';
-  saved.forEach(c => {
-    const i = _wsRuleConds.length;
-    _wsRuleConds.push({ ...c });
-    addWsRuleCond();
-    const fEl = document.getElementById(`ws-cond-field-${i}`);
-    const oEl = document.getElementById(`ws-cond-op-${i}`);
-    const vEl = document.getElementById(`ws-cond-val-${i}`);
-    if (fEl) fEl.value = c.field;
-    if (oEl) oEl.value = c.op;
-    if (vEl) vEl.value = c.value;
-  });
+  saved.forEach(c => { _wsRuleConds.push({ ...c }); _renderWsCondRow(_wsRuleConds.length - 1, c); });
   const t = document.getElementById('ws-rule-then');
   if (t) t.value = thenVal;
 }
