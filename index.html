@@ -1398,6 +1398,15 @@ html, body {
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Enter your Cloudflare Worker URL. The Anthropic API key lives as a secret on the Worker — nothing sensitive is stored in the browser.</div>
             <input class="modal-input" id="ai-worker-url-input" placeholder="https://copilot-tracker-api.&lt;user&gt;.workers.dev" style="margin-bottom:8px;">
             <button class="settings-btn settings-btn-primary" onclick="saveWorkerUrl()">Save Worker URL</button>
+            <div style="margin-top:16px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">Claude API Token Usage</div>
+              <div id="ai-usage-display" style="margin-bottom:10px;"></div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button class="settings-btn settings-btn-primary" id="ai-limits-btn" onclick="checkApiLimits()">Check Remaining Limits</button>
+                <button class="settings-btn" onclick="resetAiUsage()">Reset Counter</button>
+              </div>
+              <div id="ai-limits-out" style="font-size:11px;color:var(--muted);margin-top:8px;min-height:16px;"></div>
+            </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">AI System Prompts</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Customise the system prompts sent to Claude for each AI feature. Changes are saved in your browser.</div>
@@ -2260,7 +2269,7 @@ function showView(name) {
     buildBacklog();
   } else if (name === 'settings' || name === 'integrations') {
     document.getElementById('view-settings').hidden = false;
-    ghUpdateUI();
+    ghUpdateUI(); renderAiUsage();
   } else if (name === 'reports') {
     document.getElementById('view-reports').hidden = false;
     populateReportSelect();
@@ -3485,6 +3494,7 @@ Focus on the open/blocked/pending items and create a concrete plan to accelerate
       }),
     });
     const data = await res.json();
+    trackAiUsage(data);
     const text = data.content?.[0]?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*/);
     if (!jsonMatch) throw new Error('No JSON in response');
@@ -3661,6 +3671,75 @@ function renderExceleratePlan(id, plan) {
 
 /* ─── AI Chat Worker URL (declared early for ghUpdateUI) ─── */
 const AI_WORKER_URL_STORE    = 'copilot-tracker-ai-worker-url';
+const AI_USAGE_STORE         = 'copilot-tracker-ai-usage';
+
+function trackAiUsage(data) {
+  if (!data || !data.usage) return;
+  const prev = JSON.parse(localStorage.getItem(AI_USAGE_STORE) || '{"input":0,"output":0,"calls":0}');
+  prev.input  += data.usage.input_tokens  || 0;
+  prev.output += data.usage.output_tokens || 0;
+  prev.calls  += 1;
+  localStorage.setItem(AI_USAGE_STORE, JSON.stringify(prev));
+}
+
+function resetAiUsage() {
+  localStorage.removeItem(AI_USAGE_STORE);
+  renderAiUsage();
+}
+
+function renderAiUsage() {
+  const el = document.getElementById('ai-usage-display');
+  if (!el) return;
+  const u = JSON.parse(localStorage.getItem(AI_USAGE_STORE) || '{"input":0,"output":0,"calls":0}');
+  const total = u.input + u.output;
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="background:var(--item-row-bg);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:18px;font-weight:700;color:var(--cyan);">${u.calls.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">API calls</div>
+      </div>
+      <div style="background:var(--item-row-bg);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:18px;font-weight:700;color:var(--lavender);">${u.input.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">input tokens</div>
+      </div>
+      <div style="background:var(--item-row-bg);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:18px;font-weight:700;color:var(--mint);">${u.output.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">output tokens</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);">Total tokens used: <strong style="color:var(--text);">${total.toLocaleString()}</strong> · tracked since last reset</div>`;
+}
+
+async function checkApiLimits() {
+  const btn = document.getElementById('ai-limits-btn');
+  const out = document.getElementById('ai-limits-out');
+  if (!out) return;
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) { out.textContent = '⚠ No Worker URL configured above.'; return; }
+  if (btn) btn.disabled = true;
+  out.textContent = 'Checking…';
+  try {
+    const res = await fetch(`${workerBase}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1, system: 'Reply OK', messages: [{ role: 'user', content: 'ping' }] }),
+    });
+    const reqRemain  = res.headers.get('anthropic-ratelimit-requests-remaining');
+    const tokRemain  = res.headers.get('anthropic-ratelimit-tokens-remaining');
+    const resetAt    = res.headers.get('anthropic-ratelimit-tokens-reset');
+    const data = await res.json();
+    trackAiUsage(data); renderAiUsage();
+    if (tokRemain !== null) {
+      out.innerHTML = `<span style="color:var(--mint);">✓ Connected</span> · <strong>${parseInt(tokRemain).toLocaleString()}</strong> tokens remaining · <strong>${reqRemain}</strong> requests remaining${resetAt ? ' · resets ' + new Date(resetAt).toLocaleTimeString() : ''}`;
+    } else {
+      out.innerHTML = `<span style="color:var(--mint);">✓ Connected</span> · Rate-limit headers not forwarded by Worker (add <code>expose_headers</code> in Worker CORS config to see limits).`;
+    }
+  } catch(e) {
+    out.innerHTML = `<span style="color:#f87171;">✗ ${e.message}</span>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
 
 const DEFAULT_ACCEL_PROMPT = `You are a senior Microsoft 365 Copilot and Copilot Studio adoption expert and CSM consultant.
 Your job is to create an actionable, prioritised "Excelerate Plan" — a concrete roadmap to unblock and accelerate a customer's Microsoft 365 Copilot and Copilot Studio adoption.
@@ -3995,6 +4074,7 @@ async function sendAiMsg() {
       }),
     });
     const data = await res.json();
+    trackAiUsage(data);
     typingDiv.remove();
     const reply = data.content?.[0]?.text || data.error?.message || 'Sorry, something went wrong.';
     appendAiMsg('assistant', reply);
@@ -4988,6 +5068,7 @@ async function analyzeIntelNote() {
     });
     if (!res.ok) throw new Error('Worker responded ' + res.status);
     const data = await res.json();
+    trackAiUsage(data);
     const text = data.content?.[0]?.text || '';
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('No JSON in AI response');
@@ -5832,6 +5913,7 @@ Rules:
 
     _showCompeteAiLoading(true, 'Parsing response…');
     const data = await res.json();
+    trackAiUsage(data);
     const text = data.content?.[0]?.text || data.error?.message || '';
     if (!text) throw new Error('Empty response from AI');
 
@@ -6011,6 +6093,7 @@ Rules:
 
     if (!res.ok) throw new Error(`Worker responded ${res.status}`);
     const data = await res.json();
+    trackAiUsage(data);
     const text = data.content?.[0]?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in AI response');
@@ -6471,6 +6554,7 @@ Only suggest products the customer does NOT already have (users = 0). Return top
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     const data = await resp.json();
+    trackAiUsage(data);
     const raw_text = data.content?.[0]?.text || data.completion || data.result || data.response || data.text || '';
     // strip markdown code fences if present
     const text = raw_text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
