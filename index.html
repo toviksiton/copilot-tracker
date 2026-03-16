@@ -279,9 +279,9 @@ html, body {
 .detail-kpi-num { font-size:20px;font-weight:700;letter-spacing:-.8px;line-height:1; }
 .detail-kpi-lbl { font-size:11px;color:var(--muted);margin-top:2px; }
 
-.detail-body { flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:16px; }
+.detail-body { flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:16px; }
 .detail-body-top { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-.detail-panel { background:var(--surface);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:20px;transition:background .3s; }
+.detail-panel { background:var(--surface);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:20px;transition:background .3s;min-width:0;overflow:hidden; }
 .detail-panel-label { font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px; }
 .detail-full { grid-column:1/-1; }
 
@@ -298,10 +298,10 @@ html, body {
 .info-item-val { font-size:14px;font-weight:600;color:var(--text); }
 
 .items-list { display:flex;flex-direction:column;gap:8px; }
-.item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--item-row-bg);border:1px solid var(--border2);border-radius:10px; }
+.item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--item-row-bg);border:1px solid var(--border2);border-radius:10px;min-width:0;overflow:hidden; }
 .item-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
-.item-title { flex:1;font-size:12px;color:var(--text); }
-.item-pill { font-size:10px;padding:2px 9px;border-radius:99px;font-weight:500; }
+.item-title { flex:1;font-size:12px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.item-pill { font-size:10px;padding:2px 9px;border-radius:99px;font-weight:500;flex-shrink:0;white-space:nowrap; }
 
 /* ─── RIGHT SIDECAR ─── */
 .right-sidecar {
@@ -509,7 +509,7 @@ html, body {
   padding:0 3px;line-height:1;transition:color .12s;flex-shrink:0;
 }
 .item-del-btn:hover { color:#f87171; }
-.detail-cats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:0; }
+.detail-cats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr)); gap:14px; margin-top:0; }
 
 /* ─── drag and drop ─── */
 .cust-card[draggable="true"] { cursor:grab; }
@@ -2925,7 +2925,7 @@ function goToDetail(id) {
             <button class="item-del-btn" style="font-size:12px;" onclick="deleteSection(event,'${id}',${catIdx})" title="Delete section">🗑</button>
           </div>
         </div>
-        <div class="items-list" style="max-height:180px;overflow-y:auto;"
+        <div class="items-list" style="max-height:180px;overflow-y:auto;overflow-x:hidden;"
           data-target-cat="${catIdx}"
           ondragover="itemDragOver(event)"
           ondragleave="itemDragLeave(event)"
