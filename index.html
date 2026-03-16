@@ -1392,7 +1392,7 @@ html, body {
       <div class="view" id="view-ws-rules" hidden>
         <div class="section-label">Whitespace Rules</div>
         <div style="max-width:680px;">
-          <p style="font-size:13px;color:var(--muted);margin:0 0 20px;">IF/THEN rules that automatically inject extra instructions into the AI prompt based on customer data. Enabled rules are merged into the full instruction every time AI suggestions are generated.</p>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 20px;">IF/THEN rules that are written directly into the AI instruction. Adding or toggling a rule immediately rewrites the instruction in <b>Settings → Whitespace AI Prompt</b>.</p>
           <div id="ws-rules-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
           <button class="settings-btn settings-btn-primary" onclick="openAddWsRule()" id="ws-add-rule-btn" style="font-size:13px;padding:7px 18px;">+ Add Rule</button>
           <div id="ws-rule-form" style="display:none;margin-top:16px;background:var(--bg2,#f3f4f6);border:1px solid var(--border2,#e5e7eb);border-radius:10px;padding:18px;">
@@ -1515,7 +1515,7 @@ html, body {
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section-title">Whitespace AI Prompt</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Instruction sent to AI when generating upsell suggestions in the Whitespace view. It receives the customer profile and current product ownership.</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Instruction sent to AI when generating upsell suggestions. Rules from <b>Whitespace Rules</b> are automatically appended here when saved. Edit the base portion freely; rule additions are managed from the Rules page.</div>
             <textarea id="ws-prompt-input" class="modal-input" rows="6" style="resize:vertical;font-size:11px;font-family:monospace;line-height:1.5;margin-bottom:8px;width:100%;box-sizing:border-box;"></textarea>
             <div style="display:flex;gap:8px;margin-bottom:4px;">
               <button class="settings-btn settings-btn-primary" onclick="saveWsPrompt()">Save</button>
@@ -4012,6 +4012,8 @@ function ghUpdateUI() {
   }
   const wsPromptInput = document.getElementById('ws-prompt-input');
   if (wsPromptInput) wsPromptInput.value = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
+  // Rebuild to ensure wsPrompt is up to date with current rules
+  _rebuildWsPrompt();
   const crmToggles = JSON.parse(localStorage.getItem('crm-toggles') || '{"contacts":true,"pipeline":true,"activities":true}');
   const chkC = document.getElementById('crm-toggle-contacts');   if (chkC) chkC.checked = !!crmToggles.contacts;
   const chkP = document.getElementById('crm-toggle-pipeline');   if (chkP) chkP.checked = !!crmToggles.pipeline;
@@ -6700,23 +6702,40 @@ function buildWhitespace() {
   }).join('');
 }
 
+// Rebuild wsPrompt = base prompt + all enabled rules' THEN texts, save & update textarea
+function _rebuildWsPrompt() {
+  if (!RAW_DATA) return;
+  _initCrmData();
+  const base = (RAW_DATA.settings.wsBasePrompt) || DEFAULT_WS_PROMPT;
+  const enabledRules = getWsRules().filter(r => r.enabled);
+  let full = base;
+  if (enabledRules.length) {
+    full += '\n\nAdditional instructions based on customer profile:';
+    enabledRules.forEach(r => { full += '\n- ' + r.then; });
+  }
+  RAW_DATA.settings.wsPrompt = full;
+  saveData();
+  const el = document.getElementById('ws-prompt-input');
+  if (el) el.value = full;
+  _updateWsRulesPreview();
+}
+
 function saveWsPrompt() {
   if (!RAW_DATA) return;
   _initCrmData();
   const v = document.getElementById('ws-prompt-input')?.value.trim();
-  if (v && v !== DEFAULT_WS_PROMPT) RAW_DATA.settings.wsPrompt = v;
-  else delete RAW_DATA.settings.wsPrompt;
-  saveData();
+  // Save what the user typed as the base (rule additions will be re-appended by _rebuildWsPrompt)
+  if (v) RAW_DATA.settings.wsBasePrompt = v;
+  else delete RAW_DATA.settings.wsBasePrompt;
+  _rebuildWsPrompt();
   ghStatus('Whitespace prompt saved.', 'var(--mint)');
 }
 
 function resetWsPrompt() {
   if (!RAW_DATA) return;
   _initCrmData();
-  delete RAW_DATA.settings.wsPrompt;
-  saveData();
-  const el = document.getElementById('ws-prompt-input');
-  if (el) el.value = DEFAULT_WS_PROMPT;
+  delete RAW_DATA.settings.wsBasePrompt;
+  _rebuildWsPrompt();
   ghStatus('Whitespace prompt reset to default.', 'var(--mint)');
 }
 
@@ -6790,9 +6809,9 @@ function loadWsRulesUI() {
   const rules = getWsRules();
   if (!rules.length) {
     list.innerHTML = `<div style="font-size:12px;color:var(--muted);">No rules yet. Add your first rule below.</div>`;
+    _updateWsRulesPreview();
     return;
   }
-  _updateWsRulesPreview();
   list.innerHTML = rules.map((r, i) => {
     const condSummary = r.ifLabel || (r.ifConditions || []).map(c => {
       if (c.field === 'text' || c.op === 'text') return `<em>${c.value}</em>`;
@@ -6818,6 +6837,7 @@ function toggleWsRule(idx) {
   if (!rules[idx]) return;
   rules[idx].enabled = !rules[idx].enabled;
   _saveWsRulesData(rules);
+  _rebuildWsPrompt();
   loadWsRulesUI();
 }
 
@@ -6825,6 +6845,7 @@ function deleteWsRule(idx) {
   const rules = getWsRules();
   rules.splice(idx, 1);
   _saveWsRulesData(rules);
+  _rebuildWsPrompt();
   loadWsRulesUI();
 }
 
@@ -6907,6 +6928,7 @@ function saveNewWsRule() {
     then
   });
   _saveWsRulesData(rules);
+  _rebuildWsPrompt();
   document.getElementById('ws-rule-form').style.display = 'none';
   loadWsRulesUI();
   ghStatus('Rule saved.', 'var(--mint)');
@@ -6928,11 +6950,9 @@ async function generateWsSuggestions(custId) {
     return;
   }
 
-  const basePrompt = (RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT;
-  const ruleAdditions = evaluateWsRules(raw);
-  const systemPrompt = (ruleAdditions
-    ? basePrompt + '\n\nAdditional context-specific instructions:\n' + ruleAdditions
-    : basePrompt) + '\n\nRespond with ONLY a raw JSON array — no markdown, no explanation, no text before or after.';
+  // wsPrompt already contains the base prompt + all enabled rules (rebuilt by _rebuildWsPrompt)
+  const systemPrompt = ((RAW_DATA && RAW_DATA.settings && RAW_DATA.settings.wsPrompt) || DEFAULT_WS_PROMPT)
+    + '\n\nRespond with ONLY a raw JSON array — no markdown, no explanation, no text before or after.';
   const prods = raw.products || {};
   const productLines = WS_PRODUCTS.map(p => `${p.label}: ${prods[p.key] || 0} users`).join(', ');
   const userMsg = `Customer: ${raw.name}, total users: ${raw.users || 0}, Copilot users: ${raw.copilotUsers || 0}, renewal: ${raw.renewalDate || 'unknown'}. Products: ${productLines}.`;
