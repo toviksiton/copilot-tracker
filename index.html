@@ -1229,7 +1229,7 @@ html, body {
     <div class="sidebar-section">
       <div class="sidebar-section-label">Intelligence</div>
       <a class="nav-item" id="nav-intelligence" href="#" onclick="showView('intelligence');return false;"><span class="nav-icon">💬</span> Day to Day<span class="nav-badge" id="intel-badge" style="display:none;"></span></a>
-      <a class="nav-item" id="nav-social-intel" href="#" onclick="showView('social-intel');return false;"><span class="nav-icon">🔍</span> Social Intelligence</a>
+      <a class="nav-item" id="nav-social-intel" href="#" onclick="showView('social-intel');return false;"><span class="nav-icon">🔭</span> Customer Research</a>
     </div>
     <div class="sidebar-section" id="sidebar-section-sales">
       <div class="sidebar-section-label">Sales</div>
@@ -1719,26 +1719,23 @@ html, body {
       <!-- SOCIAL INTELLIGENCE VIEW -->
       <div class="view" id="view-social-intel" hidden>
         <div class="crm-topbar">
-          <div class="crm-topbar-title">🔍 Social Intelligence</div>
-          <select id="social-intel-customer" class="modal-input" style="max-width:220px;font-size:12px;">
-            <option value="">All Customers</option>
-          </select>
-        </div>
-        <div style="padding:16px 20px;max-width:860px;">
-          <div class="intel-input-card">
-            <div class="intel-input-label">Paste public content to analyse</div>
-            <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Copy text from a LinkedIn profile, job posting, company news, press release or website and paste it here. The AI will extract competitor signals, hiring trends, and adoption risk.</div>
-            <select id="social-intel-type" class="modal-input" style="max-width:220px;font-size:12px;margin-bottom:10px;">
-              <option value="auto">Auto-detect source type</option>
-              <option value="linkedin">LinkedIn profile / post</option>
-              <option value="jobs">Job posting</option>
-              <option value="news">News / press release</option>
-              <option value="website">Company website</option>
-              <option value="other">Other public content</option>
+          <div class="crm-topbar-title">🔭 Customer Research</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <select id="social-intel-customer" class="modal-input" style="max-width:200px;font-size:12px;" onchange="_renderSocialFeed()">
+              <option value="">All Customers</option>
             </select>
-            <textarea id="social-intel-input" class="intel-textarea" rows="6" placeholder="Paste LinkedIn content, job postings, news articles, or any public company information here…"></textarea>
-            <button class="intel-analyze-btn" onclick="analyseSocialIntel()">🔍 Analyse for Signals</button>
+            <button class="intel-analyze-btn" style="margin:0;padding:6px 14px;font-size:12px;" onclick="runAllCustomerResearch()" id="research-all-btn">⚡ Research All</button>
           </div>
+        </div>
+        <div style="padding:16px 20px;max-width:960px;">
+          <!-- research summary bar -->
+          <div id="research-status-bar" style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--glass);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;font-size:12px;color:var(--muted);flex-wrap:wrap;">
+            <span>Automated daily intelligence — no copy-paste needed. Click <b style="color:var(--text);">Research All</b> or research a single customer below.</span>
+            <span id="research-last-run" style="margin-left:auto;color:var(--dim);font-size:11px;"></span>
+          </div>
+          <!-- per-customer quick-research row -->
+          <div id="research-customer-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;"></div>
+          <!-- signals feed -->
           <div id="social-intel-feed" style="display:flex;flex-direction:column;gap:12px;"></div>
         </div>
       </div>
@@ -7269,18 +7266,24 @@ function setCMapLayer(layer) {
    SOCIAL INTELLIGENCE
 ══════════════════════════════════════════════════ */
 
-const DEFAULT_SOCIAL_INTEL_PROMPT = `You are a Microsoft sales intelligence analyst. Analyse the public content below and extract competitive signals relevant to a Microsoft Copilot / Microsoft 365 sales motion.
+/* ── AUTO CUSTOMER RESEARCH PROMPT ─────────────────────────────── */
+const AUTO_RESEARCH_SYSTEM_PROMPT = `You are a senior corporate intelligence analyst specialising in enterprise technology adoption and Microsoft sales.
 
-Return ONLY a JSON array of signal objects. Each object must have:
+Given a customer company profile, generate current intelligence signals relevant to their Microsoft Copilot / Microsoft 365 adoption journey.
+
+Draw on your knowledge of the company's industry, competitive landscape, typical hiring patterns, and enterprise technology trends.
+
+Return ONLY a JSON array of 4–7 signal objects. Each object must have:
 - "title": short headline (max 8 words)
-- "category": one of "Competitor Signal", "Hiring Trend", "Tech Stack", "Leadership Change", "Adoption Risk", "Opportunity"
+- "category": one of "Company News", "Tech Stack", "Hiring Trend", "Competitive Risk", "Adoption Opportunity", "Leadership Change", "Market Signal"
 - "severity": "High", "Medium", or "Low"
-- "detail": 2-3 sentence explanation of the signal and why it matters
-- "action": recommended sales action (1 sentence)
+- "detail": 2–3 sentences explaining the signal and why it matters for Copilot adoption
+- "action": recommended Microsoft sales action (1 sentence)
 - "icon": a single relevant emoji
 
-Return [] if no relevant signals found. No markdown, no explanation — only the raw JSON array.`;
+No markdown. No explanation. Return only the raw JSON array.`;
 
+/* ── BUILD / REFRESH SOCIAL INTEL VIEW ─────────────────────────── */
 function buildSocialIntelView() {
   const sel = document.getElementById('social-intel-customer');
   if (!sel) return;
@@ -7289,9 +7292,41 @@ function buildSocialIntelView() {
     (RAW_DATA && RAW_DATA.customers || []).map(c =>
       '<option value="' + _esc(c.id) + '"' + (c.id === current ? ' selected' : '') + '>' + _esc(c.name) + '</option>'
     ).join('');
+  _renderResearchChips();
   _renderSocialFeed();
+  _updateResearchStatusBar();
 }
 
+function _renderResearchChips() {
+  const wrap = document.getElementById('research-customer-chips');
+  if (!wrap) return;
+  const customers = (RAW_DATA && RAW_DATA.customers) || [];
+  if (!customers.length) { wrap.innerHTML = ''; return; }
+
+  const today = new Date().toDateString();
+  wrap.innerHTML = customers.map(c => {
+    const lastEntry = ((RAW_DATA.socialIntel || []).filter(e => e.customerId === c.id))[0];
+    const researchedToday = lastEntry && new Date(lastEntry.createdAt).toDateString() === today;
+    const badge = researchedToday
+      ? '<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(110,231,183,.2);color:#6ee7b7;margin-left:4px;">✓ today</span>'
+      : '<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(251,191,36,.15);color:#fbbf24;margin-left:4px;">due</span>';
+    return `<button onclick="runCustomerResearch('${c.id}')" id="chip-${c.id}"
+      style="display:flex;align-items:center;gap:4px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--glass);color:var(--text);font-size:11px;cursor:pointer;white-space:nowrap;">
+      ${_esc(c.name)}${badge}
+    </button>`;
+  }).join('');
+}
+
+function _updateResearchStatusBar() {
+  const el = document.getElementById('research-last-run');
+  if (!el) return;
+  const entries = (RAW_DATA && RAW_DATA.socialIntel) || [];
+  if (!entries.length) { el.textContent = 'No research run yet'; return; }
+  const latest = entries.reduce((a, b) => new Date(a.createdAt) > new Date(b.createdAt) ? a : b);
+  el.textContent = 'Last updated: ' + new Date(latest.createdAt).toLocaleString();
+}
+
+/* ── RENDER FEED ────────────────────────────────────────────────── */
 function _renderSocialFeed() {
   const feed = document.getElementById('social-intel-feed');
   if (!feed) return;
@@ -7299,53 +7334,78 @@ function _renderSocialFeed() {
   const entries = ((RAW_DATA && RAW_DATA.socialIntel) || [])
     .filter(e => !custId || e.customerId === custId)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
   if (!entries.length) {
-    feed.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--dim);font-size:13px;">No signals yet — paste public content above and click Analyse.</div>';
+    feed.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--dim);font-size:13px;">No research yet — click ⚡ Research All or pick a customer above to start.</div>';
     return;
   }
+
   const severityColor = { High: '#f87171', Medium: '#fbbf24', Low: '#6ee7b7' };
-  feed.innerHTML = entries.map(e => `
-    <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;">
-      <div style="display:flex;align-items:flex-start;gap:12px;">
-        <div style="font-size:26px;line-height:1;flex-shrink:0;">${e.icon || '🔍'}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-            <span style="font-size:14px;font-weight:700;color:var(--text);">${_esc(e.title)}</span>
-            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(93,173,226,.15);color:var(--cyan);">${_esc(e.category)}</span>
-            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;color:#0f1923;background:${severityColor[e.severity]||'#6ee7b7'};">${e.severity}</span>
+
+  // Group by customer
+  const groups = {};
+  entries.forEach(e => {
+    const key = e.customerId || '__none__';
+    if (!groups[key]) groups[key] = { name: e.customerName || 'Unknown', entries: [] };
+    groups[key].entries.push(e);
+  });
+
+  feed.innerHTML = Object.values(groups).map(g => `
+    <div style="margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:4px 0 10px;">${_esc(g.name)}</div>
+      ${g.entries.map(e => `
+        <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:8px;position:relative;">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="font-size:24px;line-height:1;flex-shrink:0;">${e.icon || '🔭'}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
+                <span style="font-size:13px;font-weight:700;color:var(--text);">${_esc(e.title)}</span>
+                <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(93,173,226,.15);color:var(--cyan);">${_esc(e.category)}</span>
+                <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;color:#0f1923;background:${severityColor[e.severity]||'#6ee7b7'};">${e.severity}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text);line-height:1.65;margin-bottom:7px;">${_esc(e.detail)}</div>
+              <div style="font-size:11px;font-weight:600;color:var(--cyan);padding:5px 10px;background:rgba(93,173,226,.08);border-radius:7px;border-left:3px solid var(--cyan);">→ ${_esc(e.action)}</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:7px;">${new Date(e.createdAt).toLocaleString()}</div>
+            </div>
+            <button onclick="deleteSocialIntelEntry('${e.id}')" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0;flex-shrink:0;" title="Delete">✕</button>
           </div>
-          <div style="font-size:12px;color:var(--text);line-height:1.65;margin-bottom:8px;">${_esc(e.detail)}</div>
-          <div style="font-size:11px;font-weight:600;color:var(--cyan);padding:6px 10px;background:rgba(93,173,226,.08);border-radius:7px;border-left:3px solid var(--cyan);">→ ${_esc(e.action)}</div>
-          <div style="font-size:10px;color:var(--dim);margin-top:8px;">${e.customerName ? '👤 ' + _esc(e.customerName) + ' · ' : ''}${new Date(e.createdAt).toLocaleDateString()}</div>
-        </div>
-        <button onclick="deleteSocialIntelEntry('${e.id}')" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0;flex-shrink:0;" title="Delete">✕</button>
-      </div>
+        </div>`).join('')}
     </div>`).join('');
 }
 
-async function analyseSocialIntel() {
-  const input = document.getElementById('social-intel-input');
-  const btn   = document.querySelector('#view-social-intel .intel-analyze-btn');
-  const text  = input ? input.value.trim() : '';
-  if (!text) { alert('Please paste some content to analyse.'); return; }
-
+/* ── RESEARCH A SINGLE CUSTOMER ─────────────────────────────────── */
+async function runCustomerResearch(customerId) {
   const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
   if (!workerBase) { alert('AI Worker URL not configured in Settings.'); return; }
 
-  if (btn) { btn.disabled = true; btn.textContent = 'Analysing…'; }
+  const customer = (RAW_DATA && RAW_DATA.customers || []).find(c => c.id === customerId);
+  if (!customer) return;
+
+  // Disable chip button while running
+  const chip = document.getElementById('chip-' + customerId);
+  if (chip) { chip.disabled = true; chip.style.opacity = '0.5'; chip.textContent = '⏳ ' + customer.name + '…'; }
+
   try {
-    const custId   = document.getElementById('social-intel-customer')?.value || '';
-    const srcType  = document.getElementById('social-intel-type')?.value || 'auto';
-    const custName = custId && RAW_DATA && RAW_DATA.customers ? (RAW_DATA.customers.find(c => c.id === custId) || {}).name || '' : '';
-    const userMsg  = (custName ? 'Customer context: ' + custName + '\n' : '') +
-                     'Source type: ' + srcType + '\n\n' + text;
+    const productList = Object.entries(customer.products || {})
+      .filter(([,v]) => v > 0)
+      .map(([k,v]) => k + '(' + v + ')')
+      .join(', ') || 'none';
+
+    const userMsg = [
+      'Company: ' + customer.name,
+      customer.city || customer.country ? 'Location: ' + [customer.city, customer.country].filter(Boolean).join(', ') : '',
+      customer.users ? 'Total licensed users: ' + customer.users : '',
+      customer.copilotUsers ? 'Active Copilot users: ' + customer.copilotUsers : '',
+      productList !== 'none' ? 'Current Microsoft products in use: ' + productList : '',
+      customer.renewalDate ? 'Renewal date: ' + customer.renewalDate : '',
+    ].filter(Boolean).join('\n');
 
     const res = await fetch(workerBase + '/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 1500,
-        system: DEFAULT_SOCIAL_INTEL_PROMPT,
+        model: 'claude-haiku-4-5-20251001', max_tokens: 1800,
+        system: AUTO_RESEARCH_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMsg }],
       }),
     });
@@ -7360,34 +7420,64 @@ async function analyseSocialIntel() {
       const m = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim().match(/\[\s*\{[\s\S]*\}\s*\]/);
       if (m) { try { signals = JSON.parse(m[0]); } catch(e) {} }
     }
-    if (!signals.length) throw new Error('No signals returned. The content may not contain relevant competitive information.');
+    if (!signals.length) throw new Error('No signals returned for ' + customer.name);
 
     if (!RAW_DATA.socialIntel) RAW_DATA.socialIntel = [];
-    signals.slice(0, 8).forEach(s => {
+    signals.slice(0, 7).forEach(s => {
       RAW_DATA.socialIntel.unshift({
         id: 'si-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
-        customerId: custId, customerName: custName,
-        title: s.title || 'Signal', category: s.category || 'Competitor Signal',
-        severity: s.severity || 'Medium', detail: s.detail || '',
-        action: s.action || '', icon: s.icon || '🔍',
+        customerId: customer.id, customerName: customer.name,
+        title: s.title || 'Signal',
+        category: s.category || 'Market Signal',
+        severity: s.severity || 'Medium',
+        detail: s.detail || '',
+        action: s.action || '',
+        icon: s.icon || '🔭',
+        source: 'AI Research',
         createdAt: new Date().toISOString(),
       });
     });
     saveData();
-    if (input) input.value = '';
+    _renderResearchChips();
     _renderSocialFeed();
+    _updateResearchStatusBar();
   } catch(err) {
-    alert('Analysis failed: ' + err.message);
+    alert('Research failed for ' + customer.name + ': ' + err.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔍 Analyse for Signals'; }
+    if (chip) { chip.disabled = false; chip.style.opacity = ''; }
+    _renderResearchChips();
   }
 }
 
+/* ── RESEARCH ALL CUSTOMERS ─────────────────────────────────────── */
+async function runAllCustomerResearch() {
+  const workerBase = (localStorage.getItem(AI_WORKER_URL_STORE) || '').replace(/\/$/, '');
+  if (!workerBase) { alert('AI Worker URL not configured in Settings.'); return; }
+
+  const customers = (RAW_DATA && RAW_DATA.customers) || [];
+  if (!customers.length) { alert('No customers found.'); return; }
+
+  const btn = document.getElementById('research-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Researching…'; }
+
+  for (let i = 0; i < customers.length; i++) {
+    if (btn) btn.textContent = '⏳ ' + (i + 1) + '/' + customers.length + ' ' + customers[i].name + '…';
+    await runCustomerResearch(customers[i].id);
+    // small delay between requests to avoid rate limiting
+    if (i < customers.length - 1) await new Promise(r => setTimeout(r, 800));
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ Research All'; }
+}
+
+/* ── DELETE ENTRY ───────────────────────────────────────────────── */
 function deleteSocialIntelEntry(id) {
   if (!RAW_DATA) return;
   RAW_DATA.socialIntel = (RAW_DATA.socialIntel || []).filter(e => e.id !== id);
   saveData();
+  _renderResearchChips();
   _renderSocialFeed();
+  _updateResearchStatusBar();
 }
 </script>
 </body>
